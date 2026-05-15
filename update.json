@@ -1,14 +1,14 @@
 {
   "manifest_version": 2,
   "app": {
-    "version_name": "2.2.0",
-    "version_code": 24,
-    "apk_url": "https://github.com/Acceleratorer/WUWA-VN-Android/releases/download/v2.2.0/WUWA-VN-v2.2.0-release.apk",
-    "sha256": "1695c255231eee2869223b91ab17ba7c12428c2973bd093683933d01b9ff1671",
+    "version_name": "2.3.0",
+    "version_code": 25,
+    "apk_url": "https://github.com/Acceleratorer/WUWA-VN-Android/releases/download/v2.3.0/WUWA-VN-v2.3.0-release.apk",
+    "sha256": "211b706bcac1da6d121fb113857849234e3ed0ac8f54be4d6b6c38aa2994907a",
     "changelog": [
-      "Add backup metadata session creation",
-      "Add verified patch download using SHA-256",
-      "Keep game file writing locked until Shizuku backup/restore is tested"
+      "Add read-only Shizuku backup for Engine.ini, DeviceProfiles.ini, and MountLang_en.txt",
+      "Write metadata.json from actual backed-up files with size and SHA-256",
+      "Keep restore and patch writing locked while backup is tested"
     ],
     "force_update": false
   },

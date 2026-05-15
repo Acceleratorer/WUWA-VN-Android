@@ -68,6 +68,7 @@ jobs:
 
           root_manifest = json.loads(Path("update.json").read_text(encoding="utf-8"))
           patch = root_manifest["patch"]
+          app = root_manifest.get("app", {})
           manifest = {
               "manifest_version": 2,
               "app": {
@@ -75,10 +76,8 @@ jobs:
                   "version_code": int("$VERSION_CODE"),
                   "apk_url": "https://github.com/Acceleratorer/WUWA-VN-Android/releases/download/v$VERSION/$APK_NAME",
                   "sha256": "$APK_SHA256",
-                  "changelog": [
-                      "Release $VERSION"
-                  ],
-                  "force_update": False,
+                  "changelog": app.get("changelog") or ["Release $VERSION"],
+                  "force_update": bool(app.get("force_update", False)),
               },
               "patch": patch,
           }

@@ -32,11 +32,13 @@ public class MainActivity extends Activity {
     private final PatchDryRunPlanner dryRunPlanner = new PatchDryRunPlanner(backupManager);
     private final PatchManifestRepository manifestRepository = new PatchManifestRepository();
     private final ShizukuFileSystem shizukuFileSystem = new ShizukuFileSystem();
+    private final ShizukuBackupReader backupReader = new ShizukuBackupReader(backupManager);
     private final DownloadClient downloadClient = new DownloadClient();
 
     private TextView statusView;
     private TextView logView;
     private volatile boolean patchPreparationRunning;
+    private volatile boolean backupRunning;
     private ShizukuState shizukuState = ShizukuState.NOT_INSTALLED;
     private GamePackageDetector.State gameState = GamePackageDetector.State.NOT_INSTALLED;
 
@@ -133,6 +135,12 @@ public class MainActivity extends Activity {
             @Override
             public void onClick(View view) {
                 showPatchDryRun();
+            }
+        }));
+        root.addView(button("Backup Game Configs", new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                backupGameConfigs();
             }
         }));
         root.addView(button("Download & Verify Patch", new View.OnClickListener() {
@@ -272,10 +280,8 @@ public class MainActivity extends Activity {
             public void run() {
                 PatchManifest manifest = manifestRepository.current();
                 try {
-                    PatchDryRun dryRun = dryRunPlanner.plan(MainActivity.this);
-                    File backupSession = backupManager.createBackupSession(MainActivity.this, manifest, dryRun, gameState);
-                    logger.add("Backup metadata: created");
-                    logger.add("Backup path: " + backupSession.getAbsolutePath());
+                    dryRunPlanner.plan(MainActivity.this);
+                    logger.add("Dry run: allowlist verified before download");
 
                     File patchFile = downloadClient.downloadAndVerify(
                             MainActivity.this,
@@ -294,7 +300,7 @@ public class MainActivity extends Activity {
                         public void run() {
                             showMessage(
                                     "Patch verified",
-                                    "Patch was downloaded and verified successfully.\n\nGame file writing is still locked until Shizuku backup/restore is tested on a real device."
+                                    "Patch was downloaded and verified successfully.\n\nUse Backup Game Configs to test read-only Shizuku backup. Game file writing is still locked."
                             );
                         }
                     });
@@ -311,6 +317,89 @@ public class MainActivity extends Activity {
                 }
             }
         }).start();
+    }
+
+    private void backupGameConfigs() {
+        if (backupRunning) {
+            Toast.makeText(this, "Backup is already running.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        refreshStatus();
+        if (gameState != GamePackageDetector.State.GLOBAL_INSTALLED) {
+            showMessage("Backup blocked", "Wuthering Waves Global is not detected. Install the Global version before backing up game config files.");
+            logger.add("Read-only backup: blocked - WUWA Global not detected");
+            return;
+        }
+        if (shizukuState != ShizukuState.READY) {
+            showMessage("Backup blocked", shizukuFileSystem.disabledReason(shizukuState));
+            logger.add("Read-only backup: blocked - Shizuku not ready");
+            return;
+        }
+
+        backupRunning = true;
+        logger.add("Read-only backup: started");
+        final GamePackageDetector.State detectedGameState = gameState;
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                PatchManifest manifest = manifestRepository.current();
+                try {
+                    File backupDirectory = backupManager.createBackupDirectory(MainActivity.this);
+                    logger.add("Backup path: " + backupDirectory.getAbsolutePath());
+
+                    ShizukuBackupReader.BackupResult result = backupReader.backupConfigFiles(
+                            MainActivity.this,
+                            backupDirectory,
+                            logger
+                    );
+                    backupManager.writeBackupMetadata(backupDirectory, manifest, detectedGameState, result.backedUpFiles, result.missingFiles);
+                    logger.add("Backup metadata: wrote actual backed-up files");
+                    logger.add("Read-only backup: success");
+
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            showMessage("Backup complete", backupSummary(backupDirectory, result));
+                        }
+                    });
+                } catch (Exception exception) {
+                    logger.add("Read-only backup failed: " + exception.getMessage());
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            showMessage("Backup failed", exception.getMessage());
+                        }
+                    });
+                } finally {
+                    backupRunning = false;
+                }
+            }
+        }).start();
+    }
+
+    private String backupSummary(File backupDirectory, ShizukuBackupReader.BackupResult result) {
+        StringBuilder builder = new StringBuilder();
+        builder.append("Backed up files:\n");
+        for (BackupFileInfo file : result.backedUpFiles) {
+            builder.append("- ")
+                    .append(file.displayName)
+                    .append(" (")
+                    .append(file.sizeBytes)
+                    .append(" bytes, SHA-256 ")
+                    .append(file.sha256.substring(0, 12))
+                    .append("...)\n");
+        }
+        if (!result.missingFiles.isEmpty()) {
+            builder.append("\nMissing files:\n");
+            for (String file : result.missingFiles) {
+                builder.append("- ").append(file).append('\n');
+            }
+        }
+        builder.append("\nBackup folder:\n").append(backupDirectory.getAbsolutePath());
+        builder.append("\n\nThis version only reads game files. Patch writing and restore writing remain locked.");
+        return builder.toString();
     }
 
     private void openOrRequestShizuku() {

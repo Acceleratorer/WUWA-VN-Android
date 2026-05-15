@@ -20,6 +20,7 @@ $Exe = if ($IsWindows) { ".exe" } else { "" }
 $Bat = if ($IsWindows) { ".bat" } else { "" }
 
 $Aapt2 = Join-Path $BuildTools "aapt2$Exe"
+$Aidl = Join-Path $BuildTools "aidl$Exe"
 $D8 = Join-Path $BuildTools "d8$Bat"
 $Zipalign = Join-Path $BuildTools "zipalign$Exe"
 $Apksigner = Join-Path $BuildTools "apksigner$Bat"
@@ -28,7 +29,7 @@ $Javac = Join-Path $JavaBin "javac$Exe"
 $Jar = Join-Path $JavaBin "jar$Exe"
 $Keytool = Join-Path $JavaBin "keytool$Exe"
 
-foreach ($Tool in @($Aapt2, $D8, $Zipalign, $Apksigner, $Javac, $Jar, $Keytool, $AndroidJar)) {
+foreach ($Tool in @($Aapt2, $Aidl, $D8, $Zipalign, $Apksigner, $Javac, $Jar, $Keytool, $AndroidJar)) {
     if (!(Test-Path $Tool)) {
         throw "Missing required build tool: $Tool"
     }
@@ -52,8 +53,8 @@ if (Test-Path $VersionFile) {
     }
 }
 
-$VersionName = if ($env:WUWA_VERSION_NAME) { $env:WUWA_VERSION_NAME } elseif ($VersionProperties["VERSION_NAME"]) { $VersionProperties["VERSION_NAME"] } else { "2.2.0" }
-$VersionCode = if ($env:WUWA_VERSION_CODE) { $env:WUWA_VERSION_CODE } elseif ($VersionProperties["VERSION_CODE"]) { $VersionProperties["VERSION_CODE"] } else { "24" }
+$VersionName = if ($env:WUWA_VERSION_NAME) { $env:WUWA_VERSION_NAME } elseif ($VersionProperties["VERSION_NAME"]) { $VersionProperties["VERSION_NAME"] } else { "2.3.0" }
+$VersionCode = if ($env:WUWA_VERSION_CODE) { $env:WUWA_VERSION_CODE } elseif ($VersionProperties["VERSION_CODE"]) { $VersionProperties["VERSION_CODE"] } else { "25" }
 $PackageName = "com.acceleratorer.wuwavn"
 $ShizukuVersion = "13.1.5"
 $ShizukuApiSha256 = "4def9bde498ef8626614c2fc5db9af4749c86f16f6c33e3f5658d35e70bab59b"
@@ -62,6 +63,7 @@ $Out = Join-Path (Join-Path $Root "build") "manual-apk"
 $DepsDir = Join-Path (Join-Path $Root "build") "deps"
 $CompiledRes = Join-Path $Out "compiled-res.zip"
 $Generated = Join-Path $Out "gen"
+$GeneratedAidl = Join-Path $Out "aidl"
 $Classes = Join-Path $Out "classes"
 $Dex = Join-Path $Out "dex"
 $BaseApk = Join-Path $Out "base.apk"
@@ -80,7 +82,7 @@ $KeyPass = if ($env:WUWA_KEY_PASSWORD) { $env:WUWA_KEY_PASSWORD } else { $StoreP
 if (Test-Path $Out) {
     Remove-Item -LiteralPath $Out -Recurse -Force
 }
-New-Item -ItemType Directory -Force -Path $Out, $Generated, $Classes, $Dex, $ReleaseDir, $SigningDir, $DepsDir | Out-Null
+New-Item -ItemType Directory -Force -Path $Out, $Generated, $GeneratedAidl, $Classes, $Dex, $ReleaseDir, $SigningDir, $DepsDir | Out-Null
 
 function Get-Sha256($Path) {
     return (Get-FileHash -Algorithm SHA256 -Path $Path).Hash.ToLower()
@@ -153,8 +155,18 @@ final class BuildValues {
 }
 "@ | Set-Content -Encoding ascii -Path (Join-Path $BuildValuesPath "BuildValues.java")
 
+$AidlDir = Join-Path $MainDir "aidl"
+if (Test-Path $AidlDir) {
+    $AidlSources = Get-ChildItem -Path $AidlDir -Recurse -Filter "*.aidl"
+    foreach ($AidlSource in $AidlSources) {
+        & $Aidl --lang=java --min_sdk_version=30 -I $AidlDir -o $GeneratedAidl $AidlSource.FullName
+        Assert-LastExitCode "aidl"
+    }
+}
+
 $JavaSources += Get-ChildItem -Path (Join-Path $MainDir "java") -Recurse -Filter "*.java" | ForEach-Object { $_.FullName }
 $JavaSources += Get-ChildItem -Path $Generated -Recurse -Filter "*.java" | ForEach-Object { $_.FullName }
+$JavaSources += Get-ChildItem -Path $GeneratedAidl -Recurse -Filter "*.java" | ForEach-Object { $_.FullName }
 $CompileClasspath = (@($AndroidJar) + $DependencyJars) -join [System.IO.Path]::PathSeparator
 & $Javac -source 8 -target 8 -classpath $CompileClasspath -d $Classes $JavaSources
 Assert-LastExitCode "javac"
@@ -198,7 +210,28 @@ Assert-LastExitCode "apksigner sign"
 Assert-LastExitCode "apksigner verify"
 
 $Hash = Get-FileHash -Algorithm SHA256 -Path $FinalApk
-"$($Hash.Hash.ToLower())  $(Split-Path $FinalApk -Leaf)" | Set-Content -Encoding ascii -Path (Join-Path $ReleaseDir "sha256.txt")
+$HashLower = $Hash.Hash.ToLower()
+"$HashLower  $(Split-Path $FinalApk -Leaf)" | Set-Content -Encoding ascii -Path (Join-Path $ReleaseDir "sha256.txt")
+
+$RootUpdateJson = Join-Path $Root "update.json"
+if (Test-Path $RootUpdateJson) {
+    $RootManifest = Get-Content -Raw -Path $RootUpdateJson | ConvertFrom-Json
+    $ReleaseManifest = [ordered]@{
+        manifest_version = 2
+        app = [ordered]@{
+            version_name = $VersionName
+            version_code = [int]$VersionCode
+            apk_url = "https://github.com/Acceleratorer/WUWA-VN-Android/releases/download/v$VersionName/$ApkName"
+            sha256 = $HashLower
+            changelog = @($RootManifest.app.changelog)
+            force_update = [bool]$RootManifest.app.force_update
+        }
+        patch = $RootManifest.patch
+    }
+    $ReleaseManifestJson = ($ReleaseManifest | ConvertTo-Json -Depth 8) + [Environment]::NewLine
+    $Utf8NoBom = New-Object System.Text.UTF8Encoding($false)
+    [System.IO.File]::WriteAllText((Join-Path $ReleaseDir "update.json"), $ReleaseManifestJson, $Utf8NoBom)
+}
 
 Write-Host "Built $FinalApk"
-Write-Host "SHA-256 $($Hash.Hash.ToLower())"
+Write-Host "SHA-256 $HashLower"

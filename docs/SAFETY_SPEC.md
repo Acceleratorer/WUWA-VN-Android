@@ -32,7 +32,7 @@ The app should never apply a patch until the backup step succeeds.
 
 ## Backup metadata
 
-Current `v2.2.0` backup metadata is stored in app-specific external storage:
+Current `v2.3.0` read-only backups are stored in app-specific external storage:
 
 ```text
 Android/data/com.acceleratorer.wuwavn/files/WUWA-VH-Backup/<timestamp>/metadata.json
@@ -40,20 +40,26 @@ Android/data/com.acceleratorer.wuwavn/files/WUWA-VH-Backup/<timestamp>/metadata.
 
 Public `Download/WUWA-VH-Backup` can be considered later, but only with careful Android storage handling.
 
-Each backup should include metadata similar to:
+Each backup should include copied config files and metadata similar to:
 
 ```json
 {
   "created_at": "2026-05-15T22:30:00+07:00",
   "game_package": "com.kurogame.wutheringwaves.global",
-  "app_version": "1.3.7",
+  "app_version": "2.3.0",
   "patch_version": "2026.05.15",
+  "backup_type": "shizuku_read_only_config_backup",
+  "game_write_enabled": false,
+  "restore_write_enabled": false,
   "files": [
-    "Engine.ini",
-    "DeviceProfiles.ini",
-    "MountLang_en.txt",
-    "WuWaVH_99_P.pak"
-  ]
+    {
+      "display_name": "Engine.ini",
+      "relative_path": "UE4Game/Client/Client/Saved/Config/Android/Engine.ini",
+      "sha256": "...",
+      "size_bytes": 1234
+    }
+  ],
+  "missing_files": []
 }
 ```
 
