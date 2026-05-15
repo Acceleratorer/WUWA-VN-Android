@@ -1,14 +1,14 @@
 {
   "manifest_version": 2,
   "app": {
-    "version_name": "2.3.0",
-    "version_code": 25,
-    "apk_url": "https://github.com/Acceleratorer/WUWA-VN-Android/releases/download/v2.3.0/WUWA-VN-v2.3.0-release.apk",
-    "sha256": "211b706bcac1da6d121fb113857849234e3ed0ac8f54be4d6b6c38aa2994907a",
+    "version_name": "2.3.1",
+    "version_code": 26,
+    "apk_url": "https://github.com/Acceleratorer/WUWA-VN-Android/releases/download/v2.3.1/WUWA-VN-v2.3.1-release.apk",
+    "sha256": "4d3676d4f91ddac13de55f4753f69e9a7839d8fc470f657b10957887361194d8",
     "changelog": [
-      "Add read-only Shizuku backup for Engine.ini, DeviceProfiles.ini, and MountLang_en.txt",
-      "Write metadata.json from actual backed-up files with size and SHA-256",
-      "Keep restore and patch writing locked while backup is tested"
+      "Harden Shizuku backup path validation with exact canonical path matching",
+      "Add Copy Backup Path for app-specific backup folders",
+      "Clarify restore remains locked and v2.4.0 is restore dry-run"
     ],
     "force_update": false
   },

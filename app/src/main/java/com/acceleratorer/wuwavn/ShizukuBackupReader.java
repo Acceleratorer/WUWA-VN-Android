@@ -78,7 +78,7 @@ final class ShizukuBackupReader {
                 byte[] bytes = service.readFile(absolutePath, MAX_CONFIG_BYTES);
                 BackupFileInfo info = backupManager.writeBackedUpFile(backupDirectory, displayName, relativePath, bytes);
                 backedUpFiles.add(info);
-                logger.add("Backup read: copied " + displayName + " (" + info.sizeBytes + " bytes)");
+                logger.add("Backup read: copied " + displayName + " (" + info.sizeBytes + " bytes, sha256 " + info.sha256.substring(0, 12) + "...)");
             }
 
             if (backedUpFiles.isEmpty()) {

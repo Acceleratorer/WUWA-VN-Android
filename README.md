@@ -2,18 +2,19 @@
 
 Ứng dụng hỗ trợ cài bản Việt hoá cho Wuthering Waves trên Android.
 
-> Trạng thái hiện tại: bản `v2.3.0` là APK release-signed sạch, có kiểm tra game/Shizuku, kiểm tra binder và quyền Shizuku thật, dry run theo allowlist, tải PAK và kiểm tra SHA-256 thật. Bản này đã có backup read-only bằng Shizuku cho `Engine.ini`, `DeviceProfiles.ini`, `MountLang_en.txt` và ghi `metadata.json` từ file backup thật. Phần restore và ghi patch vào game vẫn đang khóa.
+> Trạng thái hiện tại: bản `v2.3.1` là APK release-signed sạch, có kiểm tra game/Shizuku, kiểm tra binder và quyền Shizuku thật, dry run theo allowlist, tải PAK và kiểm tra SHA-256 thật. Bản này đã có backup read-only bằng Shizuku cho `Engine.ini`, `DeviceProfiles.ini`, `MountLang_en.txt`, ghi `metadata.json` từ file backup thật, và validate path backup bằng exact canonical path. Phần restore và ghi patch vào game vẫn đang khóa.
 
 ## Tính Năng
 
-- Cài bản Việt hoá cho Wuthering Waves bản Global
+- Chuẩn bị luồng cài bản Việt hoá cho Wuthering Waves bản Global
 - Cập nhật bản dịch mới nhất từ GitHub Releases
 - Sao lưu read-only các file cấu hình gốc trước khi chỉnh sửa
-- Khôi phục file gốc khi cần
+- Lưu backup để phục vụ restore ở các bản sau
 - Hỗ trợ Shizuku để thao tác với thư mục game
 - Hỗ trợ cấu hình đồ hoạ: Safe, Balanced, Performance, Max Graphics
 - Tải PAK vào app storage và kiểm tra SHA-256 trước khi cho phép bước tiếp theo
 - Ghi `metadata.json` với danh sách file backup thật, dung lượng và SHA-256
+- Copy đường dẫn backup để dễ gửi log hoặc tự kiểm tra
 - Copy debug log để gửi báo lỗi
 
 ## Screenshots
@@ -57,7 +58,7 @@ Không cài APK từ mirror lạ, link chat riêng, hoặc file không có SHA-2
 Ví dụ file phát hành hợp lệ:
 
 ```text
-WUWA-VN-v2.3.0-release.apk
+WUWA-VN-v2.3.1-release.apk
 ```
 
 Không phát hành file `app-debug.apk` cho người dùng phổ thông.
@@ -65,14 +66,14 @@ Không phát hành file `app-debug.apk` cho người dùng phổ thông.
 Trước khi phát hành, kiểm tra chữ ký:
 
 ```bash
-apksigner verify --print-certs WUWA-VN-v2.3.0-release.apk
+apksigner verify --print-certs WUWA-VN-v2.3.1-release.apk
 ```
 
 ## Cách Khôi Phục
 
 Mở app, chọn **Restore Original Files**, chọn bản backup muốn dùng, rồi bấm **Restore**.
 
-Từ `v2.3.0`, backup được lưu trong thư mục app-specific external storage để tránh xin quyền lưu trữ rộng:
+Từ `v2.3.1`, backup được lưu trong thư mục app-specific external storage để tránh xin quyền lưu trữ rộng:
 
 ```text
 Android/data/com.acceleratorer.wuwavn/files/WUWA-VH-Backup/
@@ -118,14 +119,22 @@ Quyền yêu cầu cài APK chỉ dùng khi người dùng chọn cập nhật a
 - Game vẫn đang mở và file có thể bị khoá
 - Không đủ dung lượng để tạo backup
 - Android chặn cài APK từ nguồn không xác định
-- Bản `v2.3.0` đã backup read-only file cấu hình thật bằng Shizuku, nhưng chưa ghi file game thật
+- Bản `v2.3.1` đã backup read-only file cấu hình thật bằng Shizuku, nhưng chưa ghi file game thật
+
+## Roadmap
+
+- `v2.4.0`: restore dry-run, list backup sessions, verify `metadata.json`, verify backup file SHA-256, show restore plan, no write.
+- `v2.5.0`: restore write unlock with double confirmation and allowlisted config restore only.
+- `v2.6.0`: patch write unlock after verified backup, verified PAK, Shizuku READY, and WUWA Global detection.
+
+Kotlin migration is planned after the build system moves to Gradle or adds a stable Kotlin compiler step. Current release code stays Java to keep the manual release pipeline small and verifiable.
 
 ## Báo Lỗi
 
 Khi gặp lỗi, hãy gửi kèm log trong app nếu có:
 
 ```text
-[22:31:10] App version: 2.3.0
+[22:31:10] App version: 2.3.1
 [22:31:10] Android version: 14
 [22:31:11] Shizuku: running
 [22:31:11] Permission: granted

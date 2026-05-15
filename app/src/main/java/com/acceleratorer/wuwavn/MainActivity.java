@@ -41,6 +41,7 @@ public class MainActivity extends Activity {
     private volatile boolean backupRunning;
     private ShizukuState shizukuState = ShizukuState.NOT_INSTALLED;
     private GamePackageDetector.State gameState = GamePackageDetector.State.NOT_INSTALLED;
+    private volatile String lastBackupPath;
 
     private final Shizuku.OnBinderReceivedListener binderReceivedListener = new Shizuku.OnBinderReceivedListener() {
         @Override
@@ -141,6 +142,12 @@ public class MainActivity extends Activity {
             @Override
             public void onClick(View view) {
                 backupGameConfigs();
+            }
+        }));
+        root.addView(button("Copy Backup Path", new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                copyBackupPath();
             }
         }));
         root.addView(button("Download & Verify Patch", new View.OnClickListener() {
@@ -248,6 +255,7 @@ public class MainActivity extends Activity {
         logger.add("Dry run: started");
         try {
             PatchDryRun dryRun = dryRunPlanner.plan(this);
+            lastBackupPath = dryRun.backupDirectory.getAbsolutePath();
             String message = dryRun.describe() + "\n\n" + shizukuFileSystem.disabledReason(shizukuState);
             if (gameState != GamePackageDetector.State.GLOBAL_INSTALLED) {
                 message = "Global Wuthering Waves package is not detected.\n\n" + message;
@@ -347,6 +355,7 @@ public class MainActivity extends Activity {
                 PatchManifest manifest = manifestRepository.current();
                 try {
                     File backupDirectory = backupManager.createBackupDirectory(MainActivity.this);
+                    lastBackupPath = backupDirectory.getAbsolutePath();
                     logger.add("Backup path: " + backupDirectory.getAbsolutePath());
 
                     ShizukuBackupReader.BackupResult result = backupReader.backupConfigFiles(
@@ -432,6 +441,20 @@ public class MainActivity extends Activity {
             clipboard.setPrimaryClip(ClipData.newPlainText("WUWA VN debug log", logger.text()));
             Toast.makeText(this, "Debug log copied.", Toast.LENGTH_SHORT).show();
             logger.add("Log: copied");
+        }
+    }
+
+    private void copyBackupPath() {
+        if (lastBackupPath == null || lastBackupPath.length() == 0) {
+            showMessage("Backup path", "No backup path yet. Run Show Patch Plan or Backup Game Configs first.");
+            logger.add("Backup path: not available yet");
+            return;
+        }
+        ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
+        if (clipboard != null) {
+            clipboard.setPrimaryClip(ClipData.newPlainText("WUWA VN backup path", lastBackupPath));
+            Toast.makeText(this, "Backup path copied.", Toast.LENGTH_SHORT).show();
+            logger.add("Backup path: copied");
         }
     }
 

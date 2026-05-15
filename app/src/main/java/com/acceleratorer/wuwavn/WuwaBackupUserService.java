@@ -1,5 +1,6 @@
 package com.acceleratorer.wuwavn;
 
+import android.os.Environment;
 import android.os.RemoteException;
 
 import java.io.ByteArrayOutputStream;
@@ -11,10 +12,10 @@ import java.util.HashSet;
 import java.util.Set;
 
 public final class WuwaBackupUserService extends IWuwaBackupService.Stub {
-    private static final Set<String> ALLOWED_SUFFIXES = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
-            "/Android/data/com.kurogame.wutheringwaves.global/files/UE4Game/Client/Client/Saved/Config/Android/Engine.ini",
-            "/Android/data/com.kurogame.wutheringwaves.global/files/UE4Game/Client/Client/Saved/Config/Android/DeviceProfiles.ini",
-            "/Android/data/com.kurogame.wutheringwaves.global/files/UE4Game/Client/Client/Saved/Config/Android/MountLang_en.txt"
+    private static final Set<String> ALLOWED_RELATIVE_PATHS = Collections.unmodifiableSet(new HashSet<>(Arrays.asList(
+            "Android/data/com.kurogame.wutheringwaves.global/files/UE4Game/Client/Client/Saved/Config/Android/Engine.ini",
+            "Android/data/com.kurogame.wutheringwaves.global/files/UE4Game/Client/Client/Saved/Config/Android/DeviceProfiles.ini",
+            "Android/data/com.kurogame.wutheringwaves.global/files/UE4Game/Client/Client/Saved/Config/Android/MountLang_en.txt"
     )));
 
     @Override
@@ -59,15 +60,33 @@ public final class WuwaBackupUserService extends IWuwaBackupService.Stub {
         if (absolutePath == null) {
             throw new RemoteException("Path is null.");
         }
-        String normalized = absolutePath.replace('\\', '/');
-        if (normalized.contains("..")) {
+        String rawPath = absolutePath.replace('\\', '/');
+        if (rawPath.contains("..")) {
             throw new RemoteException("Blocked path traversal.");
         }
-        for (String suffix : ALLOWED_SUFFIXES) {
-            if (normalized.endsWith(suffix)) {
-                return new File(normalized);
+
+        try {
+            File file = new File(absolutePath).getCanonicalFile();
+            String normalized = file.getPath().replace('\\', '/');
+            String externalRoot = Environment.getExternalStorageDirectory()
+                    .getCanonicalFile()
+                    .getPath()
+                    .replace('\\', '/');
+
+            for (String relativePath : ALLOWED_RELATIVE_PATHS) {
+                String expected = new File(externalRoot, relativePath)
+                        .getCanonicalFile()
+                        .getPath()
+                        .replace('\\', '/');
+                if (normalized.equals(expected)) {
+                    return file;
+                }
             }
+            throw new RemoteException("Blocked non-allowlisted path.");
+        } catch (RemoteException exception) {
+            throw exception;
+        } catch (Exception exception) {
+            throw new RemoteException("Path validation failed: " + exception.getMessage());
         }
-        throw new RemoteException("Blocked non-allowlisted path.");
     }
 }

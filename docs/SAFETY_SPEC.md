@@ -15,6 +15,8 @@ UE4Game/Client/Client/Content/Paks/WuWaVH_99_P.pak
 
 Reject paths with `..`, backtracking, or values outside this allowlist.
 
+The Shizuku user service should validate read targets by exact canonical path under the shared external storage root. Do not accept suffix-only matches.
+
 ## Patch flow
 
 ```text
@@ -28,11 +30,11 @@ Verify target files exist
 Show success
 ```
 
-The app should never apply a patch until the backup step succeeds.
+The app should never apply a patch until backup and restore behavior are tested. The next milestone after read-only backup is restore dry-run, not patch writing.
 
 ## Backup metadata
 
-Current `v2.3.0` read-only backups are stored in app-specific external storage:
+Current `v2.3.1` read-only backups are stored in app-specific external storage:
 
 ```text
 Android/data/com.acceleratorer.wuwavn/files/WUWA-VH-Backup/<timestamp>/metadata.json
@@ -46,7 +48,7 @@ Each backup should include copied config files and metadata similar to:
 {
   "created_at": "2026-05-15T22:30:00+07:00",
   "game_package": "com.kurogame.wutheringwaves.global",
-  "app_version": "2.3.0",
+  "app_version": "2.3.1",
   "patch_version": "2026.05.15",
   "backup_type": "shizuku_read_only_config_backup",
   "game_write_enabled": false,
@@ -110,8 +112,17 @@ Keep the main actions simple:
 - Install Vietnamese Patch
 - Update Vietnamese Patch
 - Restore Original Files
+- Copy Backup Path
 - Check Game Folder
 - Open Shizuku
+
+## Roadmap order
+
+```text
+v2.4.0: restore dry-run only
+v2.5.0: restore write unlock
+v2.6.0: patch write unlock
+```
 
 ## Logs
 
