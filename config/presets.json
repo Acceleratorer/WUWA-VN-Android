@@ -1,0 +1,40 @@
+{
+  "default_preset": "safe",
+  "presets": [
+    {
+      "id": "safe",
+      "name": "Safe / Default",
+      "description": "Translation only. Minimal changes and safest default for all devices.",
+      "config_dir": null,
+      "warning": null
+    },
+    {
+      "id": "balanced",
+      "name": "Balanced",
+      "description": "Translation plus stable graphics config for common upper-mid and flagship devices.",
+      "config_dir": "config/Balanced Visual",
+      "recommended_for": [
+        "Snapdragon 865",
+        "Snapdragon 870",
+        "Snapdragon 778G",
+        "Dimensity 8100+"
+      ],
+      "warning": null
+    },
+    {
+      "id": "performance",
+      "name": "Performance",
+      "description": "Translation plus lower-stutter config for mid-range and lower-end devices.",
+      "config_dir": null,
+      "status": "planned",
+      "warning": null
+    },
+    {
+      "id": "max_graphics",
+      "name": "Max Graphics",
+      "description": "Heavy visual config for high-end devices only.",
+      "config_dir": "config/Max grafic",
+      "warning": "Max Graphics may cause heat, battery drain, crashes, or FPS drops. Recommended only for high-end devices."
+    }
+  ]
+}

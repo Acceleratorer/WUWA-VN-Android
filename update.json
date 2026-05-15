@@ -1,0 +1,20 @@
+{
+  "manifest_version": 2,
+  "app": {
+    "version_name": "2.0.0",
+    "version_code": 22,
+    "apk_url": "https://github.com/Acceleratorer/WUWA-VN-Android/releases/download/v2.0.0/WUWA-VN-v2.0.0-release.apk",
+    "sha256": "d184cfb8865f87229e0cfa3ed1b56ff28fa1ff615a589b888635bc252cdb85bb",
+    "changelog": [
+      "Add clean release-signed Android app shell",
+      "Add Shizuku and game package checks",
+      "Add safe patch dry run and copyable debug logs"
+    ],
+    "force_update": false
+  },
+  "patch": {
+    "version": "2026.05.15",
+    "pak_url": "https://github.com/CallMeDangDev/WuwaVH/releases/latest/download/WuWaVH_99_P.pak",
+    "sha256": "99202f84db73e771cd68ef1734893ee5f589666654fe7be3dcfff631df199a78"
+  }
+}

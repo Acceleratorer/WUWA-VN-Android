@@ -1,0 +1,100 @@
+name: Android Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android build tools
+        run: sdkmanager "platforms;android-36" "build-tools;36.0.0" "platform-tools"
+
+      - name: Preflight Android source
+        run: |
+          test -f tools/build-release.ps1 || { echo "::error::tools/build-release.ps1 is missing."; exit 1; }
+          test -f app/src/main/AndroidManifest.xml || { echo "::error::AndroidManifest.xml is missing."; exit 1; }
+          test -f app/src/main/java/com/acceleratorer/wuwavn/MainActivity.java || { echo "::error::MainActivity.java is missing."; exit 1; }
+
+      - name: Restore release keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+        run: |
+          test -n "$KEYSTORE_BASE64" || { echo "::error::KEYSTORE_BASE64 secret is missing."; exit 1; }
+          mkdir -p .signing
+          printf '%s' "$KEYSTORE_BASE64" | base64 --decode > .signing/wuwa-vn-release.jks
+
+      - name: Build signed release APK
+        shell: pwsh
+        env:
+          WUWA_VERSION_NAME: ${{ github.ref_name }}
+          WUWA_VERSION_CODE: "22"
+          WUWA_KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          WUWA_KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          WUWA_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: |
+          $env:WUWA_VERSION_NAME = $env:WUWA_VERSION_NAME.TrimStart("v")
+          if ([string]::IsNullOrWhiteSpace($env:WUWA_VERSION_NAME)) {
+            throw "Version tag is missing."
+          }
+          ./tools/build-release.ps1
+
+      - name: Generate release update manifest
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          APK_NAME="WUWA-VN-v${VERSION}-release.apk"
+          APK_SHA256="$(sha256sum "release/$APK_NAME" | awk '{print $1}')"
+          python - <<PY
+          import json
+          from pathlib import Path
+
+          root_manifest = json.loads(Path("update.json").read_text(encoding="utf-8"))
+          patch = root_manifest["patch"]
+          manifest = {
+              "manifest_version": 2,
+              "app": {
+                  "version_name": "$VERSION",
+                  "version_code": 22,
+                  "apk_url": "https://github.com/Acceleratorer/WUWA-VN-Android/releases/download/v$VERSION/$APK_NAME",
+                  "sha256": "$APK_SHA256",
+                  "changelog": [
+                      "Release $VERSION"
+                  ],
+                  "force_update": False,
+              },
+              "patch": patch,
+          }
+          Path("release/update.json").write_text(
+              json.dumps(manifest, ensure_ascii=False, indent=2) + "\n",
+              encoding="utf-8",
+          )
+          PY
+
+      - name: Verify generated manifest
+        run: python -m json.tool release/update.json > /dev/null
+
+      - name: Upload release files
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            release/*.apk
+            release/sha256.txt
+            release/update.json

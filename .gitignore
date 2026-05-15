@@ -1,0 +1,26 @@
+# Android/Gradle
+.gradle/
+.android-sdk/
+build/
+app/build/
+local.properties
+
+# IDE
+.idea/
+*.iml
+
+# Signing secrets
+.signing/
+*.jks
+*.keystore
+*.p12
+release.keystore
+
+# Release artifacts should be uploaded to GitHub Releases, not committed.
+*.apk
+*.aab
+release/
+
+# OS files
+.DS_Store
+Thumbs.db
