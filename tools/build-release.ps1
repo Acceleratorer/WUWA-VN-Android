@@ -53,12 +53,14 @@ if (Test-Path $VersionFile) {
     }
 }
 
-$VersionName = if ($env:WUWA_VERSION_NAME) { $env:WUWA_VERSION_NAME } elseif ($VersionProperties["VERSION_NAME"]) { $VersionProperties["VERSION_NAME"] } else { "2.3.1" }
-$VersionCode = if ($env:WUWA_VERSION_CODE) { $env:WUWA_VERSION_CODE } elseif ($VersionProperties["VERSION_CODE"]) { $VersionProperties["VERSION_CODE"] } else { "26" }
+$VersionName = if ($env:WUWA_VERSION_NAME) { $env:WUWA_VERSION_NAME } elseif ($VersionProperties["VERSION_NAME"]) { $VersionProperties["VERSION_NAME"] } else { "2.3.2" }
+$VersionCode = if ($env:WUWA_VERSION_CODE) { $env:WUWA_VERSION_CODE } elseif ($VersionProperties["VERSION_CODE"]) { $VersionProperties["VERSION_CODE"] } else { "27" }
 $PackageName = "com.acceleratorer.wuwavn"
 $ShizukuVersion = "13.1.5"
 $ShizukuApiSha256 = "4def9bde498ef8626614c2fc5db9af4749c86f16f6c33e3f5658d35e70bab59b"
 $ShizukuProviderSha256 = "b0f18cd9812464ec171c53cac93a819fe411718a3965c311f01eb4de265381b3"
+$KotlinVersion = "2.0.21"
+$KotlinCompilerSha256 = "0352c0a45bd22f80f6b26e485cd04da8047baa5de54865281fb9f89a4a7bcf2a"
 $Out = Join-Path (Join-Path $Root "build") "manual-apk"
 $DepsDir = Join-Path (Join-Path $Root "build") "deps"
 $CompiledRes = Join-Path $Out "compiled-res.zip"
@@ -113,15 +115,46 @@ function Extract-AarClasses($AarPath, $Destination) {
     return $ClassesJar
 }
 
+function Extract-ZipDependency($ZipPath, $Destination) {
+    if (Test-Path $Destination) {
+        Remove-Item -LiteralPath $Destination -Recurse -Force
+    }
+    New-Item -ItemType Directory -Force -Path $Destination | Out-Null
+    [System.IO.Compression.ZipFile]::ExtractToDirectory($ZipPath, $Destination)
+}
+
 $ApiAar = Join-Path $DepsDir "shizuku-api-$ShizukuVersion.aar"
 $ProviderAar = Join-Path $DepsDir "shizuku-provider-$ShizukuVersion.aar"
 Download-Dependency "https://repo.maven.apache.org/maven2/dev/rikka/shizuku/api/$ShizukuVersion/api-$ShizukuVersion.aar" $ApiAar $ShizukuApiSha256
 Download-Dependency "https://repo.maven.apache.org/maven2/dev/rikka/shizuku/provider/$ShizukuVersion/provider-$ShizukuVersion.aar" $ProviderAar $ShizukuProviderSha256
 
+$KotlinCompilerZip = Join-Path $DepsDir "kotlin-compiler-$KotlinVersion.zip"
+$KotlinCompilerDir = Join-Path $DepsDir "kotlin-compiler-$KotlinVersion"
+Download-Dependency "https://github.com/JetBrains/kotlin/releases/download/v$KotlinVersion/kotlin-compiler-$KotlinVersion.zip" $KotlinCompilerZip $KotlinCompilerSha256
+if (!(Test-Path (Join-Path (Join-Path $KotlinCompilerDir "kotlinc") "bin"))) {
+    Extract-ZipDependency $KotlinCompilerZip $KotlinCompilerDir
+}
+$Kotlinc = Join-Path (Join-Path (Join-Path $KotlinCompilerDir "kotlinc") "bin") "kotlinc$Bat"
+if (!(Test-Path $Kotlinc)) {
+    throw "Missing Kotlin compiler: $Kotlinc"
+}
+$KotlinLib = Join-Path (Join-Path $KotlinCompilerDir "kotlinc") "lib"
+$KotlinStdlibJars = @(
+    (Join-Path $KotlinLib "kotlin-stdlib.jar"),
+    (Join-Path $KotlinLib "kotlin-stdlib-jdk7.jar"),
+    (Join-Path $KotlinLib "kotlin-stdlib-jdk8.jar")
+)
+foreach ($JarPath in $KotlinStdlibJars) {
+    if (!(Test-Path $JarPath)) {
+        throw "Missing Kotlin runtime jar: $JarPath"
+    }
+}
+
 $DependencyJars = @(
     (Extract-AarClasses $ApiAar (Join-Path $DepsDir "api")),
     (Extract-AarClasses $ProviderAar (Join-Path $DepsDir "provider"))
 )
+$RuntimeJars = $DependencyJars + $KotlinStdlibJars
 
 $MainDir = Join-Path (Join-Path (Join-Path $Root "app") "src") "main"
 & $Aapt2 compile --dir (Join-Path $MainDir "res") -o $CompiledRes
@@ -147,8 +180,8 @@ New-Item -ItemType Directory -Force -Path $BuildValuesPath | Out-Null
 package com.acceleratorer.wuwavn;
 
 final class BuildValues {
-    static final String VERSION_NAME = "$VersionName";
-    static final int VERSION_CODE = $VersionCode;
+    public static final String VERSION_NAME = "$VersionName";
+    public static final int VERSION_CODE = $VersionCode;
 
     private BuildValues() {
     }
@@ -164,15 +197,31 @@ if (Test-Path $AidlDir) {
     }
 }
 
-$JavaSources += Get-ChildItem -Path (Join-Path $MainDir "java") -Recurse -Filter "*.java" | ForEach-Object { $_.FullName }
+$AppJavaDir = Join-Path $MainDir "java"
+if (Test-Path $AppJavaDir) {
+    $JavaSources += Get-ChildItem -Path $AppJavaDir -Recurse -Filter "*.java" | ForEach-Object { $_.FullName }
+}
 $JavaSources += Get-ChildItem -Path $Generated -Recurse -Filter "*.java" | ForEach-Object { $_.FullName }
 $JavaSources += Get-ChildItem -Path $GeneratedAidl -Recurse -Filter "*.java" | ForEach-Object { $_.FullName }
 $CompileClasspath = (@($AndroidJar) + $DependencyJars) -join [System.IO.Path]::PathSeparator
 & $Javac -source 8 -target 8 -classpath $CompileClasspath -d $Classes $JavaSources
 Assert-LastExitCode "javac"
 
+$AppKotlinDir = Join-Path $MainDir "kotlin"
+if (Test-Path $AppKotlinDir) {
+    $KotlinSources = Get-ChildItem -Path $AppKotlinDir -Recurse -Filter "*.kt" | ForEach-Object { $_.FullName }
+    if ($KotlinSources.Count -gt 0) {
+        $KotlinClasspath = (@($Classes, $AndroidJar) + $RuntimeJars) -join [System.IO.Path]::PathSeparator
+        $KotlinArgs = Join-Path $Out "kotlinc.args"
+        $KotlinArgLines = @("-jvm-target", "1.8", "-cp", $KotlinClasspath, "-d", $Classes) + $KotlinSources
+        [System.IO.File]::WriteAllText($KotlinArgs, ($KotlinArgLines -join [Environment]::NewLine) + [Environment]::NewLine)
+        & $Kotlinc "@$KotlinArgs"
+        Assert-LastExitCode "kotlinc"
+    }
+}
+
 $ClassFiles = Get-ChildItem -Path $Classes -Recurse -Filter "*.class" | ForEach-Object { $_.FullName }
-$D8Inputs = @("--min-api", "30", "--output", $Dex) + $ClassFiles + $DependencyJars
+$D8Inputs = @("--min-api", "30", "--output", $Dex) + $ClassFiles + $RuntimeJars
 & $D8 @D8Inputs
 Assert-LastExitCode "d8"
 

@@ -34,7 +34,7 @@ The app should never apply a patch until backup and restore behavior are tested.
 
 ## Backup metadata
 
-Current `v2.3.1` read-only backups are stored in app-specific external storage:
+Current `v2.3.2` read-only backups are stored in app-specific external storage:
 
 ```text
 Android/data/com.acceleratorer.wuwavn/files/WUWA-VH-Backup/<timestamp>/metadata.json
@@ -48,7 +48,7 @@ Each backup should include copied config files and metadata similar to:
 {
   "created_at": "2026-05-15T22:30:00+07:00",
   "game_package": "com.kurogame.wutheringwaves.global",
-  "app_version": "2.3.1",
+  "app_version": "2.3.2",
   "patch_version": "2026.05.15",
   "backup_type": "shizuku_read_only_config_backup",
   "game_write_enabled": false,

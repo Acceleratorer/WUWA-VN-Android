@@ -1,14 +1,14 @@
 {
   "manifest_version": 2,
   "app": {
-    "version_name": "2.3.1",
-    "version_code": 26,
-    "apk_url": "https://github.com/Acceleratorer/WUWA-VN-Android/releases/download/v2.3.1/WUWA-VN-v2.3.1-release.apk",
-    "sha256": "4d3676d4f91ddac13de55f4753f69e9a7839d8fc470f657b10957887361194d8",
+    "version_name": "2.3.2",
+    "version_code": 27,
+    "apk_url": "https://github.com/Acceleratorer/WUWA-VN-Android/releases/download/v2.3.2/WUWA-VN-v2.3.2-release.apk",
+    "sha256": "c804c74c2a96b3ac7df0b0c9d1f619c3f607c368c91e4608c6d4b803d8026cc9",
     "changelog": [
-      "Harden Shizuku backup path validation with exact canonical path matching",
-      "Add Copy Backup Path for app-specific backup folders",
-      "Clarify restore remains locked and v2.4.0 is restore dry-run"
+      "Rebuild app source in Kotlin",
+      "Add pinned Kotlin compiler support to the manual release pipeline",
+      "Keep read-only backup behavior and all game write locks unchanged"
     ],
     "force_update": false
   },

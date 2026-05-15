@@ -32,7 +32,7 @@ jobs:
         run: |
           test -f tools/build-release.ps1 || { echo "::error::tools/build-release.ps1 is missing."; exit 1; }
           test -f app/src/main/AndroidManifest.xml || { echo "::error::AndroidManifest.xml is missing."; exit 1; }
-          test -f app/src/main/java/com/acceleratorer/wuwavn/MainActivity.java || { echo "::error::MainActivity.java is missing."; exit 1; }
+          test -f app/src/main/kotlin/com/acceleratorer/wuwavn/MainActivity.kt || { echo "::error::MainActivity.kt is missing."; exit 1; }
 
       - name: Restore release keystore
         env:
