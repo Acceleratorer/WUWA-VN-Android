@@ -11,11 +11,21 @@ import org.json.JSONArray
 import org.json.JSONObject
 
 class BackupManager {
-    fun planBackupSession(context: Context): File {
-        val root = context.getExternalFilesDir("WUWA-VH-Backup")
+    fun backupRoot(context: Context): File =
+        context.getExternalFilesDir("WUWA-VH-Backup")
             ?: File(context.filesDir, "WUWA-VH-Backup")
+
+    fun listBackupSessions(context: Context): List<File> {
+        val root = backupRoot(context)
+        val sessions = root.listFiles { file ->
+            file.isDirectory && File(file, "metadata.json").isFile
+        } ?: return emptyList()
+        return sessions.sortedByDescending { it.name }
+    }
+
+    fun planBackupSession(context: Context): File {
         val timestamp = SimpleDateFormat("yyyy-MM-dd_HH-mm-ss", Locale.US).format(Date())
-        return File(root, timestamp)
+        return File(backupRoot(context), timestamp)
     }
 
     fun createBackupDirectory(context: Context): File {

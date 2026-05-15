@@ -1,14 +1,14 @@
 {
   "manifest_version": 2,
   "app": {
-    "version_name": "2.3.2",
-    "version_code": 27,
-    "apk_url": "https://github.com/Acceleratorer/WUWA-VN-Android/releases/download/v2.3.2/WUWA-VN-v2.3.2-release.apk",
-    "sha256": "c804c74c2a96b3ac7df0b0c9d1f619c3f607c368c91e4608c6d4b803d8026cc9",
+    "version_name": "2.4.0",
+    "version_code": 28,
+    "apk_url": "https://github.com/Acceleratorer/WUWA-VN-Android/releases/download/v2.4.0/WUWA-VN-v2.4.0-release.apk",
+    "sha256": "10222042e9e7724c21fe55d2809f156749148bffb242f1284b5e78760f227518",
     "changelog": [
-      "Rebuild app source in Kotlin",
-      "Add pinned Kotlin compiler support to the manual release pipeline",
-      "Keep read-only backup behavior and all game write locks unchanged"
+      "Add restore dry-run for existing backup sessions",
+      "Verify backup metadata and file SHA-256 before showing restore plan",
+      "Keep restore writing and patch writing locked"
     ],
     "force_update": false
   },

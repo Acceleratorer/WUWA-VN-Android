@@ -34,7 +34,7 @@ The app should never apply a patch until backup and restore behavior are tested.
 
 ## Backup metadata
 
-Current `v2.3.2` read-only backups are stored in app-specific external storage:
+Current `v2.4.0` read-only backups are stored in app-specific external storage:
 
 ```text
 Android/data/com.acceleratorer.wuwavn/files/WUWA-VH-Backup/<timestamp>/metadata.json
@@ -48,7 +48,7 @@ Each backup should include copied config files and metadata similar to:
 {
   "created_at": "2026-05-15T22:30:00+07:00",
   "game_package": "com.kurogame.wutheringwaves.global",
-  "app_version": "2.3.2",
+  "app_version": "2.4.0",
   "patch_version": "2026.05.15",
   "backup_type": "shizuku_read_only_config_backup",
   "game_write_enabled": false,
@@ -123,6 +123,18 @@ v2.4.0: restore dry-run only
 v2.5.0: restore write unlock
 v2.6.0: patch write unlock
 ```
+
+## Restore dry-run
+
+`v2.4.0` may read backup sessions from app-specific backup storage, parse `metadata.json`, verify the SHA-256 of each backed-up file, and show a restore plan. It must not write anything to the game folder.
+
+Restore dry-run should flag:
+
+- Missing `metadata.json`
+- Missing backup files
+- SHA-256 mismatch
+- Unsafe metadata paths outside the backup allowlist
+- Metadata display names that do not match the allowlisted relative path
 
 ## Logs
 

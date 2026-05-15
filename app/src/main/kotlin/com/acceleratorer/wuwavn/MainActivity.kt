@@ -32,12 +32,14 @@ class MainActivity : Activity() {
     private val manifestRepository = PatchManifestRepository()
     private val shizukuFileSystem = ShizukuFileSystem()
     private val backupReader = ShizukuBackupReader(backupManager)
+    private val restoreDryRunPlanner = RestoreDryRunPlanner(backupManager)
     private val downloadClient = DownloadClient()
 
     private var statusView: TextView? = null
     private var logView: TextView? = null
     @Volatile private var patchPreparationRunning = false
     @Volatile private var backupRunning = false
+    @Volatile private var restoreDryRunRunning = false
     private var shizukuState = ShizukuState.NOT_INSTALLED
     private var gameState = GamePackageDetector.State.NOT_INSTALLED
     @Volatile private var lastBackupPath: String? = null
@@ -125,8 +127,7 @@ class MainActivity : Activity() {
             logger.add("Update check: opened GitHub Releases")
         })
         root.addView(button("Restore Original Files") {
-            showMessage("Restore Original Files", "Restore is locked until backup copy and Shizuku file writing are tested on a real device.")
-            logger.add("Restore: locked")
+            showRestoreDryRunSessions()
         })
         root.addView(button("Check Game Folder") {
             refreshStatus()
@@ -321,6 +322,87 @@ class MainActivity : Activity() {
         }
         append("\nBackup folder:\n").append(backupDirectory.absolutePath)
         append("\n\nThis version only reads game files. Patch writing and restore writing remain locked.")
+    }
+
+    private fun showRestoreDryRunSessions() {
+        val sessions = restoreDryRunPlanner.listBackupSessions(this)
+        if (sessions.isEmpty()) {
+            showMessage(
+                "Restore dry run",
+                "No backup sessions found yet.\n\nRun Backup Game Configs first. Restore writing remains locked.",
+            )
+            logger.add("Restore dry run: no backup sessions found")
+            return
+        }
+
+        val labels = sessions.map { restoreDryRunPlanner.sessionLabel(it) }.toTypedArray()
+        AlertDialog.Builder(this)
+            .setTitle("Select backup")
+            .setItems(labels) { _, which ->
+                showRestoreDryRun(sessions[which])
+            }
+            .setNegativeButton("Cancel", null)
+            .show()
+        logger.add("Restore dry run: listed ${sessions.size} backup sessions")
+    }
+
+    private fun showRestoreDryRun(sessionDirectory: File) {
+        if (restoreDryRunRunning) {
+            Toast.makeText(this, "Restore dry run is already running.", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        restoreDryRunRunning = true
+        logger.add("Restore dry run: started for ${sessionDirectory.name}")
+
+        Thread {
+            try {
+                val dryRun = restoreDryRunPlanner.plan(sessionDirectory)
+                logger.add("Restore dry run: verified ${dryRun.verifiedCount()}/${dryRun.files.size} files")
+                runOnUiThread {
+                    showMessage("Restore dry run", restoreDryRunSummary(dryRun))
+                }
+            } catch (exception: Exception) {
+                logger.add("Restore dry run failed: ${exception.message}")
+                runOnUiThread {
+                    showMessage("Restore dry run failed", exception.message.orEmpty())
+                }
+            } finally {
+                restoreDryRunRunning = false
+            }
+        }.start()
+    }
+
+    private fun restoreDryRunSummary(dryRun: RestoreDryRun): String = buildString {
+        append("Backup session:\n")
+            .append(dryRun.sessionDirectory.absolutePath)
+            .append("\n\nCreated at:\n")
+            .append(dryRun.createdAt)
+            .append("\n\nBackup type:\n")
+            .append(dryRun.backupType)
+            .append("\n\nFiles checked:\n")
+
+        for (file in dryRun.files) {
+            append("- ")
+                .append(file.displayName)
+                .append(": ")
+                .append(file.status.label)
+                .append(" (")
+                .append(file.sizeBytes)
+                .append(" bytes")
+            file.actualSha256?.let { hash ->
+                append(", SHA-256 ").append(hash.take(12)).append("...")
+            }
+            append(")\n  target: ")
+                .append(file.relativePath.ifEmpty { "unknown" })
+                .append('\n')
+        }
+
+        append("\nVerified files: ")
+            .append(dryRun.verifiedCount())
+            .append("/")
+            .append(dryRun.files.size)
+        append("\n\nRestore writing is still locked in v2.4.0. No game files were modified.")
     }
 
     private fun openOrRequestShizuku() {
