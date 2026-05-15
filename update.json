@@ -1,14 +1,14 @@
 {
   "manifest_version": 2,
   "app": {
-    "version_name": "2.0.0",
-    "version_code": 22,
-    "apk_url": "https://github.com/Acceleratorer/WUWA-VN-Android/releases/download/v2.0.0/WUWA-VN-v2.0.0-release.apk",
-    "sha256": "d184cfb8865f87229e0cfa3ed1b56ff28fa1ff615a589b888635bc252cdb85bb",
+    "version_name": "2.1.0",
+    "version_code": 23,
+    "apk_url": "https://github.com/Acceleratorer/WUWA-VN-Android/releases/download/v2.1.0/WUWA-VN-v2.1.0-release.apk",
+    "sha256": "1810cbeca25dc48e32fe7a53c467884ede8350003d2bf973f2baa75568f1e114",
     "changelog": [
-      "Add clean release-signed Android app shell",
-      "Add Shizuku and game package checks",
-      "Add safe patch dry run and copyable debug logs"
+      "Add real Shizuku binder and permission state checks",
+      "Split patch manager responsibilities into focused classes",
+      "Add allowlisted dry run, backup planning, and SHA-256 verifier"
     ],
     "force_update": false
   },

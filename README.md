@@ -2,7 +2,7 @@
 
 Ứng dụng hỗ trợ cài bản Việt hoá cho Wuthering Waves trên Android.
 
-> Trạng thái hiện tại: bản `v2.0.0` là APK release-signed sạch, có kiểm tra game/Shizuku, dry run trước khi áp dụng patch và debug log có thể copy. Phần ghi file game bằng Shizuku cần được hoàn thiện trước khi gọi đây là bản cài patch đầy đủ.
+> Trạng thái hiện tại: bản `v2.1.0` là APK release-signed sạch, có kiểm tra game/Shizuku, kiểm tra binder và quyền Shizuku thật, dry run theo allowlist, backup planning và debug log có thể copy. Phần ghi file game bằng Shizuku vẫn đang khóa cho tới khi backup/restore được test trên máy thật.
 
 ## Tính Năng
 
@@ -54,7 +54,7 @@ Không cài APK từ mirror lạ, link chat riêng, hoặc file không có SHA-2
 Ví dụ file phát hành hợp lệ:
 
 ```text
-WUWA-VN-v2.0.0-release.apk
+WUWA-VN-v2.1.0-release.apk
 ```
 
 Không phát hành file `app-debug.apk` cho người dùng phổ thông.
@@ -62,7 +62,7 @@ Không phát hành file `app-debug.apk` cho người dùng phổ thông.
 Trước khi phát hành, kiểm tra chữ ký:
 
 ```bash
-apksigner verify --print-certs WUWA-VN-v2.0.0-release.apk
+apksigner verify --print-certs WUWA-VN-v2.1.0-release.apk
 ```
 
 ## Cách Khôi Phục
@@ -113,14 +113,14 @@ Quyền yêu cầu cài APK chỉ dùng khi người dùng chọn cập nhật a
 - Game vẫn đang mở và file có thể bị khoá
 - Không đủ dung lượng để tạo backup
 - Android chặn cài APK từ nguồn không xác định
-- Bản `v2.0.0` hiện mới là app shell/dry run, chưa ghi file game thật
+- Bản `v2.1.0` đã kiểm tra Shizuku thật và lập dry run theo allowlist, nhưng chưa ghi file game thật
 
 ## Báo Lỗi
 
 Khi gặp lỗi, hãy gửi kèm log trong app nếu có:
 
 ```text
-[22:31:10] App version: 2.0.0
+[22:31:10] App version: 2.1.0
 [22:31:10] Android version: 14
 [22:31:11] Shizuku: running
 [22:31:11] Permission: granted
@@ -142,6 +142,7 @@ Khi gặp lỗi, hãy gửi kèm log trong app nếu có:
 - [ ] Backup chạy trước mọi thay đổi file
 - [ ] Restore đã được test
 - [ ] Các trạng thái Shizuku được xử lý an toàn
+- [ ] Shizuku permission check dùng API thật, không chỉ kiểm tra package
 - [ ] App chỉ chỉnh sửa file trong allowlist
 - [ ] Release notes/changelog rõ ràng
 - [ ] Không commit keystore hoặc signing secret
@@ -150,6 +151,10 @@ Khi gặp lỗi, hãy gửi kèm log trong app nếu có:
 
 - Vietnamese translation pack: [CallMeDangDev/WuwaVH](https://github.com/CallMeDangDev/WuwaVH)
 - Android patch manager: [Acceleratorer/WUWA-VN-Android](https://github.com/Acceleratorer/WUWA-VN-Android)
+
+## License
+
+MIT License. Xem file [LICENSE](LICENSE).
 
 ## Lưu Ý
 

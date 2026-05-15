@@ -13,6 +13,7 @@ $AndroidJar = Join-Path (Join-Path (Join-Path $Sdk "platforms") "android-36") "a
 $JavaHome = if ($env:JAVA_HOME) { $env:JAVA_HOME } else { "C:\PROGRA~2\Android\openjdk\jdk-21.0.8" }
 $env:JAVA_HOME = $JavaHome
 $env:PATH = (Join-Path $JavaHome "bin") + ";" + $env:PATH
+Add-Type -AssemblyName System.IO.Compression.FileSystem
 
 $IsWindows = $PSVersionTable.Platform -eq "Win32NT" -or $env:OS -eq "Windows_NT"
 $Exe = if ($IsWindows) { ".exe" } else { "" }
@@ -39,10 +40,14 @@ function Assert-LastExitCode($Step) {
     }
 }
 
-$VersionName = if ($env:WUWA_VERSION_NAME) { $env:WUWA_VERSION_NAME } else { "2.0.0" }
-$VersionCode = if ($env:WUWA_VERSION_CODE) { $env:WUWA_VERSION_CODE } else { "22" }
+$VersionName = if ($env:WUWA_VERSION_NAME) { $env:WUWA_VERSION_NAME } else { "2.1.0" }
+$VersionCode = if ($env:WUWA_VERSION_CODE) { $env:WUWA_VERSION_CODE } else { "23" }
 $PackageName = "com.acceleratorer.wuwavn"
+$ShizukuVersion = "13.1.5"
+$ShizukuApiSha256 = "4def9bde498ef8626614c2fc5db9af4749c86f16f6c33e3f5658d35e70bab59b"
+$ShizukuProviderSha256 = "b0f18cd9812464ec171c53cac93a819fe411718a3965c311f01eb4de265381b3"
 $Out = Join-Path (Join-Path $Root "build") "manual-apk"
+$DepsDir = Join-Path (Join-Path $Root "build") "deps"
 $CompiledRes = Join-Path $Out "compiled-res.zip"
 $Generated = Join-Path $Out "gen"
 $Classes = Join-Path $Out "classes"
@@ -63,7 +68,46 @@ $KeyPass = if ($env:WUWA_KEY_PASSWORD) { $env:WUWA_KEY_PASSWORD } else { $StoreP
 if (Test-Path $Out) {
     Remove-Item -LiteralPath $Out -Recurse -Force
 }
-New-Item -ItemType Directory -Force -Path $Out, $Generated, $Classes, $Dex, $ReleaseDir, $SigningDir | Out-Null
+New-Item -ItemType Directory -Force -Path $Out, $Generated, $Classes, $Dex, $ReleaseDir, $SigningDir, $DepsDir | Out-Null
+
+function Get-Sha256($Path) {
+    return (Get-FileHash -Algorithm SHA256 -Path $Path).Hash.ToLower()
+}
+
+function Download-Dependency($Url, $Path, $ExpectedSha256) {
+    if (!(Test-Path $Path) -or (Get-Sha256 $Path) -ne $ExpectedSha256) {
+        Write-Host "Downloading $Url"
+        Invoke-WebRequest -Uri $Url -OutFile $Path
+    }
+
+    $ActualSha256 = Get-Sha256 $Path
+    if ($ActualSha256 -ne $ExpectedSha256) {
+        throw "Dependency hash mismatch for $Path. Expected $ExpectedSha256 but got $ActualSha256"
+    }
+}
+
+function Extract-AarClasses($AarPath, $Destination) {
+    if (Test-Path $Destination) {
+        Remove-Item -LiteralPath $Destination -Recurse -Force
+    }
+    New-Item -ItemType Directory -Force -Path $Destination | Out-Null
+    [System.IO.Compression.ZipFile]::ExtractToDirectory($AarPath, $Destination)
+    $ClassesJar = Join-Path $Destination "classes.jar"
+    if (!(Test-Path $ClassesJar)) {
+        throw "AAR did not contain classes.jar: $AarPath"
+    }
+    return $ClassesJar
+}
+
+$ApiAar = Join-Path $DepsDir "shizuku-api-$ShizukuVersion.aar"
+$ProviderAar = Join-Path $DepsDir "shizuku-provider-$ShizukuVersion.aar"
+Download-Dependency "https://repo.maven.apache.org/maven2/dev/rikka/shizuku/api/$ShizukuVersion/api-$ShizukuVersion.aar" $ApiAar $ShizukuApiSha256
+Download-Dependency "https://repo.maven.apache.org/maven2/dev/rikka/shizuku/provider/$ShizukuVersion/provider-$ShizukuVersion.aar" $ProviderAar $ShizukuProviderSha256
+
+$DependencyJars = @(
+    (Extract-AarClasses $ApiAar (Join-Path $DepsDir "api")),
+    (Extract-AarClasses $ProviderAar (Join-Path $DepsDir "provider"))
+)
 
 $MainDir = Join-Path (Join-Path (Join-Path $Root "app") "src") "main"
 & $Aapt2 compile --dir (Join-Path $MainDir "res") -o $CompiledRes
@@ -85,11 +129,13 @@ Assert-LastExitCode "aapt2 link"
 $JavaSources = @()
 $JavaSources += Get-ChildItem -Path (Join-Path $MainDir "java") -Recurse -Filter "*.java" | ForEach-Object { $_.FullName }
 $JavaSources += Get-ChildItem -Path $Generated -Recurse -Filter "*.java" | ForEach-Object { $_.FullName }
-& $Javac -source 8 -target 8 -classpath $AndroidJar -d $Classes $JavaSources
+$CompileClasspath = (@($AndroidJar) + $DependencyJars) -join [System.IO.Path]::PathSeparator
+& $Javac -source 8 -target 8 -classpath $CompileClasspath -d $Classes $JavaSources
 Assert-LastExitCode "javac"
 
 $ClassFiles = Get-ChildItem -Path $Classes -Recurse -Filter "*.class" | ForEach-Object { $_.FullName }
-& $D8 --min-api 30 --output $Dex $ClassFiles
+$D8Inputs = @("--min-api", "30", "--output", $Dex) + $ClassFiles + $DependencyJars
+& $D8 @D8Inputs
 Assert-LastExitCode "d8"
 
 Copy-Item -LiteralPath $BaseApk -Destination $UnsignedApk -Force

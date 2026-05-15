@@ -7,13 +7,11 @@ import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.Typeface;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.text.TextUtils;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.Button;
@@ -22,21 +20,46 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.text.SimpleDateFormat;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
-import java.util.Locale;
+import rikka.shizuku.Shizuku;
 
 public class MainActivity extends Activity {
-    private static final String GLOBAL_PACKAGE = "com.kurogame.wutheringwaves.global";
-    private static final String CN_PACKAGE = "com.kurogame.wutheringwaves";
-    private static final String SHIZUKU_PACKAGE = "moe.shizuku.privileged.api";
-    private static final String RELEASES_URL = "https://github.com/Acceleratorer/WUWA-VN-Android/releases";
+    private final DebugLogger logger = new DebugLogger();
+    private final GamePackageDetector gamePackageDetector = new GamePackageDetector();
+    private final ShizukuStateChecker shizukuStateChecker = new ShizukuStateChecker(gamePackageDetector);
+    private final BackupManager backupManager = new BackupManager();
+    private final PatchDryRunPlanner dryRunPlanner = new PatchDryRunPlanner(backupManager);
+    private final PatchManifestRepository manifestRepository = new PatchManifestRepository();
+    private final ShizukuFileSystem shizukuFileSystem = new ShizukuFileSystem();
 
-    private final List<String> logLines = new ArrayList<>();
     private TextView statusView;
     private TextView logView;
+    private ShizukuState shizukuState = ShizukuState.NOT_INSTALLED;
+    private GamePackageDetector.State gameState = GamePackageDetector.State.NOT_INSTALLED;
+
+    private final Shizuku.OnBinderReceivedListener binderReceivedListener = new Shizuku.OnBinderReceivedListener() {
+        @Override
+        public void onBinderReceived() {
+            logger.add("Shizuku: binder received");
+            refreshStatus();
+        }
+    };
+
+    private final Shizuku.OnBinderDeadListener binderDeadListener = new Shizuku.OnBinderDeadListener() {
+        @Override
+        public void onBinderDead() {
+            logger.add("Shizuku: binder dead");
+            refreshStatus();
+        }
+    };
+
+    private final Shizuku.OnRequestPermissionResultListener permissionResultListener =
+            new Shizuku.OnRequestPermissionResultListener() {
+                @Override
+                public void onRequestPermissionResult(int requestCode, int grantResult) {
+                    logger.add("Shizuku permission result: " + grantResult);
+                    refreshStatus();
+                }
+            };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,9 +68,30 @@ public class MainActivity extends Activity {
         getWindow().setNavigationBarColor(Color.rgb(11, 17, 29));
 
         setContentView(createContentView());
-        addLog("App version: 2.0.0");
-        addLog("Android version: " + Build.VERSION.RELEASE);
+        logger.setListener(new DebugLogger.Listener() {
+            @Override
+            public void onLogChanged(String text) {
+                if (logView != null) {
+                    logView.setText(text);
+                }
+            }
+        });
+
+        registerShizukuListeners();
+        logger.add("App version: " + AppConstants.VERSION_NAME + " (" + AppConstants.VERSION_CODE + ")");
+        logger.add("Android version: " + Build.VERSION.RELEASE);
         refreshStatus();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        try {
+            Shizuku.removeBinderReceivedListener(binderReceivedListener);
+            Shizuku.removeBinderDeadListener(binderDeadListener);
+            Shizuku.removeRequestPermissionResultListener(permissionResultListener);
+        } catch (Throwable ignored) {
+        }
     }
 
     private View createContentView() {
@@ -63,7 +107,7 @@ public class MainActivity extends Activity {
                 ScrollView.LayoutParams.WRAP_CONTENT
         ));
 
-        TextView title = text("WUWA Việt Hoá Android", 26, Color.WHITE, true);
+        TextView title = text("WUWA VN Android", 26, Color.WHITE, true);
         root.addView(title);
 
         TextView subtitle = text("Safe patch manager for Vietnamese Wuthering Waves players.", 14, Color.rgb(182, 193, 211), false);
@@ -85,28 +129,28 @@ public class MainActivity extends Activity {
         root.addView(button("Update Vietnamese Patch", new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                openUrl(RELEASES_URL);
-                addLog("Update check: opened GitHub Releases");
+                openUrl(AppConstants.RELEASES_URL);
+                logger.add("Update check: opened GitHub Releases");
             }
         }));
         root.addView(button("Restore Original Files", new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                showMessage("Restore Original Files", "No local backup is bundled in this clean build yet. Future builds should list backups from Download/WUWA-VH-Backup and restore only allowlisted WUWA files.");
-                addLog("Restore: backup browser not available in this build");
+                showMessage("Restore Original Files", "Restore is locked until backup copy and Shizuku file writing are tested on a real device.");
+                logger.add("Restore: locked");
             }
         }));
         root.addView(button("Check Game Folder", new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 refreshStatus();
-                addLog("Game folder: checked package state");
+                logger.add("Game folder: checked package state");
             }
         }));
         root.addView(button("Open Shizuku", new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                openShizuku();
+                openOrRequestShizuku();
             }
         }));
 
@@ -114,7 +158,7 @@ public class MainActivity extends Activity {
         TextView safetyTitle = text("Safety rules", 18, Color.WHITE, true);
         root.addView(safetyTitle);
         TextView safety = text(
-                "Only known WUWA targets should be changed:\n" +
+                "Only allowlisted WUWA targets can be planned:\n" +
                         "- Engine.ini\n" +
                         "- DeviceProfiles.ini\n" +
                         "- MountLang_en.txt\n" +
@@ -151,61 +195,67 @@ public class MainActivity extends Activity {
         return scroll;
     }
 
-    private void refreshStatus() {
-        boolean globalInstalled = isPackageInstalled(GLOBAL_PACKAGE);
-        boolean cnInstalled = isPackageInstalled(CN_PACKAGE);
-        boolean shizukuInstalled = isPackageInstalled(SHIZUKU_PACKAGE);
+    private void registerShizukuListeners() {
+        try {
+            Shizuku.addBinderReceivedListenerSticky(binderReceivedListener);
+            Shizuku.addBinderDeadListener(binderDeadListener);
+            Shizuku.addRequestPermissionResultListener(permissionResultListener);
+        } catch (Throwable throwable) {
+            logger.add("Shizuku listeners: unavailable");
+        }
+    }
 
-        String gameState = globalInstalled ? "Global game installed" : (cnInstalled ? "Non-global game package detected" : "Game package not detected");
-        String shizukuState = shizukuInstalled ? "Shizuku installed" : "Shizuku not installed";
+    private void refreshStatus() {
+        gameState = gamePackageDetector.detect(this);
+        shizukuState = shizukuStateChecker.check(this);
+        PatchManifest manifest = manifestRepository.current();
 
         statusView.setText(
                 "Status\n" +
-                        "Game: " + gameState + "\n" +
-                        "Shizuku: " + shizukuState + "\n" +
+                        "Game: " + gameState.label() + "\n" +
+                        "Shizuku: " + shizukuState.label() + "\n" +
+                        "Patch: " + manifest.patchVersion + "\n" +
+                        "Patch SHA-256: " + manifest.pakSha256.substring(0, 12) + "...\n" +
                         "Mode: Safe / Default\n" +
-                        "Patch flow: dry-run first, backup required"
+                        "File writing: " + (shizukuFileSystem.isWriteEnabled(shizukuState) ? "enabled" : "locked")
         );
     }
 
     private void showPatchDryRun() {
-        addLog("Dry run: started");
-        String message =
-                "Files to add:\n" +
-                        "- WuWaVH_99_P.pak\n\n" +
-                        "Files to modify:\n" +
-                        "- Engine.ini\n" +
-                        "- DeviceProfiles.ini\n" +
-                        "- MountLang_en.txt\n\n" +
-                        "Backup target:\n" +
-                        "Download/WUWA-VH-Backup/<timestamp>\n\n" +
-                        "This clean build does not write game files yet. Add the Shizuku file-system layer before enabling Apply Patch.";
-        new AlertDialog.Builder(this)
-                .setTitle("Dry run")
-                .setMessage(message)
-                .setPositiveButton("OK", null)
-                .show();
-        addLog("Dry run: shown");
-    }
-
-    private boolean isPackageInstalled(String packageName) {
+        logger.add("Dry run: started");
         try {
-            getPackageManager().getPackageInfo(packageName, 0);
-            return true;
-        } catch (PackageManager.NameNotFoundException ignored) {
-            return false;
+            PatchDryRun dryRun = dryRunPlanner.plan(this);
+            String message = dryRun.describe() + "\n\n" + shizukuFileSystem.disabledReason(shizukuState);
+            if (gameState != GamePackageDetector.State.GLOBAL_INSTALLED) {
+                message = "Global Wuthering Waves package is not detected.\n\n" + message;
+            }
+            new AlertDialog.Builder(this)
+                    .setTitle("Dry run")
+                    .setMessage(message)
+                    .setPositiveButton("OK", null)
+                    .show();
+            logger.add("Dry run: allowlist verified");
+            logger.add("Backup target planned: " + dryRun.backupDirectory.getAbsolutePath());
+        } catch (RuntimeException exception) {
+            showMessage("Dry run failed", exception.getMessage());
+            logger.add("Dry run: failed - " + exception.getMessage());
         }
     }
 
-    private void openShizuku() {
-        Intent launchIntent = getPackageManager().getLaunchIntentForPackage(SHIZUKU_PACKAGE);
+    private void openOrRequestShizuku() {
+        if (shizukuState == ShizukuState.RUNNING_PERMISSION_DENIED && shizukuStateChecker.requestPermissionIfPossible(this)) {
+            logger.add("Shizuku: permission request sent");
+            return;
+        }
+
+        Intent launchIntent = getPackageManager().getLaunchIntentForPackage(AppConstants.SHIZUKU_PACKAGE);
         if (launchIntent != null) {
             startActivity(launchIntent);
-            addLog("Shizuku: opened app");
+            logger.add("Shizuku: opened app");
             return;
         }
         openUrl("https://shizuku.rikka.app/");
-        addLog("Shizuku: opened install guide");
+        logger.add("Shizuku: opened install guide");
     }
 
     private void openUrl(String url) {
@@ -219,9 +269,9 @@ public class MainActivity extends Activity {
     private void copyLog() {
         ClipboardManager clipboard = (ClipboardManager) getSystemService(Context.CLIPBOARD_SERVICE);
         if (clipboard != null) {
-            clipboard.setPrimaryClip(ClipData.newPlainText("WUWA VN debug log", getLogText()));
+            clipboard.setPrimaryClip(ClipData.newPlainText("WUWA VN debug log", logger.text()));
             Toast.makeText(this, "Debug log copied.", Toast.LENGTH_SHORT).show();
-            addLog("Log: copied");
+            logger.add("Log: copied");
         }
     }
 
@@ -229,9 +279,9 @@ public class MainActivity extends Activity {
         Intent intent = new Intent(Intent.ACTION_SEND);
         intent.setType("text/plain");
         intent.putExtra(Intent.EXTRA_SUBJECT, "WUWA VN issue report");
-        intent.putExtra(Intent.EXTRA_TEXT, getLogText());
+        intent.putExtra(Intent.EXTRA_TEXT, logger.text());
         startActivity(Intent.createChooser(intent, "Send Issue Report"));
-        addLog("Issue report: share sheet opened");
+        logger.add("Issue report: share sheet opened");
     }
 
     private void showMessage(String title, String message) {
@@ -240,18 +290,6 @@ public class MainActivity extends Activity {
                 .setMessage(message)
                 .setPositiveButton("OK", null)
                 .show();
-    }
-
-    private void addLog(String message) {
-        String time = new SimpleDateFormat("HH:mm:ss", Locale.US).format(new Date());
-        logLines.add("[" + time + "] " + message);
-        if (logView != null) {
-            logView.setText(getLogText());
-        }
-    }
-
-    private String getLogText() {
-        return TextUtils.join("\n", logLines);
     }
 
     private TextView text(String value, int sp, int color, boolean bold) {
