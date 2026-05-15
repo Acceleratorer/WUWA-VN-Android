@@ -40,8 +40,20 @@ function Assert-LastExitCode($Step) {
     }
 }
 
-$VersionName = if ($env:WUWA_VERSION_NAME) { $env:WUWA_VERSION_NAME } else { "2.1.0" }
-$VersionCode = if ($env:WUWA_VERSION_CODE) { $env:WUWA_VERSION_CODE } else { "23" }
+$VersionFile = Join-Path $Root "version.properties"
+$VersionProperties = @{}
+if (Test-Path $VersionFile) {
+    Get-Content -Path $VersionFile | ForEach-Object {
+        $Line = $_.Trim()
+        if ($Line -and !$Line.StartsWith("#") -and $Line.Contains("=")) {
+            $Parts = $Line.Split("=", 2)
+            $VersionProperties[$Parts[0].Trim()] = $Parts[1].Trim()
+        }
+    }
+}
+
+$VersionName = if ($env:WUWA_VERSION_NAME) { $env:WUWA_VERSION_NAME } elseif ($VersionProperties["VERSION_NAME"]) { $VersionProperties["VERSION_NAME"] } else { "2.2.0" }
+$VersionCode = if ($env:WUWA_VERSION_CODE) { $env:WUWA_VERSION_CODE } elseif ($VersionProperties["VERSION_CODE"]) { $VersionProperties["VERSION_CODE"] } else { "24" }
 $PackageName = "com.acceleratorer.wuwavn"
 $ShizukuVersion = "13.1.5"
 $ShizukuApiSha256 = "4def9bde498ef8626614c2fc5db9af4749c86f16f6c33e3f5658d35e70bab59b"
@@ -127,6 +139,20 @@ Assert-LastExitCode "aapt2 compile"
 Assert-LastExitCode "aapt2 link"
 
 $JavaSources = @()
+$BuildValuesPath = Join-Path (Join-Path (Join-Path $Generated "com") "acceleratorer") "wuwavn"
+New-Item -ItemType Directory -Force -Path $BuildValuesPath | Out-Null
+@"
+package com.acceleratorer.wuwavn;
+
+final class BuildValues {
+    static final String VERSION_NAME = "$VersionName";
+    static final int VERSION_CODE = $VersionCode;
+
+    private BuildValues() {
+    }
+}
+"@ | Set-Content -Encoding ascii -Path (Join-Path $BuildValuesPath "BuildValues.java")
+
 $JavaSources += Get-ChildItem -Path (Join-Path $MainDir "java") -Recurse -Filter "*.java" | ForEach-Object { $_.FullName }
 $JavaSources += Get-ChildItem -Path $Generated -Recurse -Filter "*.java" | ForEach-Object { $_.FullName }
 $CompileClasspath = (@($AndroidJar) + $DependencyJars) -join [System.IO.Path]::PathSeparator

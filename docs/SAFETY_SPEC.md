@@ -32,6 +32,14 @@ The app should never apply a patch until the backup step succeeds.
 
 ## Backup metadata
 
+Current `v2.2.0` backup metadata is stored in app-specific external storage:
+
+```text
+Android/data/com.acceleratorer.wuwavn/files/WUWA-VH-Backup/<timestamp>/metadata.json
+```
+
+Public `Download/WUWA-VH-Backup` can be considered later, but only with careful Android storage handling.
+
 Each backup should include metadata similar to:
 
 ```json

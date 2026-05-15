@@ -16,18 +16,18 @@ final class DebugLogger {
     private final List<String> lines = new ArrayList<>();
     private Listener listener;
 
-    void setListener(Listener listener) {
+    synchronized void setListener(Listener listener) {
         this.listener = listener;
         notifyChanged();
     }
 
-    void add(String message) {
+    synchronized void add(String message) {
         String time = new SimpleDateFormat("HH:mm:ss", Locale.US).format(new Date());
         lines.add("[" + time + "] " + message);
         notifyChanged();
     }
 
-    String text() {
+    synchronized String text() {
         return TextUtils.join("\n", lines);
     }
 

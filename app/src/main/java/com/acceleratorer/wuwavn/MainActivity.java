@@ -20,6 +20,8 @@ import android.widget.ScrollView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.io.File;
+
 import rikka.shizuku.Shizuku;
 
 public class MainActivity extends Activity {
@@ -30,9 +32,11 @@ public class MainActivity extends Activity {
     private final PatchDryRunPlanner dryRunPlanner = new PatchDryRunPlanner(backupManager);
     private final PatchManifestRepository manifestRepository = new PatchManifestRepository();
     private final ShizukuFileSystem shizukuFileSystem = new ShizukuFileSystem();
+    private final DownloadClient downloadClient = new DownloadClient();
 
     private TextView statusView;
     private TextView logView;
+    private volatile boolean patchPreparationRunning;
     private ShizukuState shizukuState = ShizukuState.NOT_INSTALLED;
     private GamePackageDetector.State gameState = GamePackageDetector.State.NOT_INSTALLED;
 
@@ -71,9 +75,14 @@ public class MainActivity extends Activity {
         logger.setListener(new DebugLogger.Listener() {
             @Override
             public void onLogChanged(String text) {
-                if (logView != null) {
-                    logView.setText(text);
-                }
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (logView != null) {
+                            logView.setText(text);
+                        }
+                    }
+                });
             }
         });
 
@@ -120,10 +129,16 @@ public class MainActivity extends Activity {
         root.addView(statusView, matchWrap());
 
         root.addView(space(14));
-        root.addView(primaryButton("Install Vietnamese Patch", new View.OnClickListener() {
+        root.addView(primaryButton("Show Patch Plan", new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 showPatchDryRun();
+            }
+        }));
+        root.addView(button("Download & Verify Patch", new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                preparePatchSafely();
             }
         }));
         root.addView(button("Update Vietnamese Patch", new View.OnClickListener() {
@@ -240,6 +255,62 @@ public class MainActivity extends Activity {
             showMessage("Dry run failed", exception.getMessage());
             logger.add("Dry run: failed - " + exception.getMessage());
         }
+    }
+
+    private void preparePatchSafely() {
+        if (patchPreparationRunning) {
+            Toast.makeText(this, "Patch preparation is already running.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        refreshStatus();
+        patchPreparationRunning = true;
+        logger.add("Patch preparation: started");
+
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                PatchManifest manifest = manifestRepository.current();
+                try {
+                    PatchDryRun dryRun = dryRunPlanner.plan(MainActivity.this);
+                    File backupSession = backupManager.createBackupSession(MainActivity.this, manifest, dryRun, gameState);
+                    logger.add("Backup metadata: created");
+                    logger.add("Backup path: " + backupSession.getAbsolutePath());
+
+                    File patchFile = downloadClient.downloadAndVerify(
+                            MainActivity.this,
+                            manifest,
+                            new DownloadClient.ProgressListener() {
+                                @Override
+                                public void onProgress(String message) {
+                                    logger.add(message);
+                                }
+                            }
+                    );
+
+                    logger.add("Patch file: " + patchFile.getAbsolutePath());
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            showMessage(
+                                    "Patch verified",
+                                    "Patch was downloaded and verified successfully.\n\nGame file writing is still locked until Shizuku backup/restore is tested on a real device."
+                            );
+                        }
+                    });
+                } catch (Exception exception) {
+                    logger.add("Patch preparation failed: " + exception.getMessage());
+                    runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            showMessage("Patch preparation failed", exception.getMessage());
+                        }
+                    });
+                } finally {
+                    patchPreparationRunning = false;
+                }
+            }
+        }).start();
     }
 
     private void openOrRequestShizuku() {

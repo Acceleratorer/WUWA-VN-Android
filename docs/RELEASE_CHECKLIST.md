@@ -8,7 +8,7 @@ Use this checklist before publishing a public APK.
 - Confirm `debuggable=false` in the packaged manifest.
 - Sign with the private release keystore.
 - Never commit keystore files or passwords.
-- Name the APK like `WUWA-VN-v2.1.0-release.apk`.
+- Name the APK like `WUWA-VN-v2.2.0-release.apk`.
 - Do not upload `app-debug.apk` as a public release file.
 - Upload `sha256.txt` beside the APK.
 - Upload the generated release `update.json`.
@@ -22,12 +22,13 @@ powershell -ExecutionPolicy Bypass -File .\tools\build-release.ps1
 ```
 
 The script downloads and verifies the official Shizuku API/provider AARs before compiling.
+Version name and version code come from `version.properties` unless release automation overrides `WUWA_VERSION_NAME` from the Git tag.
 
 Verify the APK:
 
 ```bash
-apksigner verify --print-certs WUWA-VN-v2.1.0-release.apk
-sha256sum WUWA-VN-v2.1.0-release.apk
+apksigner verify --print-certs WUWA-VN-v2.2.0-release.apk
+sha256sum WUWA-VN-v2.2.0-release.apk
 ```
 
 ## Future Gradle release build type

@@ -6,6 +6,7 @@ import java.io.File;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 final class PatchDryRunPlanner {
@@ -28,10 +29,19 @@ final class PatchDryRunPlanner {
         assertAllowed("UE4Game/Client/Client/Saved/Config/Android/DeviceProfiles.ini");
         assertAllowed("UE4Game/Client/Client/Saved/Config/Android/MountLang_en.txt");
 
+        List<String> filesToAdd = Collections.singletonList("WuWaVH_99_P.pak");
+        List<String> filesToModify = Arrays.asList("Engine.ini", "DeviceProfiles.ini", "MountLang_en.txt");
+        List<String> metadataFiles = Arrays.asList(
+                "Engine.ini",
+                "DeviceProfiles.ini",
+                "MountLang_en.txt",
+                "WuWaVH_99_P.pak"
+        );
         File backupDirectory = backupManager.planBackupSession(context);
         return new PatchDryRun(
-                Collections.singletonList("WuWaVH_99_P.pak"),
-                Arrays.asList("Engine.ini", "DeviceProfiles.ini", "MountLang_en.txt"),
+                filesToAdd,
+                filesToModify,
+                metadataFiles,
                 backupDirectory
         );
     }

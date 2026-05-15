@@ -1,14 +1,14 @@
 {
   "manifest_version": 2,
   "app": {
-    "version_name": "2.1.0",
-    "version_code": 23,
-    "apk_url": "https://github.com/Acceleratorer/WUWA-VN-Android/releases/download/v2.1.0/WUWA-VN-v2.1.0-release.apk",
-    "sha256": "1810cbeca25dc48e32fe7a53c467884ede8350003d2bf973f2baa75568f1e114",
+    "version_name": "2.2.0",
+    "version_code": 24,
+    "apk_url": "https://github.com/Acceleratorer/WUWA-VN-Android/releases/download/v2.2.0/WUWA-VN-v2.2.0-release.apk",
+    "sha256": "1695c255231eee2869223b91ab17ba7c12428c2973bd093683933d01b9ff1671",
     "changelog": [
-      "Add real Shizuku binder and permission state checks",
-      "Split patch manager responsibilities into focused classes",
-      "Add allowlisted dry run, backup planning, and SHA-256 verifier"
+      "Add backup metadata session creation",
+      "Add verified patch download using SHA-256",
+      "Keep game file writing locked until Shizuku backup/restore is tested"
     ],
     "force_update": false
   },

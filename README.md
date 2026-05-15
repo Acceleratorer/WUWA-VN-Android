@@ -2,7 +2,7 @@
 
 Ứng dụng hỗ trợ cài bản Việt hoá cho Wuthering Waves trên Android.
 
-> Trạng thái hiện tại: bản `v2.1.0` là APK release-signed sạch, có kiểm tra game/Shizuku, kiểm tra binder và quyền Shizuku thật, dry run theo allowlist, backup planning và debug log có thể copy. Phần ghi file game bằng Shizuku vẫn đang khóa cho tới khi backup/restore được test trên máy thật.
+> Trạng thái hiện tại: bản `v2.2.0` là APK release-signed sạch, có kiểm tra game/Shizuku, kiểm tra binder và quyền Shizuku thật, dry run theo allowlist, tạo backup metadata, tải PAK và kiểm tra SHA-256 thật. Phần ghi file game bằng Shizuku vẫn đang khóa cho tới khi backup/restore được test trên máy thật.
 
 ## Tính Năng
 
@@ -12,7 +12,7 @@
 - Khôi phục file gốc khi cần
 - Hỗ trợ Shizuku để thao tác với thư mục game
 - Hỗ trợ cấu hình đồ hoạ: Safe, Balanced, Performance, Max Graphics
-- Kiểm tra SHA-256 cho file tải về trước khi cài hoặc áp dụng
+- Tải PAK vào app storage và kiểm tra SHA-256 trước khi cho phép bước tiếp theo
 - Copy debug log để gửi báo lỗi
 
 ## Screenshots
@@ -41,9 +41,10 @@
 3. Mở Shizuku và bật dịch vụ bằng Wireless Debugging.
 4. Cấp quyền Shizuku cho WUWA VN.
 5. Mở WUWA VN.
-6. Bấm **Install Vietnamese Patch**.
-7. Kiểm tra danh sách file sẽ thay đổi, sau đó bấm **Apply Patch**.
-8. Chờ hoàn tất rồi mở game.
+6. Bấm **Show Patch Plan**.
+7. Kiểm tra danh sách file sẽ thay đổi.
+8. Bấm **Download & Verify Patch** để tạo backup metadata, tải PAK và kiểm tra SHA-256.
+9. Chờ bản sau mở khóa bước ghi file game sau khi backup/restore đã được test an toàn.
 
 ## Verify APK
 
@@ -54,7 +55,7 @@ Không cài APK từ mirror lạ, link chat riêng, hoặc file không có SHA-2
 Ví dụ file phát hành hợp lệ:
 
 ```text
-WUWA-VN-v2.1.0-release.apk
+WUWA-VN-v2.2.0-release.apk
 ```
 
 Không phát hành file `app-debug.apk` cho người dùng phổ thông.
@@ -62,23 +63,22 @@ Không phát hành file `app-debug.apk` cho người dùng phổ thông.
 Trước khi phát hành, kiểm tra chữ ký:
 
 ```bash
-apksigner verify --print-certs WUWA-VN-v2.1.0-release.apk
+apksigner verify --print-certs WUWA-VN-v2.2.0-release.apk
 ```
 
 ## Cách Khôi Phục
 
 Mở app, chọn **Restore Original Files**, chọn bản backup muốn dùng, rồi bấm **Restore**.
 
-Backup nên được lưu theo dạng:
+Từ `v2.2.0`, backup metadata được lưu trong thư mục app-specific external storage để tránh xin quyền lưu trữ rộng:
 
 ```text
-Download/WUWA-VH-Backup/
+Android/data/com.acceleratorer.wuwavn/files/WUWA-VH-Backup/
   2026-05-15_22-30/
-    Engine.ini
-    DeviceProfiles.ini
-    MountLang_en.txt
     metadata.json
 ```
+
+File gốc của game sẽ chỉ được copy vào backup sau khi Shizuku read/copy được test an toàn trên máy thật.
 
 ## Các Chế Độ Cấu Hình
 
@@ -113,22 +113,22 @@ Quyền yêu cầu cài APK chỉ dùng khi người dùng chọn cập nhật a
 - Game vẫn đang mở và file có thể bị khoá
 - Không đủ dung lượng để tạo backup
 - Android chặn cài APK từ nguồn không xác định
-- Bản `v2.1.0` đã kiểm tra Shizuku thật và lập dry run theo allowlist, nhưng chưa ghi file game thật
+- Bản `v2.2.0` đã tải và verify PAK thật, nhưng chưa ghi file game thật
 
 ## Báo Lỗi
 
 Khi gặp lỗi, hãy gửi kèm log trong app nếu có:
 
 ```text
-[22:31:10] App version: 2.1.0
+[22:31:10] App version: 2.2.0
 [22:31:10] Android version: 14
 [22:31:11] Shizuku: running
 [22:31:11] Permission: granted
 [22:31:12] Game folder: found
-[22:31:15] Backup: success
+[22:31:15] Backup metadata: created
 [22:31:17] Patch download: success
 [22:31:17] SHA-256: verified
-[22:31:20] Apply patch: success
+[22:31:20] Apply patch: locked
 ```
 
 ## Security Checklist

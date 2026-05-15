@@ -46,7 +46,6 @@ jobs:
         shell: pwsh
         env:
           WUWA_VERSION_NAME: ${{ github.ref_name }}
-          WUWA_VERSION_CODE: "23"
           WUWA_KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
           WUWA_KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
           WUWA_KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
@@ -60,6 +59,7 @@ jobs:
       - name: Generate release update manifest
         run: |
           VERSION="${GITHUB_REF_NAME#v}"
+          VERSION_CODE="$(grep '^VERSION_CODE=' version.properties | cut -d= -f2)"
           APK_NAME="WUWA-VN-v${VERSION}-release.apk"
           APK_SHA256="$(sha256sum "release/$APK_NAME" | awk '{print $1}')"
           python - <<PY
@@ -72,7 +72,7 @@ jobs:
               "manifest_version": 2,
               "app": {
                   "version_name": "$VERSION",
-                  "version_code": 23,
+                  "version_code": int("$VERSION_CODE"),
                   "apk_url": "https://github.com/Acceleratorer/WUWA-VN-Android/releases/download/v$VERSION/$APK_NAME",
                   "sha256": "$APK_SHA256",
                   "changelog": [
