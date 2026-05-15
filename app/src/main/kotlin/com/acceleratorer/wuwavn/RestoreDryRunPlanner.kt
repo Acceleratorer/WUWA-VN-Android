@@ -61,7 +61,13 @@ class RestoreDryRunPlanner(
         return RestoreDryRun(
             sessionDirectory = sessionDirectory,
             createdAt = metadata.optString("created_at", sessionDirectory.name),
+            gamePackage = metadata.optString("game_package", ""),
             backupType = metadata.optString("backup_type", "unknown"),
+            restoreWriteEnabled = if (metadata.has("restore_write_enabled")) {
+                metadata.optBoolean("restore_write_enabled")
+            } else {
+                null
+            },
             files = files,
         )
     }

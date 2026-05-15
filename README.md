@@ -2,7 +2,7 @@
 
 Ứng dụng hỗ trợ cài bản Việt hoá cho Wuthering Waves trên Android.
 
-> Trạng thái hiện tại: bản `v2.4.0` là APK release-signed sạch, source app đã được rebuild sang Kotlin, có kiểm tra game/Shizuku, backup read-only, verify SHA-256, và restore dry-run. App có thể liệt kê backup sessions, đọc `metadata.json`, verify hash file backup, rồi show restore plan. Phần restore write và patch write vào game vẫn đang khóa.
+> Trạng thái hiện tại: bản `v2.5.0` là APK release-signed sạch, source app đã được rebuild sang Kotlin, có kiểm tra game/Shizuku, backup read-only, verify SHA-256, restore dry-run, và restore write cho backup gốc đã VERIFIED. App chỉ restore `Engine.ini`, `DeviceProfiles.ini`, `MountLang_en.txt` từ backup tin cậy sau hai bước xác nhận. Patch write vào game vẫn đang khóa.
 
 ## Tính Năng
 
@@ -10,6 +10,7 @@
 - Cập nhật bản dịch mới nhất từ GitHub Releases
 - Sao lưu read-only các file cấu hình gốc trước khi chỉnh sửa
 - Restore dry-run: liệt kê backup, verify metadata/SHA-256, show restore plan
+- Restore file gốc từ backup đã VERIFIED bằng Shizuku
 - Hỗ trợ Shizuku để thao tác với thư mục game
 - Hỗ trợ cấu hình đồ hoạ: Safe, Balanced, Performance, Max Graphics
 - Tải PAK vào app storage và kiểm tra SHA-256 trước khi cho phép bước tiếp theo
@@ -47,7 +48,7 @@
 7. Kiểm tra danh sách file sẽ thay đổi.
 8. Bấm **Backup Game Configs** để copy read-only `Engine.ini`, `DeviceProfiles.ini`, `MountLang_en.txt` vào backup.
 9. Bấm **Download & Verify Patch** để tải PAK và kiểm tra SHA-256.
-10. Bấm **Restore Original Files** để xem restore dry-run. Bước này chỉ verify backup và show plan, không ghi vào game.
+10. Bấm **Restore Original Files** để kiểm tra backup và restore file gốc nếu tất cả file đều VERIFIED.
 
 ## Verify APK
 
@@ -58,7 +59,7 @@ Không cài APK từ mirror lạ, link chat riêng, hoặc file không có SHA-2
 Ví dụ file phát hành hợp lệ:
 
 ```text
-WUWA-VN-v2.4.0-release.apk
+WUWA-VN-v2.5.0-release.apk
 ```
 
 Không phát hành file `app-debug.apk` cho người dùng phổ thông.
@@ -66,14 +67,14 @@ Không phát hành file `app-debug.apk` cho người dùng phổ thông.
 Trước khi phát hành, kiểm tra chữ ký:
 
 ```bash
-apksigner verify --print-certs WUWA-VN-v2.4.0-release.apk
+apksigner verify --print-certs WUWA-VN-v2.5.0-release.apk
 ```
 
 ## Cách Khôi Phục
 
-Mở app, chọn **Restore Original Files**, chọn bản backup muốn kiểm tra, rồi xem restore dry-run.
+Mở app, chọn **Restore Original Files**, chọn bản backup muốn kiểm tra, xem restore dry-run, rồi xác nhận hai lần nếu muốn restore file gốc.
 
-Từ `v2.4.0`, backup được lưu trong thư mục app-specific external storage để tránh xin quyền lưu trữ rộng:
+Từ `v2.5.0`, backup được lưu trong thư mục app-specific external storage để tránh xin quyền lưu trữ rộng:
 
 ```text
 Android/data/com.acceleratorer.wuwavn/files/WUWA-VH-Backup/
@@ -84,7 +85,16 @@ Android/data/com.acceleratorer.wuwavn/files/WUWA-VH-Backup/
     metadata.json
 ```
 
-Restore dry-run sẽ verify `metadata.json`, verify SHA-256 từng file backup, show file nào có thể restore và file nào bị thiếu/hỏng. Restore thật vẫn đang khóa tới `v2.5.0`.
+Restore chỉ được mở khi backup thoả tất cả điều kiện:
+
+- `backup_type` là `shizuku_read_only_config_backup`
+- `game_package` là `com.kurogame.wutheringwaves.global`
+- `restore_write_enabled` trong metadata là `false`
+- Cả 3 file `Engine.ini`, `DeviceProfiles.ini`, `MountLang_en.txt` đều VERIFIED
+- Shizuku đang READY
+- Wuthering Waves Global được phát hiện
+
+Patch write vẫn đang khóa tới `v2.6.0`.
 
 ## Các Chế Độ Cấu Hình
 
@@ -119,11 +129,10 @@ Quyền yêu cầu cài APK chỉ dùng khi người dùng chọn cập nhật a
 - Game vẫn đang mở và file có thể bị khoá
 - Không đủ dung lượng để tạo backup
 - Android chặn cài APK từ nguồn không xác định
-- Bản `v2.4.0` đã có restore dry-run, nhưng chưa ghi file game thật
+- Bản `v2.5.0` chỉ restore file gốc từ backup VERIFIED; patch write vẫn khóa
 
 ## Roadmap
 
-- `v2.5.0`: restore write unlock with double confirmation and allowlisted config restore only.
 - `v2.6.0`: patch write unlock after verified backup, verified PAK, Shizuku READY, and WUWA Global detection.
 
 Source app hiện đã được migrate sang Kotlin. Build script vẫn là manual pipeline nhẹ, có download Kotlin compiler `2.0.21` từ JetBrains và verify SHA-256 trước khi compile.
@@ -143,7 +152,7 @@ Script sẽ tự kiểm tra Android SDK build-tools `36.0.0`, download và verif
 Khi gặp lỗi, hãy gửi kèm log trong app nếu có:
 
 ```text
-[22:31:10] App version: 2.4.0
+[22:31:10] App version: 2.5.0
 [22:31:10] Android version: 14
 [22:31:11] Shizuku: running
 [22:31:11] Permission: granted
@@ -153,9 +162,11 @@ Khi gặp lỗi, hãy gửi kèm log trong app nếu có:
 [22:31:16] Backup read: copied MountLang_en.txt
 [22:31:16] Backup metadata: wrote actual backed-up files
 [22:31:16] Restore dry run: verified 3/3 files
-[22:31:17] Patch download: success
-[22:31:17] SHA-256: verified
-[22:31:20] Apply patch: locked
+[22:31:17] Restore write: verified Engine.ini
+[22:31:18] Restore write: success
+[22:31:19] Patch download: success
+[22:31:19] SHA-256: verified
+[22:31:20] Patch write: locked
 ```
 
 ## Security Checklist

@@ -5,10 +5,31 @@ import java.io.File
 data class RestoreDryRun(
     val sessionDirectory: File,
     val createdAt: String,
+    val gamePackage: String,
     val backupType: String,
+    val restoreWriteEnabled: Boolean?,
     val files: List<RestoreFilePlan>,
 ) {
     fun verifiedCount(): Int = files.count { it.status == RestoreFileStatus.VERIFIED }
+
+    fun allFilesVerified(): Boolean =
+        files.isNotEmpty() && files.all { it.status == RestoreFileStatus.VERIFIED }
+
+    fun hasVerifiedRequiredConfigFiles(): Boolean {
+        val verifiedPaths = files
+            .filter { it.status == RestoreFileStatus.VERIFIED }
+            .map { it.relativePath }
+            .toSet()
+        return PatchDryRunPlanner.backupRelativePaths().all { verifiedPaths.contains(it) }
+    }
+
+    fun hasOnlyVerifiedRequiredConfigFiles(): Boolean {
+        val requiredPaths = PatchDryRunPlanner.backupRelativePaths().toSet()
+        val filePaths = files.map { it.relativePath }
+        return files.size == requiredPaths.size &&
+            filePaths.toSet() == requiredPaths &&
+            files.all { it.status == RestoreFileStatus.VERIFIED }
+    }
 }
 
 data class RestoreFilePlan(

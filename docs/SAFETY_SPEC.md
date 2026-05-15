@@ -30,11 +30,11 @@ Verify target files exist
 Show success
 ```
 
-The app should never apply a patch until backup and restore behavior are tested. The next milestone after read-only backup is restore dry-run, not patch writing.
+The app should never apply a patch until backup and restore behavior are tested. Restore writing must come before patch writing.
 
 ## Backup metadata
 
-Current `v2.4.0` read-only backups are stored in app-specific external storage:
+Current `v2.5.0` backups are stored in app-specific external storage:
 
 ```text
 Android/data/com.acceleratorer.wuwavn/files/WUWA-VH-Backup/<timestamp>/metadata.json
@@ -48,7 +48,7 @@ Each backup should include copied config files and metadata similar to:
 {
   "created_at": "2026-05-15T22:30:00+07:00",
   "game_package": "com.kurogame.wutheringwaves.global",
-  "app_version": "2.4.0",
+  "app_version": "2.5.0",
   "patch_version": "2026.05.15",
   "backup_type": "shizuku_read_only_config_backup",
   "game_write_enabled": false,
@@ -119,14 +119,14 @@ Keep the main actions simple:
 ## Roadmap order
 
 ```text
-v2.4.0: restore dry-run only
-v2.5.0: restore write unlock
+previous milestone: restore dry-run only
+v2.5.0: restore write unlock for verified original config backups
 v2.6.0: patch write unlock
 ```
 
 ## Restore dry-run
 
-`v2.4.0` may read backup sessions from app-specific backup storage, parse `metadata.json`, verify the SHA-256 of each backed-up file, and show a restore plan. It must not write anything to the game folder.
+Restore dry-run may read backup sessions from app-specific backup storage, parse `metadata.json`, verify the SHA-256 of each backed-up file, and show a restore plan.
 
 Restore dry-run should flag:
 
@@ -135,6 +135,28 @@ Restore dry-run should flag:
 - SHA-256 mismatch
 - Unsafe metadata paths outside the backup allowlist
 - Metadata display names that do not match the allowlisted relative path
+
+## Restore write
+
+`v2.5.0` may restore original config files, but only from trusted backup metadata and only after two confirmations.
+
+Restore write must require:
+
+- Shizuku state is `READY`
+- Wuthering Waves Global is detected
+- `backup_type` is `shizuku_read_only_config_backup`
+- `game_package` is `com.kurogame.wutheringwaves.global`
+- `restore_write_enabled` is explicitly `false`
+- Every file in the restore plan is `VERIFIED`
+- The restore plan contains exactly `Engine.ini`, `DeviceProfiles.ini`, and `MountLang_en.txt`
+
+Restore write must not:
+
+- Restore partial backups
+- Restore missing or hash-mismatched files
+- Restore PAK files
+- Apply the Vietnamese patch
+- Create arbitrary game paths
 
 ## Logs
 

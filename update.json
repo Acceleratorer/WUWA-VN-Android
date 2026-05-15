@@ -1,14 +1,15 @@
 {
   "manifest_version": 2,
   "app": {
-    "version_name": "2.4.0",
-    "version_code": 28,
-    "apk_url": "https://github.com/Acceleratorer/WUWA-VN-Android/releases/download/v2.4.0/WUWA-VN-v2.4.0-release.apk",
-    "sha256": "10222042e9e7724c21fe55d2809f156749148bffb242f1284b5e78760f227518",
+    "version_name": "2.5.0",
+    "version_code": 29,
+    "apk_url": "https://github.com/Acceleratorer/WUWA-VN-Android/releases/download/v2.5.0/WUWA-VN-v2.5.0-release.apk",
+    "sha256": "d1b6420a0dc668058b1e1336d65b978e0792a6845e528c78b5d754b7db354b58",
     "changelog": [
-      "Add restore dry-run for existing backup sessions",
-      "Verify backup metadata and file SHA-256 before showing restore plan",
-      "Keep restore writing and patch writing locked"
+      "Add restore write unlock for verified original config backups",
+      "Require trusted read-only backup metadata and all VERIFIED files before restore",
+      "Split patch, backup, restore, dialog, and status logic out of MainActivity",
+      "Keep patch writing locked"
     ],
     "force_update": false
   },

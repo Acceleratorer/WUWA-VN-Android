@@ -1,7 +1,6 @@
 package com.acceleratorer.wuwavn
 
 import android.app.Activity
-import android.app.AlertDialog
 import android.content.ActivityNotFoundException
 import android.content.ClipData
 import android.content.ClipboardManager
@@ -20,7 +19,6 @@ import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
 import android.widget.Toast
-import java.io.File
 import rikka.shizuku.Shizuku
 
 class MainActivity : Activity() {
@@ -33,13 +31,17 @@ class MainActivity : Activity() {
     private val shizukuFileSystem = ShizukuFileSystem()
     private val backupReader = ShizukuBackupReader(backupManager)
     private val restoreDryRunPlanner = RestoreDryRunPlanner(backupManager)
+    private val restoreWriter = ShizukuRestoreWriter()
     private val downloadClient = DownloadClient()
+    private val statusRenderer = StatusRenderer(manifestRepository, shizukuFileSystem)
+
+    private lateinit var dialogs: DialogFactory
+    private lateinit var patchPreparationController: PatchPreparationController
+    private lateinit var backupFlowController: BackupFlowController
+    private lateinit var restoreFlowController: RestoreFlowController
 
     private var statusView: TextView? = null
     private var logView: TextView? = null
-    @Volatile private var patchPreparationRunning = false
-    @Volatile private var backupRunning = false
-    @Volatile private var restoreDryRunRunning = false
     private var shizukuState = ShizukuState.NOT_INSTALLED
     private var gameState = GamePackageDetector.State.NOT_INSTALLED
     @Volatile private var lastBackupPath: String? = null
@@ -65,6 +67,7 @@ class MainActivity : Activity() {
         window.statusBarColor = Color.rgb(11, 17, 29)
         window.navigationBarColor = Color.rgb(11, 17, 29)
 
+        initializeControllers()
         setContentView(createContentView())
         logger.setListener { text ->
             runOnUiThread {
@@ -76,6 +79,40 @@ class MainActivity : Activity() {
         logger.add("App version: ${AppConstants.VERSION_NAME} (${AppConstants.VERSION_CODE})")
         logger.add("Android version: ${Build.VERSION.RELEASE}")
         refreshStatus()
+    }
+
+    private fun initializeControllers() {
+        dialogs = DialogFactory(this)
+        patchPreparationController = PatchPreparationController(
+            activity = this,
+            logger = logger,
+            dryRunPlanner = dryRunPlanner,
+            manifestRepository = manifestRepository,
+            shizukuFileSystem = shizukuFileSystem,
+            downloadClient = downloadClient,
+            dialogs = dialogs,
+            onBackupPath = { path -> lastBackupPath = path },
+        )
+        backupFlowController = BackupFlowController(
+            activity = this,
+            logger = logger,
+            backupManager = backupManager,
+            manifestRepository = manifestRepository,
+            shizukuFileSystem = shizukuFileSystem,
+            backupReader = backupReader,
+            dialogs = dialogs,
+            onBackupPath = { path -> lastBackupPath = path },
+        )
+        restoreFlowController = RestoreFlowController(
+            activity = this,
+            logger = logger,
+            restoreDryRunPlanner = restoreDryRunPlanner,
+            restoreWriter = restoreWriter,
+            gamePackageDetector = gamePackageDetector,
+            shizukuStateChecker = shizukuStateChecker,
+            dialogs = dialogs,
+            onRestoreFinished = { refreshStatus() },
+        )
     }
 
     override fun onDestroy() {
@@ -118,16 +155,22 @@ class MainActivity : Activity() {
         }
 
         root.addView(space(14))
-        root.addView(primaryButton("Show Patch Plan") { showPatchDryRun() })
-        root.addView(button("Backup Game Configs") { backupGameConfigs() })
+        root.addView(primaryButton("Show Patch Plan") {
+            refreshStatus()
+            patchPreparationController.showPatchDryRun(gameState, shizukuState)
+        })
+        root.addView(button("Backup Game Configs") {
+            refreshStatus()
+            backupFlowController.backupGameConfigs(gameState, shizukuState)
+        })
         root.addView(button("Copy Backup Path") { copyBackupPath() })
-        root.addView(button("Download & Verify Patch") { preparePatchSafely() })
+        root.addView(button("Download & Verify Patch") { patchPreparationController.preparePatchSafely() })
         root.addView(button("Update Vietnamese Patch") {
             openUrl(AppConstants.RELEASES_URL)
             logger.add("Update check: opened GitHub Releases")
         })
         root.addView(button("Restore Original Files") {
-            showRestoreDryRunSessions()
+            restoreFlowController.showRestoreSessions()
         })
         root.addView(button("Check Game Folder") {
             refreshStatus()
@@ -178,231 +221,7 @@ class MainActivity : Activity() {
     private fun refreshStatus() {
         gameState = gamePackageDetector.detect(this)
         shizukuState = shizukuStateChecker.check(this)
-        val manifest = manifestRepository.current()
-
-        statusView?.text =
-            "Status\n" +
-                "Game: ${gameState.label}\n" +
-                "Shizuku: ${shizukuState.label}\n" +
-                "Patch: ${manifest.patchVersion}\n" +
-                "Patch SHA-256: ${manifest.pakSha256.take(12)}...\n" +
-                "Mode: Safe / Default\n" +
-                "File writing: ${if (shizukuFileSystem.isWriteEnabled(shizukuState)) "enabled" else "locked"}"
-    }
-
-    private fun showPatchDryRun() {
-        logger.add("Dry run: started")
-        try {
-            val dryRun = dryRunPlanner.plan(this)
-            lastBackupPath = dryRun.backupDirectory.absolutePath
-            var message = dryRun.describe() + "\n\n" + shizukuFileSystem.disabledReason(shizukuState)
-            if (gameState != GamePackageDetector.State.GLOBAL_INSTALLED) {
-                message = "Global Wuthering Waves package is not detected.\n\n$message"
-            }
-            AlertDialog.Builder(this)
-                .setTitle("Dry run")
-                .setMessage(message)
-                .setPositiveButton("OK", null)
-                .show()
-            logger.add("Dry run: allowlist verified")
-            logger.add("Backup target planned: ${dryRun.backupDirectory.absolutePath}")
-        } catch (exception: RuntimeException) {
-            showMessage("Dry run failed", exception.message.orEmpty())
-            logger.add("Dry run: failed - ${exception.message}")
-        }
-    }
-
-    private fun preparePatchSafely() {
-        if (patchPreparationRunning) {
-            Toast.makeText(this, "Patch preparation is already running.", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        refreshStatus()
-        patchPreparationRunning = true
-        logger.add("Patch preparation: started")
-
-        Thread {
-            val manifest = manifestRepository.current()
-            try {
-                dryRunPlanner.plan(this)
-                logger.add("Dry run: allowlist verified before download")
-
-                val patchFile = downloadClient.downloadAndVerify(
-                    this,
-                    manifest,
-                    DownloadClient.ProgressListener { message -> logger.add(message) },
-                )
-
-                logger.add("Patch file: ${patchFile.absolutePath}")
-                runOnUiThread {
-                    showMessage(
-                        "Patch verified",
-                        "Patch was downloaded and verified successfully.\n\nUse Backup Game Configs to test read-only Shizuku backup. Game file writing is still locked.",
-                    )
-                }
-            } catch (exception: Exception) {
-                logger.add("Patch preparation failed: ${exception.message}")
-                runOnUiThread {
-                    showMessage("Patch preparation failed", exception.message.orEmpty())
-                }
-            } finally {
-                patchPreparationRunning = false
-            }
-        }.start()
-    }
-
-    private fun backupGameConfigs() {
-        if (backupRunning) {
-            Toast.makeText(this, "Backup is already running.", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        refreshStatus()
-        if (gameState != GamePackageDetector.State.GLOBAL_INSTALLED) {
-            showMessage("Backup blocked", "Wuthering Waves Global is not detected. Install the Global version before backing up game config files.")
-            logger.add("Read-only backup: blocked - WUWA Global not detected")
-            return
-        }
-        if (shizukuState != ShizukuState.READY) {
-            showMessage("Backup blocked", shizukuFileSystem.disabledReason(shizukuState))
-            logger.add("Read-only backup: blocked - Shizuku not ready")
-            return
-        }
-
-        backupRunning = true
-        logger.add("Read-only backup: started")
-        val detectedGameState = gameState
-
-        Thread {
-            val manifest = manifestRepository.current()
-            try {
-                val backupDirectory = backupManager.createBackupDirectory(this)
-                lastBackupPath = backupDirectory.absolutePath
-                logger.add("Backup path: ${backupDirectory.absolutePath}")
-
-                val result = backupReader.backupConfigFiles(this, backupDirectory, logger)
-                backupManager.writeBackupMetadata(backupDirectory, manifest, detectedGameState, result.backedUpFiles, result.missingFiles)
-                logger.add("Backup metadata: wrote actual backed-up files")
-                logger.add("Read-only backup: success")
-
-                runOnUiThread {
-                    showMessage("Backup complete", backupSummary(backupDirectory, result))
-                }
-            } catch (exception: Exception) {
-                logger.add("Read-only backup failed: ${exception.message}")
-                runOnUiThread {
-                    showMessage("Backup failed", exception.message.orEmpty())
-                }
-            } finally {
-                backupRunning = false
-            }
-        }.start()
-    }
-
-    private fun backupSummary(
-        backupDirectory: File,
-        result: ShizukuBackupReader.BackupResult,
-    ): String = buildString {
-        append("Backed up files:\n")
-        for (file in result.backedUpFiles) {
-            append("- ")
-                .append(file.displayName)
-                .append(" (")
-                .append(file.sizeBytes)
-                .append(" bytes, SHA-256 ")
-                .append(file.sha256.take(12))
-                .append("...)\n")
-        }
-        if (result.missingFiles.isNotEmpty()) {
-            append("\nMissing files:\n")
-            for (file in result.missingFiles) {
-                append("- ").append(file).append('\n')
-            }
-        }
-        append("\nBackup folder:\n").append(backupDirectory.absolutePath)
-        append("\n\nThis version only reads game files. Patch writing and restore writing remain locked.")
-    }
-
-    private fun showRestoreDryRunSessions() {
-        val sessions = restoreDryRunPlanner.listBackupSessions(this)
-        if (sessions.isEmpty()) {
-            showMessage(
-                "Restore dry run",
-                "No backup sessions found yet.\n\nRun Backup Game Configs first. Restore writing remains locked.",
-            )
-            logger.add("Restore dry run: no backup sessions found")
-            return
-        }
-
-        val labels = sessions.map { restoreDryRunPlanner.sessionLabel(it) }.toTypedArray()
-        AlertDialog.Builder(this)
-            .setTitle("Select backup")
-            .setItems(labels) { _, which ->
-                showRestoreDryRun(sessions[which])
-            }
-            .setNegativeButton("Cancel", null)
-            .show()
-        logger.add("Restore dry run: listed ${sessions.size} backup sessions")
-    }
-
-    private fun showRestoreDryRun(sessionDirectory: File) {
-        if (restoreDryRunRunning) {
-            Toast.makeText(this, "Restore dry run is already running.", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        restoreDryRunRunning = true
-        logger.add("Restore dry run: started for ${sessionDirectory.name}")
-
-        Thread {
-            try {
-                val dryRun = restoreDryRunPlanner.plan(sessionDirectory)
-                logger.add("Restore dry run: verified ${dryRun.verifiedCount()}/${dryRun.files.size} files")
-                runOnUiThread {
-                    showMessage("Restore dry run", restoreDryRunSummary(dryRun))
-                }
-            } catch (exception: Exception) {
-                logger.add("Restore dry run failed: ${exception.message}")
-                runOnUiThread {
-                    showMessage("Restore dry run failed", exception.message.orEmpty())
-                }
-            } finally {
-                restoreDryRunRunning = false
-            }
-        }.start()
-    }
-
-    private fun restoreDryRunSummary(dryRun: RestoreDryRun): String = buildString {
-        append("Backup session:\n")
-            .append(dryRun.sessionDirectory.absolutePath)
-            .append("\n\nCreated at:\n")
-            .append(dryRun.createdAt)
-            .append("\n\nBackup type:\n")
-            .append(dryRun.backupType)
-            .append("\n\nFiles checked:\n")
-
-        for (file in dryRun.files) {
-            append("- ")
-                .append(file.displayName)
-                .append(": ")
-                .append(file.status.label)
-                .append(" (")
-                .append(file.sizeBytes)
-                .append(" bytes")
-            file.actualSha256?.let { hash ->
-                append(", SHA-256 ").append(hash.take(12)).append("...")
-            }
-            append(")\n  target: ")
-                .append(file.relativePath.ifEmpty { "unknown" })
-                .append('\n')
-        }
-
-        append("\nVerified files: ")
-            .append(dryRun.verifiedCount())
-            .append("/")
-            .append(dryRun.files.size)
-        append("\n\nRestore writing is still locked in v2.4.0. No game files were modified.")
+        statusView?.text = statusRenderer.render(gameState, shizukuState)
     }
 
     private fun openOrRequestShizuku() {
@@ -463,11 +282,7 @@ class MainActivity : Activity() {
     }
 
     private fun showMessage(title: String, message: String) {
-        AlertDialog.Builder(this)
-            .setTitle(title)
-            .setMessage(message)
-            .setPositiveButton("OK", null)
-            .show()
+        dialogs.showMessage(title, message)
     }
 
     private fun text(value: String, sp: Int, color: Int, bold: Boolean): TextView {

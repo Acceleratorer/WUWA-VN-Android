@@ -56,7 +56,7 @@ class ShizukuBackupReader(
                 val displayName = PatchDryRunPlanner.displayName(relativePath)
                 if (!service.exists(absolutePath)) {
                     logger.add("Backup read: missing $displayName")
-                    missingFiles.add(displayName)
+                    missingFiles.add(relativePath)
                     continue
                 }
 

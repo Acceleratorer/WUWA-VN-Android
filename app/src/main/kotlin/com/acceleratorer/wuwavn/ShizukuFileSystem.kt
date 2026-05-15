@@ -1,12 +1,14 @@
 package com.acceleratorer.wuwavn
 
 class ShizukuFileSystem {
-    fun isWriteEnabled(state: ShizukuState): Boolean = false
+    fun isRestoreWriteEnabled(state: ShizukuState): Boolean = state == ShizukuState.READY
+
+    fun isPatchWriteEnabled(): Boolean = false
 
     fun disabledReason(state: ShizukuState): String {
         if (state != ShizukuState.READY) {
             return "Shizuku is not ready yet."
         }
-        return "Shizuku file writing is intentionally locked until backup and restore are tested on a real device."
+        return "Patch writing is intentionally locked until restore writing is tested on a real device."
     }
 }

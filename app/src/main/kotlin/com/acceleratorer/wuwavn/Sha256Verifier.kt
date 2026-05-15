@@ -5,6 +5,12 @@ import java.io.FileInputStream
 import java.security.MessageDigest
 
 object Sha256Verifier {
+    fun sha256(bytes: ByteArray): String {
+        val digest = MessageDigest.getInstance("SHA-256")
+        digest.update(bytes)
+        return digest.digest().joinToString("") { "%02x".format(it) }
+    }
+
     fun sha256(file: File): String {
         val digest = MessageDigest.getInstance("SHA-256")
         FileInputStream(file).use { input ->

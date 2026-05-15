@@ -91,7 +91,7 @@ class BackupManager {
                 .put("patch_version", manifest.patchVersion)
                 .put("patch_url", manifest.pakUrl)
                 .put("patch_sha256", manifest.pakSha256)
-                .put("backup_type", "shizuku_read_only_config_backup")
+                .put("backup_type", READ_ONLY_CONFIG_BACKUP_TYPE)
                 .put("game_write_enabled", false)
                 .put("restore_write_enabled", false)
 
@@ -130,5 +130,9 @@ class BackupManager {
         val format = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ssXXX", Locale.US)
         format.timeZone = TimeZone.getDefault()
         return format.format(Date())
+    }
+
+    companion object {
+        const val READ_ONLY_CONFIG_BACKUP_TYPE = "shizuku_read_only_config_backup"
     }
 }
