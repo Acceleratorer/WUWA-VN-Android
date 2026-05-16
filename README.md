@@ -2,7 +2,7 @@
 
 Ứng dụng hỗ trợ cài bản Việt hoá cho Wuthering Waves trên Android.
 
-> Trạng thái hiện tại: bản `v2.7.0` là APK release-signed sạch, source app đã được rebuild sang Kotlin, có kiểm tra game/Shizuku, backup read-only, verify SHA-256, restore write cho backup gốc đã VERIFIED, cài patch PAK, và ghi config preset Safe / Default. App chỉ ghi `WuWaVH_99_P.pak` hoặc 3 file config Safe sau khi có backup tin cậy, Shizuku READY, và hai bước xác nhận. Balanced, Performance, và Max Graphics vẫn đang khóa.
+> Trạng thái hiện tại: bản `v2.7.1` là APK release-signed sạch, source app đã được rebuild sang Kotlin, có kiểm tra game/Shizuku, backup read-only, verify SHA-256, restore write cho backup gốc đã VERIFIED, cài patch PAK, ghi config preset Safe / Default, và ảnh header trong UI. App chỉ ghi `WuWaVH_99_P.pak` hoặc 3 file config Safe sau khi có backup tin cậy, Shizuku READY, và hai bước xác nhận. Balanced, Performance, và Max Graphics vẫn đang khóa.
 
 ## Tính Năng
 
@@ -15,6 +15,7 @@
 - Hỗ trợ Shizuku để thao tác với thư mục game
 - Ghi config preset **Safe / Default** từ template bundled, không bật CVars đồ hoạ nặng
 - Chuẩn bị cấu hình đồ hoạ theo lộ trình: Balanced, Performance, Max Graphics vẫn khóa
+- Header UI dùng artwork bundled trong APK, không tải ảnh từ mạng
 - Tải PAK vào app storage và kiểm tra SHA-256 trước khi cho phép bước tiếp theo
 - Ghi `metadata.json` với danh sách file backup thật, dung lượng và SHA-256
 - Copy đường dẫn backup để dễ gửi log hoặc tự kiểm tra
@@ -63,7 +64,7 @@ Không cài APK từ mirror lạ, link chat riêng, hoặc file không có SHA-2
 Ví dụ file phát hành hợp lệ:
 
 ```text
-WUWA-VN-v2.7.0-release.apk
+WUWA-VN-v2.7.1-release.apk
 ```
 
 Không phát hành file `app-debug.apk` cho người dùng phổ thông.
@@ -71,7 +72,7 @@ Không phát hành file `app-debug.apk` cho người dùng phổ thông.
 Trước khi phát hành, kiểm tra chữ ký:
 
 ```bash
-apksigner verify --print-certs WUWA-VN-v2.7.0-release.apk
+apksigner verify --print-certs WUWA-VN-v2.7.1-release.apk
 ```
 
 ## Cách Khôi Phục
@@ -120,11 +121,11 @@ Các trạng thái Shizuku cần kiểm tra trong app:
 - Shizuku đang chạy nhưng chưa cấp quyền
 - Sẵn sàng
 
-## Quyền Cài APK Dùng Để Làm Gì?
+## Cập Nhật App
 
-Quyền yêu cầu cài APK chỉ dùng khi người dùng chọn cập nhật app từ GitHub Releases. App phải hiển thị phiên bản mới, changelog, dung lượng tải về và kết quả kiểm tra SHA-256 trước khi mở màn hình cài đặt của Android.
+Hiện tại app mở GitHub Releases để người dùng tự tải bản mới. Manifest không xin quyền `REQUEST_INSTALL_PACKAGES`.
 
-Ứng dụng không nên tự động cài đặt âm thầm.
+Ứng dụng không tự cài APK âm thầm.
 
 ## Known Issues
 
@@ -133,7 +134,7 @@ Quyền yêu cầu cài APK chỉ dùng khi người dùng chọn cập nhật a
 - Game vẫn đang mở và file có thể bị khoá
 - Không đủ dung lượng để tạo backup
 - Android chặn cài APK từ nguồn không xác định
-- Bản `v2.7.0` chỉ mở khóa Safe / Default config preset; Balanced, Performance, và Max Graphics vẫn khóa
+- Bản `v2.7.1` chỉ mở khóa Safe / Default config preset; Balanced, Performance, và Max Graphics vẫn khóa
 
 ## Roadmap
 
@@ -158,7 +159,7 @@ Script sẽ tự kiểm tra Android SDK build-tools `36.0.0`, download và verif
 Khi gặp lỗi, hãy gửi kèm log trong app nếu có:
 
 ```text
-[22:31:10] App version: 2.7.0
+[22:31:10] App version: 2.7.1
 [22:31:10] Android version: 14
 [22:31:11] Shizuku: running
 [22:31:11] Permission: granted

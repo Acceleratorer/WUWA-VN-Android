@@ -1,15 +1,15 @@
 {
   "manifest_version": 2,
   "app": {
-    "version_name": "2.7.0",
-    "version_code": 31,
-    "apk_url": "https://github.com/Acceleratorer/WUWA-VN-Android/releases/download/v2.7.0/WUWA-VN-v2.7.0-release.apk",
-    "sha256": "885ec75db5159a0e3e537512970a07baf4d5b10de65a2962c3aea1a7b1311654",
+    "version_name": "2.7.1",
+    "version_code": 32,
+    "apk_url": "https://github.com/Acceleratorer/WUWA-VN-Android/releases/download/v2.7.1/WUWA-VN-v2.7.1-release.apk",
+    "sha256": "ef6acd1f06020147b5a5098780da1943b0cd0a2fa261a2aee1eda1fc7c5a1bc1",
     "changelog": [
-      "Add Safe / Default config preset write flow",
-      "Require WUWA Global, Shizuku READY, and a trusted VERIFIED backup before config writes",
-      "Write only bundled Safe templates for Engine.ini, DeviceProfiles.ini, and MountLang_en.txt",
-      "Keep Balanced, Performance, and Max Graphics presets locked"
+      "Add bundled Phrolova artwork to the app home UI",
+      "Rename the Shizuku config write service for clearer restore and preset architecture",
+      "Clarify that app updates open GitHub Releases and do not silently install APKs",
+      "Keep Safe / Default as the only unlocked config preset"
     ],
     "force_update": false
   },

@@ -7,7 +7,7 @@ import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
 
-class WuwaRestoreUserService : IWuwaRestoreService.Stub() {
+class WuwaConfigUserService : IWuwaRestoreService.Stub() {
     override fun exists(absolutePath: String?): Boolean = validate(absolutePath).isFile
 
     override fun length(absolutePath: String?): Long = validate(absolutePath).length()

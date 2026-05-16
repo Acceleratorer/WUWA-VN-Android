@@ -48,7 +48,7 @@ Each backup should include copied config files and metadata similar to:
 {
   "created_at": "2026-05-15T22:30:00+07:00",
   "game_package": "com.kurogame.wutheringwaves.global",
-  "app_version": "2.7.0",
+  "app_version": "2.7.1",
   "patch_version": "2026.05.15",
   "backup_type": "shizuku_read_only_config_backup",
   "game_write_enabled": false,

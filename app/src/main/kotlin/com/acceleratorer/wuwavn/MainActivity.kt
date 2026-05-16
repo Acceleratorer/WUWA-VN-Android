@@ -15,6 +15,7 @@ import android.view.Gravity
 import android.view.View
 import android.widget.Button
 import android.widget.FrameLayout
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.ScrollView
 import android.widget.TextView
@@ -171,6 +172,8 @@ class MainActivity : Activity() {
         subtitle.setPadding(0, dp(8), 0, dp(16))
         root.addView(subtitle)
 
+        root.addView(heroImage())
+
         statusView = text("", 15, Color.WHITE, false).also {
             it.setPadding(dp(14), dp(14), dp(14), dp(14))
             it.setBackgroundColor(Color.rgb(22, 32, 49))
@@ -237,6 +240,18 @@ class MainActivity : Activity() {
         root.addView(button("Send Issue Report") { shareLog() })
 
         return scroll
+    }
+
+    private fun heroImage(): ImageView {
+        val image = ImageView(this)
+        image.setImageResource(R.drawable.phrolova_header)
+        image.scaleType = ImageView.ScaleType.CENTER_CROP
+        image.contentDescription = "WUWA VN header artwork"
+        val params = matchWrap()
+        params.height = dp(132)
+        params.setMargins(0, 0, 0, dp(16))
+        image.layoutParams = params
+        return image
     }
 
     private fun registerShizukuListeners() {

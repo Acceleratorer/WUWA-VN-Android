@@ -20,7 +20,7 @@ class ShizukuConfigPresetWriter {
 
         val serviceRef = AtomicReference<IWuwaRestoreService?>()
         val connected = CountDownLatch(1)
-        val componentName = ComponentName(context, WuwaRestoreUserService::class.java)
+        val componentName = ComponentName(context, WuwaConfigUserService::class.java)
         val args = Shizuku.UserServiceArgs(componentName)
             .daemon(false)
             .debuggable(false)
