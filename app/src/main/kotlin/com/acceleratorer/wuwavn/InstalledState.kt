@@ -8,6 +8,7 @@ enum class PatchInstallState {
 }
 
 enum class ConfigInstallState {
+    // Reserved for future original-config fingerprint detection from trusted backup metadata.
     ORIGINAL,
     SAFE_DEFAULT,
     CUSTOM,

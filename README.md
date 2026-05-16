@@ -29,9 +29,9 @@
 
 ## Screenshots
 
-| Home | Shizuku Check | Apply Patch | Restore |
+| ORIGINAL | PATCHED | PARTIAL | UNKNOWN / Shizuku |
 |---|---|---|---|
-| Sẽ bổ sung sau khi test trên máy thật | Sẽ bổ sung sau khi test trên máy thật | Sẽ bổ sung sau khi test trên máy thật | Sẽ bổ sung sau khi test trên máy thật |
+| Cần chụp state gốc: PAK missing, MountLang không trỏ PAK | Cần chụp state đã cài: PAK exists, MountLang trỏ PAK | Cần chụp state lệch: PAK/MountLang không khớp | Cần chụp khi Shizuku chưa READY hoặc không đọc được state |
 
 ## Yêu Cầu
 

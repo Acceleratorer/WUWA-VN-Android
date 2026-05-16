@@ -31,6 +31,7 @@ class StatusRenderer(
             "Launcher compatibility: WUWA Global ${AppConstants.SUPPORTED_GAME_VERSION}\n" +
             "Compatibility status: ${gameInfo?.compatibilityLabel ?: "game package not detected"}\n" +
             "Shizuku: ${shizukuState.label}\n" +
+            "Download & Verify Patch: available without Shizuku; install/remove requires Shizuku READY.\n" +
             stateText +
             "Patch: ${manifest.patchVersion}\n" +
             "Patch SHA-256: ${manifest.pakSha256.take(12)}...\n" +
