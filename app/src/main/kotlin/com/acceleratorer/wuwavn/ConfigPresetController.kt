@@ -7,6 +7,7 @@ class ConfigPresetController(
     private val activity: Activity,
     private val logger: DebugLogger,
     private val preconditionChecker: ConfigPresetPreconditionChecker,
+    private val balancedPresetDryRunPlanner: BalancedPresetDryRunPlanner,
     private val configPresetWriter: ShizukuConfigPresetWriter,
     private val gamePackageDetector: GamePackageDetector,
     private val shizukuStateChecker: ShizukuStateChecker,
@@ -19,18 +20,31 @@ class ConfigPresetController(
         gameState: GamePackageDetector.State,
         shizukuState: ShizukuState,
     ) {
-        showPresetDryRun(ConfigPresets.SAFE_DEFAULT_ID, gameState, shizukuState)
+        showPresetDryRun(ConfigPresetId.SAFE_DEFAULT, gameState, shizukuState)
     }
 
     fun showBalancedDryRun(
         gameState: GamePackageDetector.State,
         shizukuState: ShizukuState,
+        installedState: InstalledState?,
     ) {
-        showPresetDryRun(ConfigPresets.BALANCED_ID, gameState, shizukuState)
+        if (configWriteRunning) {
+            Toast.makeText(activity, "Config preset is already running.", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val dryRun = balancedPresetDryRunPlanner.plan(
+            context = activity,
+            gameState = gameState,
+            shizukuState = shizukuState,
+            installedState = installedState,
+        )
+        dialogs.showMessage("Balanced Preset Preview", dryRun.describe())
+        logger.add("Balanced preview: shown")
     }
 
     private fun showPresetDryRun(
-        presetId: String,
+        presetId: ConfigPresetId,
         gameState: GamePackageDetector.State,
         shizukuState: ShizukuState,
     ) {
@@ -137,20 +151,15 @@ class ConfigPresetController(
                 .append('\n')
         }
 
-        if (preset != null) {
-            append("\nWarning:\n")
-                .append(preset.warning)
-                .append("\n")
+        if (preset != null && preset.warnings.isNotEmpty()) {
+            append("\nWarnings:\n")
+            for (warning in preset.warnings) {
+                append("- ").append(warning).append('\n')
+            }
         }
 
         append("\nConfig/CVar changes:\n")
-        if (preset == null || preset.cvarChanges.isEmpty()) {
-            append("- No graphics CVars changed.\n")
-        } else {
-            for (change in preset.cvarChanges) {
-                append("- ").append(change).append('\n')
-            }
-        }
+            .append("- No graphics CVars changed by this write path.\n")
 
         append("\nPreset rules:\n")
             .append("- No arbitrary config paths\n")
@@ -196,9 +205,9 @@ class ConfigPresetController(
     }
 
     private fun warningBlock(preset: ConfigPreset): String =
-        if (preset.warning.isBlank()) {
+        if (preset.warnings.isEmpty()) {
             ""
         } else {
-            "Warning:\n${preset.warning}\n\n"
+            "Warnings:\n${preset.warnings.joinToString("\n") { "- $it" }}\n\n"
         }
 }

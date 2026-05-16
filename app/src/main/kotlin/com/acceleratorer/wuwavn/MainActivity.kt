@@ -35,6 +35,10 @@ class MainActivity : Activity() {
     private val restoreWriter = ShizukuRestoreWriter()
     private val downloadClient = DownloadClient()
     private val trustedBackupFinder = TrustedBackupFinder(restoreDryRunPlanner)
+    private val balancedPresetDryRunPlanner = BalancedPresetDryRunPlanner(
+        trustedBackupFinder,
+        ConfigPresetDiffPlanner(),
+    )
     private val installedStateDetector = InstalledStateDetector(
         ShizukuInstalledStateReader(),
         trustedBackupFinder,
@@ -63,6 +67,7 @@ class MainActivity : Activity() {
     private lateinit var backupButton: Button
     private lateinit var downloadPatchButton: Button
     private lateinit var applySafeButton: Button
+    private lateinit var previewBalancedButton: Button
     private lateinit var removePatchButton: Button
     private lateinit var restoreButton: Button
     private var shizukuState = ShizukuState.NOT_INSTALLED
@@ -150,6 +155,7 @@ class MainActivity : Activity() {
             activity = this,
             logger = logger,
             preconditionChecker = configPresetPreconditionChecker,
+            balancedPresetDryRunPlanner = balancedPresetDryRunPlanner,
             configPresetWriter = configPresetWriter,
             gamePackageDetector = gamePackageDetector,
             shizukuStateChecker = shizukuStateChecker,
@@ -228,6 +234,12 @@ class MainActivity : Activity() {
             configPresetController.showSafeDefaultDryRun(gameState, shizukuState)
         }
         root.addView(applySafeButton)
+        previewBalancedButton = button("Preview Balanced Preset") {
+            refreshStatus()
+            if (blockIfDisabled(previewBalancedButton, "Preview Balanced Preset")) return@button
+            configPresetController.showBalancedDryRun(gameState, shizukuState, installedState)
+        }
+        root.addView(previewBalancedButton)
         root.addView(button("Update Vietnamese Patch") {
             openUrl(AppConstants.RELEASES_URL)
             logger.add("Update check: opened GitHub Releases")
@@ -320,6 +332,7 @@ class MainActivity : Activity() {
         installPatchButton.isEnabled = state.installPatchEnabled
         removePatchButton.isEnabled = state.removePatchEnabled
         applySafeButton.isEnabled = state.applySafeEnabled
+        previewBalancedButton.isEnabled = state.previewBalancedEnabled
         restoreButton.isEnabled = state.restoreEnabled
         backupButton.isEnabled = state.backupEnabled
         downloadPatchButton.isEnabled = state.downloadPatchEnabled

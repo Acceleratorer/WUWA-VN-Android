@@ -48,7 +48,7 @@ Each backup should include copied config files and metadata similar to:
 {
   "created_at": "2026-05-15T22:30:00+07:00",
   "game_package": "com.kurogame.wutheringwaves.global",
-  "app_version": "3.3.3",
+  "app_version": "3.3.4",
   "patch_version": "wuwa-3.3-vi-2026.05",
   "backup_type": "shizuku_read_only_config_backup",
   "game_write_enabled": false,
@@ -127,7 +127,7 @@ v3.3.0: WUWA Global 3.3 compatibility metadata and Remove Patch dry-run
 v3.3.1: Remove Patch write unlock with MountLang rollback
 v3.3.2: bundled launcher icon refresh
 v3.3.3: smart installed-state detection and UI action gating
-future milestone: Balanced config preset dry-run after smart state validation
+v3.3.4: Balanced config preset dry-run after smart state validation
 future milestone: Balanced config preset write after dry-run validation
 future milestone: Performance config preset write
 future milestone: Max Graphics preset with strong warning
@@ -225,7 +225,7 @@ Safe config preset write must not:
 
 - Write arbitrary config paths
 - Write PAK files
-- Apply Balanced, Performance, or Max Graphics presets
+- Write Balanced, Performance, or Max Graphics presets
 - Continue if the trusted backup is missing or incomplete
 
 ## Game compatibility metadata
@@ -236,8 +236,8 @@ Safe config preset write must not:
 {
   "manifest_version": 3,
   "app": {
-    "version_name": "3.3.3",
-    "version_code": 37,
+    "version_name": "3.3.4",
+    "version_code": 38,
     "supported_game_version": "3.3",
     "minimum_game_version": "3.3"
   },
@@ -297,7 +297,21 @@ Remove patch write must not:
 
 ## Balanced config preset write
 
-Balanced config preset write is locked in `v3.3.3` while the launcher focuses on WUWA Global `3.3` smart-state detection and rollback safety.
+Balanced config preset write is locked in `v3.3.4`. This release may show a Balanced preview only.
+
+Balanced preview may:
+
+- Show the exact files that would be changed
+- Show the exact planned config keys and CVars
+- Require Wuthering Waves Global, Shizuku READY, and a trusted VERIFIED backup before previewing
+- Warn when the current installed state is PARTIAL or UNKNOWN
+
+Balanced preview must not:
+
+- Write any game file
+- Add a new Shizuku write method
+- Change the Safe / Default write gate
+- Enable Performance or Max Graphics
 
 ## Installed state detection
 

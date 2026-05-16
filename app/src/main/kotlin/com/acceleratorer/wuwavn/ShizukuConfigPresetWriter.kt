@@ -111,7 +111,7 @@ class ShizukuConfigPresetWriter {
         if (plan.trustedBackup.verifiedFiles != PatchDryRunPlanner.backupRelativePaths().size) {
             throw IllegalStateException("Trusted backup is incomplete.")
         }
-        if (plan.preset.id == ConfigPresets.BALANCED_ID && hasForbiddenBalancedLine(plan.templateFiles)) {
+        if (plan.preset.id == ConfigPresetId.BALANCED && hasForbiddenBalancedLine(plan.templateFiles)) {
             throw IllegalStateException("Balanced preset contains a forbidden high-risk graphics or FPS setting.")
         }
     }

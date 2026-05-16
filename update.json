@@ -1,19 +1,18 @@
 {
   "manifest_version": 3,
   "app": {
-    "version_name": "3.3.3",
-    "version_code": 37,
+    "version_name": "3.3.4",
+    "version_code": 38,
     "supported_game_version": "3.3",
     "minimum_game_version": "3.3",
-    "apk_url": "https://github.com/Acceleratorer/WUWA-VN-Android/releases/download/v3.3.3/WUWA-VN-v3.3.3-release.apk",
-    "sha256": "28428a401b07197b7db53214c83d62aeb7c880705887ae8cea016b086515f76f",
+    "apk_url": "https://github.com/Acceleratorer/WUWA-VN-Android/releases/download/v3.3.4/WUWA-VN-v3.3.4-release.apk",
+    "sha256": "58498bcccf7324463ab58a72f3fa95aa34b8c7909a528e1f29fdc7244e6fc92f",
     "changelog": [
-      "Add smart installed-state detection for Original, Patched, Partial, and Unknown states",
-      "Detect whether WuWaVH_99_P.pak exists in the WUWA Global game folder",
-      "Detect whether MountLang_en.txt points to the Vietnamese PAK",
-      "Show patch state, config state, trusted backup state, and recommended actions in the home status card",
-      "Disable unsafe duplicate actions based on detected state",
-      "Keep Balanced, Performance, and Max Graphics locked"
+      "Add Balanced config preset dry-run only",
+      "Show exact files and planned config values for Balanced preset",
+      "Add shared ConfigPreset model and preset availability policy",
+      "Keep Balanced write locked in this release",
+      "Keep Performance and Max Graphics locked"
     ],
     "force_update": false
   },

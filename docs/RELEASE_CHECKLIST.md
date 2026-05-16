@@ -8,7 +8,7 @@ Use this checklist before publishing a public APK.
 - Confirm `debuggable=false` in the packaged manifest.
 - Sign with the private release keystore.
 - Never commit keystore files or passwords.
-- Name the APK like `WUWA-VN-v3.3.3-release.apk`.
+- Name the APK like `WUWA-VN-v3.3.4-release.apk`.
 - Do not upload `app-debug.apk` as a public release file.
 - Upload `sha256.txt` beside the APK.
 - Upload the generated release `update.json`.
@@ -28,8 +28,8 @@ Version name and version code come from `version.properties` unless release auto
 Verify the APK:
 
 ```bash
-apksigner verify --print-certs WUWA-VN-v3.3.3-release.apk
-sha256sum WUWA-VN-v3.3.3-release.apk
+apksigner verify --print-certs WUWA-VN-v3.3.4-release.apk
+sha256sum WUWA-VN-v3.3.4-release.apk
 ```
 
 ## Future Gradle release build type
@@ -61,7 +61,7 @@ android {
 
 ## Manifest update
 
-- Keep only the nested `app` and `patch` objects in `update.json`.
+- Keep the nested `app`, `game`, and `patch` objects in `update.json`.
 - Confirm APK URL points to `Acceleratorer/WUWA-VN-Android`.
 - Confirm the APK SHA-256 is real.
 - Confirm the PAK SHA-256 is real.

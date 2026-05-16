@@ -6,20 +6,23 @@ class ConfigPresetPreconditionChecker(
     private val restoreDryRunPlanner: RestoreDryRunPlanner,
 ) {
     fun check(
-        presetId: String,
+        presetId: ConfigPresetId,
         context: Context,
         gameState: GamePackageDetector.State,
         shizukuState: ShizukuState,
     ): ConfigPresetPrecondition {
         val failures = mutableListOf<String>()
         val preset = ConfigPresets.get(presetId)
-        val templateFiles = preset?.files.orEmpty()
+        val templateFiles = preset.files
         val trustedBackup = TrustedBackupPolicy.findTrustedBackup(context, restoreDryRunPlanner)
 
-        if (preset == null) {
-            failures.add("Config preset is not available.")
-        } else if (!ConfigPresets.isUnlocked(preset.id)) {
-            failures.add("${preset.name} is still locked.")
+        if (!ConfigPresets.isUnlocked(preset.id)) {
+            val lockReason = when (preset.availability) {
+                PresetAvailability.DRY_RUN_ONLY -> "${preset.name} is preview-only in this release."
+                PresetAvailability.LOCKED -> "${preset.name} is still locked."
+                PresetAvailability.WRITE_ENABLED -> "${preset.name} is not available for writing."
+            }
+            failures.add(lockReason)
         }
         if (gameState != GamePackageDetector.State.GLOBAL_INSTALLED) {
             failures.add("Wuthering Waves Global is not detected.")
@@ -45,11 +48,11 @@ class ConfigPresetPreconditionChecker(
                 failures.add("${file.displayName} template hash mismatch.")
             }
         }
-        if (preset?.id == ConfigPresets.BALANCED_ID && hasForbiddenBalancedLine(templateFiles)) {
+        if (preset.id == ConfigPresetId.BALANCED && hasForbiddenBalancedLine(templateFiles)) {
             failures.add("Balanced preset contains a forbidden high-risk graphics or FPS setting.")
         }
 
-        val plan = if (failures.isEmpty() && preset != null && trustedBackup != null) {
+        val plan = if (failures.isEmpty() && trustedBackup != null) {
             ConfigPresetPlan(
                 preset = preset,
                 templateFiles = preset.files,

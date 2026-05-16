@@ -35,7 +35,7 @@ class StatusRenderer(
             stateText +
             "Patch: ${manifest.patchVersion}\n" +
             "Patch SHA-256: ${manifest.pakSha256.take(12)}...\n" +
-            "Mode: Safe / Default\n" +
+            "Mode: Safe / Default; Balanced preview only\n" +
             "Restore writing: ${if (shizukuFileSystem.isRestoreWriteEnabled(shizukuState)) "enabled" else "locked"}\n" +
             "Patch writing: ${shizukuFileSystem.patchWriteStatus(shizukuState)}\n" +
             "Config preset writing: ${shizukuFileSystem.configPresetWriteStatus(shizukuState)}"

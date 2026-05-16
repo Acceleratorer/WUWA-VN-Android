@@ -12,7 +12,7 @@ class ShizukuFileSystem {
 
     fun configPresetWriteStatus(state: ShizukuState): String =
         if (state == ShizukuState.READY) {
-            "Safe-only gated"
+            "Safe-only gated; Balanced preview only"
         } else {
             "locked"
         }
@@ -21,6 +21,6 @@ class ShizukuFileSystem {
         if (state != ShizukuState.READY) {
             return "Shizuku is not ready yet."
         }
-        return "Patch writing is available only through the PAK-only verified install flow. Config preset writing is available only through the Safe / Default verified flow."
+        return "Patch writing is available only through the PAK-only verified install flow. Config preset writing is available only through the Safe / Default verified flow; Balanced is preview-only."
     }
 }
