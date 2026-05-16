@@ -48,8 +48,8 @@ Each backup should include copied config files and metadata similar to:
 {
   "created_at": "2026-05-15T22:30:00+07:00",
   "game_package": "com.kurogame.wutheringwaves.global",
-  "app_version": "2.8.0",
-  "patch_version": "2026.05.15",
+  "app_version": "3.3.0",
+  "patch_version": "wuwa-3.3-vi-2026.05",
   "backup_type": "shizuku_read_only_config_backup",
   "game_write_enabled": false,
   "restore_write_enabled": false,
@@ -123,9 +123,11 @@ previous milestone: restore dry-run only
 previous milestone: restore write unlock for verified original config backups
 v2.6.0: PAK-only patch write unlock
 v2.7.0: Safe / Default config preset write unlock
-v2.8.0: conservative Balanced config preset write unlock
-v2.9.0: Performance config preset write unlock
-v3.0.0: Max Graphics preset with strong warning
+v3.3.0: WUWA Global 3.3 compatibility metadata and Remove Patch dry-run
+future milestone: Remove Patch write unlock
+future milestone: Balanced config preset write after WUWA 3.3 validation
+future milestone: Performance config preset write
+future milestone: Max Graphics preset with strong warning
 ```
 
 ## Restore dry-run
@@ -223,37 +225,67 @@ Safe config preset write must not:
 - Apply Balanced, Performance, or Max Graphics presets
 - Continue if the trusted backup is missing or incomplete
 
-## Balanced config preset write
+## Game compatibility metadata
 
-`v2.8.0` may write only the bundled Balanced templates for the same three config files:
+`update.json` uses manifest version 3 and should include game compatibility metadata:
 
-```text
-UE4Game/Client/Client/Saved/Config/Android/Engine.ini
-UE4Game/Client/Client/Saved/Config/Android/DeviceProfiles.ini
-UE4Game/Client/Client/Saved/Config/Android/MountLang_en.txt
+```json
+{
+  "manifest_version": 3,
+  "app": {
+    "version_name": "3.3.0",
+    "version_code": 34,
+    "supported_game_version": "3.3",
+    "minimum_game_version": "3.3"
+  },
+  "game": {
+    "name": "Wuthering Waves",
+    "server": "Global",
+    "package": "com.kurogame.wutheringwaves.global",
+    "version": "3.3"
+  }
+}
 ```
 
-Balanced config preset write must require everything required by Safe config preset write, plus:
+The app should show:
 
-- Risk level is shown as `medium`
-- A device warning is shown before write
-- Dry-run lists every config/CVar value the preset changes
-- The preset blocks forced Vulkan toggles
-- The preset blocks resolution scale overrides
-- The preset blocks aggressive FPS unlock settings
-- The preset blocks high-end profile spoofing such as fake RTX/Windows profiles
+```text
+WUWA Global detected
+Game version: 3.3.x
+Launcher compatibility: WUWA Global 3.3
+Status: compatible
+```
 
-Balanced config preset write must not:
+If Android does not expose a game version, show:
 
-- Set `r.Android.DisableVulkanSupport`
-- Set `bSupportsVulkan`
-- Set `bEnableDynamicMaxFPS`
-- Set `r.MobileContentScaleFactor`
-- Set `r.ScreenPercentage`
-- Set `t.MaxFPS`
-- Set `dp.override`
-- Use fake `Windows_ExtraHigh`, `Android_VeryHigh`, or `Nvidia_RTX` profiles
-- Enable Performance or Max Graphics presets
+```text
+Game package detected, version unknown.
+```
+
+Do not block users only because the game version is unknown.
+
+## Remove patch dry-run
+
+`v3.3.0` may show a dry-run plan for removing `WuWaVH_99_P.pak`.
+
+Remove patch dry-run must:
+
+- Plan only `UE4Game/Client/Client/Content/Paks/WuWaVH_99_P.pak`
+- Show that no config files will be changed
+- Show that no delete happens in this release
+- Keep the target allowlisted
+
+Remove patch dry-run must not:
+
+- Delete the PAK
+- Delete arbitrary PAK names
+- Modify `Engine.ini`
+- Modify `DeviceProfiles.ini`
+- Modify `MountLang_en.txt`
+
+## Balanced config preset write
+
+Balanced config preset write is locked in `v3.3.0` while the launcher focuses on WUWA Global `3.3` compatibility.
 
 ## Logs
 

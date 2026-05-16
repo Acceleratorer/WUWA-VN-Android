@@ -106,6 +106,30 @@ class PatchPreparationController(
         }
     }
 
+    fun showRemovePatchDryRun(
+        gameState: GamePackageDetector.State,
+        shizukuState: ShizukuState,
+    ) {
+        val failures = mutableListOf<String>()
+        if (gameState != GamePackageDetector.State.GLOBAL_INSTALLED) {
+            failures.add("Wuthering Waves Global is not detected.")
+        }
+        if (shizukuState != ShizukuState.READY) {
+            failures.add("Shizuku is not ready.")
+        }
+        if (!PatchDryRunPlanner.isAllowedTarget(PatchDryRunPlanner.patchPakRelativePath())) {
+            failures.add("Patch target is not allowlisted.")
+        }
+
+        val summary = removePatchDryRunSummary(failures)
+        dialogs.showMessage("Remove patch dry run", summary)
+        if (failures.isEmpty()) {
+            logger.add("Remove patch dry run: planned PAK removal")
+        } else {
+            logger.add("Remove patch dry run: blocked - ${failures.joinToString("; ")}")
+        }
+    }
+
     private fun showFinalPatchConfirmation(plan: PatchWritePlan) {
         dialogs.showConfirmation(
             title = "Final patch confirmation",
@@ -202,5 +226,28 @@ class PatchPreparationController(
             .append(result.sha256)
             .append("\n\nTarget file was re-read from the game folder and verified.")
             .append("\n\nConfig preset writing is handled separately.")
+    }
+
+    private fun removePatchDryRunSummary(failures: List<String>): String = buildString {
+        append("Remove Vietnamese Patch plan:\n")
+            .append("Dry-run only in v3.3.0\n\n")
+            .append("File that would be removed:\n")
+            .append("- WuWaVH_99_P.pak\n\n")
+            .append("Target:\n")
+            .append(PatchDryRunPlanner.patchPakRelativePath())
+            .append("\n\nSafety rules:\n")
+            .append("- Only this exact allowlisted PAK target is planned\n")
+            .append("- No config files are modified\n")
+            .append("- No delete is performed in this release\n")
+
+        if (failures.isEmpty()) {
+            append("\nNext unlock step:\n")
+                .append("A future release can add two confirmations, delete only WuWaVH_99_P.pak, and verify the target no longer exists.")
+        } else {
+            append("\nBlocked:\n")
+            for (failure in failures) {
+                append("- ").append(failure).append('\n')
+            }
+        }
     }
 }

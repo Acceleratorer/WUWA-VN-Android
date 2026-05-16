@@ -53,8 +53,8 @@ if (Test-Path $VersionFile) {
     }
 }
 
-$VersionName = if ($env:WUWA_VERSION_NAME) { $env:WUWA_VERSION_NAME } elseif ($VersionProperties["VERSION_NAME"]) { $VersionProperties["VERSION_NAME"] } else { "2.8.0" }
-$VersionCode = if ($env:WUWA_VERSION_CODE) { $env:WUWA_VERSION_CODE } elseif ($VersionProperties["VERSION_CODE"]) { $VersionProperties["VERSION_CODE"] } else { "33" }
+$VersionName = if ($env:WUWA_VERSION_NAME) { $env:WUWA_VERSION_NAME } elseif ($VersionProperties["VERSION_NAME"]) { $VersionProperties["VERSION_NAME"] } else { "3.3.0" }
+$VersionCode = if ($env:WUWA_VERSION_CODE) { $env:WUWA_VERSION_CODE } elseif ($VersionProperties["VERSION_CODE"]) { $VersionProperties["VERSION_CODE"] } else { "34" }
 $PackageName = "com.acceleratorer.wuwavn"
 $ShizukuVersion = "13.1.5"
 $ShizukuApiSha256 = "4def9bde498ef8626614c2fc5db9af4749c86f16f6c33e3f5658d35e70bab59b"
@@ -269,15 +269,18 @@ $RootUpdateJson = Join-Path $Root "update.json"
 if (Test-Path $RootUpdateJson) {
     $RootManifest = Get-Content -Raw -Path $RootUpdateJson | ConvertFrom-Json
     $ReleaseManifest = [ordered]@{
-        manifest_version = 2
+        manifest_version = if ($RootManifest.manifest_version) { [int]$RootManifest.manifest_version } else { 3 }
         app = [ordered]@{
             version_name = $VersionName
             version_code = [int]$VersionCode
+            supported_game_version = $RootManifest.app.supported_game_version
+            minimum_game_version = $RootManifest.app.minimum_game_version
             apk_url = "https://github.com/Acceleratorer/WUWA-VN-Android/releases/download/v$VersionName/$ApkName"
             sha256 = $HashLower
             changelog = @($RootManifest.app.changelog)
             force_update = [bool]$RootManifest.app.force_update
         }
+        game = $RootManifest.game
         patch = $RootManifest.patch
     }
     $ReleaseManifestJson = ($ReleaseManifest | ConvertTo-Json -Depth 8) + [Environment]::NewLine

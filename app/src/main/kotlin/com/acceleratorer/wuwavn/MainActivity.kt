@@ -54,6 +54,7 @@ class MainActivity : Activity() {
     private var logView: TextView? = null
     private var shizukuState = ShizukuState.NOT_INSTALLED
     private var gameState = GamePackageDetector.State.NOT_INSTALLED
+    private var gameInfo: GamePackageDetector.GameInfo? = null
     @Volatile private var lastBackupPath: String? = null
 
     private val binderReceivedListener = Shizuku.OnBinderReceivedListener {
@@ -199,13 +200,13 @@ class MainActivity : Activity() {
             refreshStatus()
             configPresetController.showSafeDefaultDryRun(gameState, shizukuState)
         })
-        root.addView(button("Apply Balanced Config Preset") {
-            refreshStatus()
-            configPresetController.showBalancedDryRun(gameState, shizukuState)
-        })
         root.addView(button("Update Vietnamese Patch") {
             openUrl(AppConstants.RELEASES_URL)
             logger.add("Update check: opened GitHub Releases")
+        })
+        root.addView(button("Remove Vietnamese Patch") {
+            refreshStatus()
+            patchPreparationController.showRemovePatchDryRun(gameState, shizukuState)
         })
         root.addView(button("Restore Original Files") {
             restoreFlowController.showRestoreSessions()
@@ -270,8 +271,9 @@ class MainActivity : Activity() {
 
     private fun refreshStatus() {
         gameState = gamePackageDetector.detect(this)
+        gameInfo = gamePackageDetector.detectGlobalInfo(this)
         shizukuState = shizukuStateChecker.check(this)
-        statusView?.text = statusRenderer.render(gameState, shizukuState)
+        statusView?.text = statusRenderer.render(gameState, gameInfo, shizukuState)
     }
 
     private fun openOrRequestShizuku() {

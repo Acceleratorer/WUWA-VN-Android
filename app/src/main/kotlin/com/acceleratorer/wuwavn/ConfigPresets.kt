@@ -13,7 +13,7 @@ object ConfigPresets {
     }
 
     fun isUnlocked(id: String): Boolean =
-        id == SAFE_DEFAULT_ID || id == BALANCED_ID
+        id == SAFE_DEFAULT_ID
 
     private fun safeDefault(): ConfigPreset = ConfigPreset(
         id = SAFE_DEFAULT_ID,

@@ -1,20 +1,28 @@
 {
-  "manifest_version": 2,
+  "manifest_version": 3,
   "app": {
-    "version_name": "2.8.0",
-    "version_code": 33,
-    "apk_url": "https://github.com/Acceleratorer/WUWA-VN-Android/releases/download/v2.8.0/WUWA-VN-v2.8.0-release.apk",
-    "sha256": "8b964cc58557519a90a24d87def91c9fb1d5b94aab5840ae2c5bfdef5573c968",
+    "version_name": "3.3.0",
+    "version_code": 34,
+    "supported_game_version": "3.3",
+    "minimum_game_version": "3.3",
+    "apk_url": "https://github.com/Acceleratorer/WUWA-VN-Android/releases/download/v3.3.0/WUWA-VN-v3.3.0-release.apk",
+    "sha256": "09f65dd3c416e1eb72ba83e1f7c6d281dd1d08e255479b450247f7f9c1b907d9",
     "changelog": [
-      "Add shared ConfigPreset model for Safe and Balanced presets",
-      "Unlock conservative Balanced config preset with a warning and full config/CVar dry-run summary",
-      "Block high-risk Balanced settings such as forced Vulkan, resolution scale, FPS unlock, and profile spoofing",
-      "Keep Performance and Max Graphics presets locked"
+      "Align launcher release with Wuthering Waves Global 3.3",
+      "Add game compatibility metadata and in-app game version display",
+      "Add Remove Vietnamese Patch dry-run planning",
+      "Keep Safe / Default as the only unlocked config preset"
     ],
     "force_update": false
   },
+  "game": {
+    "name": "Wuthering Waves",
+    "server": "Global",
+    "package": "com.kurogame.wutheringwaves.global",
+    "version": "3.3"
+  },
   "patch": {
-    "version": "2026.05.15",
+    "version": "wuwa-3.3-vi-2026.05",
     "pak_url": "https://github.com/CallMeDangDev/WuwaVH/releases/latest/download/WuWaVH_99_P.pak",
     "sha256": "99202f84db73e771cd68ef1734893ee5f589666654fe7be3dcfff631df199a78"
   }

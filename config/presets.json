@@ -14,14 +14,14 @@
       "name": "Balanced",
       "description": "Translation plus conservative graphics config for common upper-mid and flagship devices.",
       "config_dir": "bundled:kotlin/ConfigPresets",
-      "status": "enabled_v2.8.0",
+      "status": "locked_after_v3.3.0",
       "recommended_for": [
         "Snapdragon 865",
         "Snapdragon 870",
         "Snapdragon 778G",
         "Dimensity 8100+"
       ],
-      "warning": "Balanced changes graphics config but does not force Vulkan, resolution scale, FPS unlock, or high-end profile spoofing."
+      "warning": "Balanced remains locked in v3.3.0 while the launcher focuses on WUWA 3.3 compatibility."
     },
     {
       "id": "performance",
