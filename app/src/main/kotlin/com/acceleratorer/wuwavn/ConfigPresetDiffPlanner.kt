@@ -118,7 +118,7 @@ class ConfigPresetDiffPlanner {
             ),
             writeEnabled = writeEnabled,
             blockedReason = if (writeEnabled) {
-                "Balanced write is enabled in v3.3.5 only after this dry-run, trusted backup check, and final confirmation."
+                "Balanced write is enabled in v3.3.6 only after PATCHED state, this dry-run, trusted backup check, and final confirmation."
             } else {
                 "Balanced write is locked. This is preview only."
             },

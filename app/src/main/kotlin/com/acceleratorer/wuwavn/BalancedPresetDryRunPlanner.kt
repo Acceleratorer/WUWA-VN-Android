@@ -44,18 +44,18 @@ class BalancedPresetDryRunPlanner(
     }
 
     private fun allowsBalancedWrite(installedState: InstalledState?): Boolean =
-        installedState?.patchState == PatchInstallState.ORIGINAL ||
-            installedState?.patchState == PatchInstallState.PATCHED
+        installedState?.patchState == PatchInstallState.PATCHED
 
     private fun stateBlockReason(installedState: InstalledState?): String = when (installedState?.patchState) {
+        PatchInstallState.ORIGINAL -> "Current patch state is ORIGINAL. Install Vietnamese Patch before applying Balanced."
         PatchInstallState.PARTIAL -> "Current patch state is PARTIAL. Use Remove Vietnamese Patch or Restore Original Files before applying Balanced."
         PatchInstallState.UNKNOWN, null -> "Current patch state is UNKNOWN. Refresh state and complete game/Shizuku setup before applying Balanced."
-        PatchInstallState.ORIGINAL, PatchInstallState.PATCHED -> "Balanced write is available for this state."
+        PatchInstallState.PATCHED -> "Balanced write is available for this state."
     }
 
     private fun stateWarning(installedState: InstalledState?): String = when (installedState?.patchState) {
         PatchInstallState.ORIGINAL ->
-            "Current patch state is ORIGINAL. Balanced can be applied, but install the patch before expecting the Vietnamese PAK mount to be active."
+            "Current patch state is ORIGINAL. Install Vietnamese Patch, refresh state, then apply Balanced."
         PatchInstallState.PATCHED ->
             "Current patch state is PATCHED. Balanced can be applied after final confirmation."
         PatchInstallState.PARTIAL ->

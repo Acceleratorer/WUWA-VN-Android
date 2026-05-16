@@ -135,7 +135,10 @@ class ConfigPresetController(
             return
         }
         if (plan.preset.id == ConfigPresetId.BALANCED && !balancedWriteStateAllowed(installedStateProvider())) {
-            dialogs.showMessage("Balanced preset blocked", "Current patch state is PARTIAL or UNKNOWN. Use Remove Vietnamese Patch or Restore Original Files before applying Balanced.")
+            dialogs.showMessage(
+                "Balanced preset blocked",
+                "Balanced requires the Vietnamese patch to be installed first. Install Vietnamese Patch, refresh state, then apply Balanced.",
+            )
             logger.add("Balanced preset: blocked before write - unsafe patch state")
             return
         }
@@ -180,8 +183,7 @@ class ConfigPresetController(
     }
 
     private fun balancedWriteStateAllowed(installedState: InstalledState?): Boolean =
-        installedState?.patchState == PatchInstallState.ORIGINAL ||
-            installedState?.patchState == PatchInstallState.PATCHED
+        installedState?.patchState == PatchInstallState.PATCHED
 
     private fun presetDryRunSummary(precondition: ConfigPresetPrecondition): String = buildString {
         val preset = precondition.preset

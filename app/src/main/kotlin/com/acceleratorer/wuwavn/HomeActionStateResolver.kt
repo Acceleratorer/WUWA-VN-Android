@@ -38,12 +38,12 @@ object HomeActionStateResolver {
                 installPatchEnabled = installedState.hasTrustedBackup,
                 removePatchEnabled = false,
                 applySafeEnabled = installedState.hasTrustedBackup,
-                applyBalancedEnabled = installedState.hasTrustedBackup,
+                applyBalancedEnabled = false,
                 restoreEnabled = installedState.hasTrustedBackup,
                 backupEnabled = true,
                 downloadPatchEnabled = true,
                 primaryHint = if (installedState.hasTrustedBackup) {
-                    "Original state detected. Patch install is available."
+                    "Original state detected. Install Vietnamese Patch before applying Balanced."
                 } else {
                     "Original state detected. Run Backup Game Configs before patch install."
                 },

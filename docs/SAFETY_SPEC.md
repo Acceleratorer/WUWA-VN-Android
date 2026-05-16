@@ -48,7 +48,7 @@ Each backup should include copied config files and metadata similar to:
 {
   "created_at": "2026-05-15T22:30:00+07:00",
   "game_package": "com.kurogame.wutheringwaves.global",
-  "app_version": "3.3.5",
+  "app_version": "3.3.6",
   "patch_version": "wuwa-3.3-vi-2026.05",
   "backup_type": "shizuku_read_only_config_backup",
   "game_write_enabled": false,
@@ -129,6 +129,7 @@ v3.3.2: bundled launcher icon refresh
 v3.3.3: smart installed-state detection and UI action gating
 v3.3.4: Balanced config preset dry-run after smart state validation
 v3.3.5: Balanced config preset write after dry-run validation
+v3.3.6: Balanced write stability gate requiring PATCHED state
 future milestone: Performance config preset write
 future milestone: Max Graphics preset with strong warning
 ```
@@ -236,8 +237,8 @@ Safe config preset write must not:
 {
   "manifest_version": 3,
   "app": {
-    "version_name": "3.3.5",
-    "version_code": 39,
+    "version_name": "3.3.6",
+    "version_code": 40,
     "supported_game_version": "3.3",
     "minimum_game_version": "3.3"
   },
@@ -297,7 +298,7 @@ Remove patch write must not:
 
 ## Balanced config preset write
 
-`v3.3.5` may write only the bundled Balanced templates for:
+`v3.3.6` may write only the bundled Balanced templates for:
 
 ```text
 UE4Game/Client/Client/Saved/Config/Android/Engine.ini
@@ -311,7 +312,7 @@ Balanced config preset write must require:
 - Shizuku state is `READY`
 - A trusted VERIFIED backup exists
 - The preset availability is `WRITE_ENABLED`
-- The current patch state is `ORIGINAL` or `PATCHED`
+- The current patch state is `PATCHED`
 - The template set contains exactly the three config files
 - Two confirmations before writing
 
@@ -326,7 +327,8 @@ Balanced config preset write must not:
 
 - Add a new Shizuku write method
 - Write PAK files
-- Continue when the current patch state is `PARTIAL` or `UNKNOWN`
+- Continue when the current patch state is `ORIGINAL`, `PARTIAL`, or `UNKNOWN`
+- Create a state where `MountLang_en.txt` points to `WuWaVH_99_P.pak` while the PAK is missing
 - Enable Performance or Max Graphics
 
 ## Installed state detection
