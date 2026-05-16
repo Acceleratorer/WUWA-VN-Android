@@ -14,7 +14,7 @@ data class PatchDryRun(
         appendList("Files to modify:", filesToModify)
         append("\nBackup target:\n")
         append(backupDirectory.absolutePath)
-        append("\n\nApply Patch remains locked until backup/restore and Shizuku file writing are tested on a real device.")
+        append("\n\nv2.6.0 can install only WuWaVH_99_P.pak. Config file modification remains locked for a later release.")
     }
 
     private fun StringBuilder.appendList(title: String, values: List<String>) {

@@ -33,6 +33,12 @@ class MainActivity : Activity() {
     private val restoreDryRunPlanner = RestoreDryRunPlanner(backupManager)
     private val restoreWriter = ShizukuRestoreWriter()
     private val downloadClient = DownloadClient()
+    private val patchWritePreconditionChecker = PatchWritePreconditionChecker(
+        manifestRepository,
+        downloadClient,
+        restoreDryRunPlanner,
+    )
+    private val patchWriter = ShizukuPatchWriter()
     private val statusRenderer = StatusRenderer(manifestRepository, shizukuFileSystem)
 
     private lateinit var dialogs: DialogFactory
@@ -90,6 +96,10 @@ class MainActivity : Activity() {
             manifestRepository = manifestRepository,
             shizukuFileSystem = shizukuFileSystem,
             downloadClient = downloadClient,
+            patchWritePreconditionChecker = patchWritePreconditionChecker,
+            patchWriter = patchWriter,
+            gamePackageDetector = gamePackageDetector,
+            shizukuStateChecker = shizukuStateChecker,
             dialogs = dialogs,
             onBackupPath = { path -> lastBackupPath = path },
         )
@@ -155,7 +165,11 @@ class MainActivity : Activity() {
         }
 
         root.addView(space(14))
-        root.addView(primaryButton("Show Patch Plan") {
+        root.addView(primaryButton("Install Vietnamese Patch") {
+            refreshStatus()
+            patchPreparationController.showPatchWriteDryRun(gameState, shizukuState)
+        })
+        root.addView(button("Show Patch Plan") {
             refreshStatus()
             patchPreparationController.showPatchDryRun(gameState, shizukuState)
         })

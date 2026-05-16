@@ -12,18 +12,33 @@ class DownloadClient {
         fun onProgress(message: String)
     }
 
+    fun patchFile(context: Context, manifest: PatchManifest): File {
+        val patchDir = context.getExternalFilesDir("patches")
+            ?: File(context.filesDir, "patches")
+        return File(patchDir, manifest.pakFileName)
+    }
+
+    fun verifiedPatchFile(context: Context, manifest: PatchManifest): File? {
+        val file = patchFile(context, manifest)
+        return if (file.isFile && Sha256Verifier.verify(file, manifest.pakSha256)) {
+            file
+        } else {
+            null
+        }
+    }
+
     fun downloadAndVerify(
         context: Context,
         manifest: PatchManifest,
         progressListener: ProgressListener,
     ): File {
-        val patchDir = context.getExternalFilesDir("patches")
-            ?: File(context.filesDir, "patches")
+        val patchDir = patchFile(context, manifest).parentFile
+            ?: throw IllegalStateException("Could not locate patch directory.")
         if (!patchDir.exists() && !patchDir.mkdirs()) {
             throw IllegalStateException("Could not create patch directory: ${patchDir.absolutePath}")
         }
 
-        val destination = File(patchDir, manifest.pakFileName)
+        val destination = patchFile(context, manifest)
         if (destination.exists() && Sha256Verifier.verify(destination, manifest.pakSha256)) {
             progressListener.onProgress("Patch download: already verified")
             return destination

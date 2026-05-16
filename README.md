@@ -2,7 +2,7 @@
 
 Ứng dụng hỗ trợ cài bản Việt hoá cho Wuthering Waves trên Android.
 
-> Trạng thái hiện tại: bản `v2.5.0` là APK release-signed sạch, source app đã được rebuild sang Kotlin, có kiểm tra game/Shizuku, backup read-only, verify SHA-256, restore dry-run, và restore write cho backup gốc đã VERIFIED. App chỉ restore `Engine.ini`, `DeviceProfiles.ini`, `MountLang_en.txt` từ backup tin cậy sau hai bước xác nhận. Patch write vào game vẫn đang khóa.
+> Trạng thái hiện tại: bản `v2.6.0` là APK release-signed sạch, source app đã được rebuild sang Kotlin, có kiểm tra game/Shizuku, backup read-only, verify SHA-256, restore write cho backup gốc đã VERIFIED, và cài patch PAK đầu tiên. App chỉ ghi `WuWaVH_99_P.pak` sau khi có backup tin cậy, PAK đã verify, Shizuku READY, và hai bước xác nhận. Ghi config preset vẫn đang khóa.
 
 ## Tính Năng
 
@@ -11,6 +11,7 @@
 - Sao lưu read-only các file cấu hình gốc trước khi chỉnh sửa
 - Restore dry-run: liệt kê backup, verify metadata/SHA-256, show restore plan
 - Restore file gốc từ backup đã VERIFIED bằng Shizuku
+- Cài bản Việt hoá PAK-only: chỉ ghi `WuWaVH_99_P.pak`
 - Hỗ trợ Shizuku để thao tác với thư mục game
 - Hỗ trợ cấu hình đồ hoạ: Safe, Balanced, Performance, Max Graphics
 - Tải PAK vào app storage và kiểm tra SHA-256 trước khi cho phép bước tiếp theo
@@ -48,7 +49,8 @@
 7. Kiểm tra danh sách file sẽ thay đổi.
 8. Bấm **Backup Game Configs** để copy read-only `Engine.ini`, `DeviceProfiles.ini`, `MountLang_en.txt` vào backup.
 9. Bấm **Download & Verify Patch** để tải PAK và kiểm tra SHA-256.
-10. Bấm **Restore Original Files** để kiểm tra backup và restore file gốc nếu tất cả file đều VERIFIED.
+10. Bấm **Install Vietnamese Patch** để xem patch write dry-run, xác nhận hai lần, rồi cài `WuWaVH_99_P.pak`.
+11. Bấm **Restore Original Files** nếu cần khôi phục file gốc từ backup VERIFIED.
 
 ## Verify APK
 
@@ -59,7 +61,7 @@ Không cài APK từ mirror lạ, link chat riêng, hoặc file không có SHA-2
 Ví dụ file phát hành hợp lệ:
 
 ```text
-WUWA-VN-v2.5.0-release.apk
+WUWA-VN-v2.6.0-release.apk
 ```
 
 Không phát hành file `app-debug.apk` cho người dùng phổ thông.
@@ -67,14 +69,14 @@ Không phát hành file `app-debug.apk` cho người dùng phổ thông.
 Trước khi phát hành, kiểm tra chữ ký:
 
 ```bash
-apksigner verify --print-certs WUWA-VN-v2.5.0-release.apk
+apksigner verify --print-certs WUWA-VN-v2.6.0-release.apk
 ```
 
 ## Cách Khôi Phục
 
 Mở app, chọn **Restore Original Files**, chọn bản backup muốn kiểm tra, xem restore dry-run, rồi xác nhận hai lần nếu muốn restore file gốc.
 
-Từ `v2.5.0`, backup được lưu trong thư mục app-specific external storage để tránh xin quyền lưu trữ rộng:
+Backup được lưu trong thư mục app-specific external storage để tránh xin quyền lưu trữ rộng:
 
 ```text
 Android/data/com.acceleratorer.wuwavn/files/WUWA-VH-Backup/
@@ -129,11 +131,11 @@ Quyền yêu cầu cài APK chỉ dùng khi người dùng chọn cập nhật a
 - Game vẫn đang mở và file có thể bị khoá
 - Không đủ dung lượng để tạo backup
 - Android chặn cài APK từ nguồn không xác định
-- Bản `v2.5.0` chỉ restore file gốc từ backup VERIFIED; patch write vẫn khóa
+- Bản `v2.6.0` chỉ cài PAK Việt hoá; ghi config preset vẫn khóa
 
 ## Roadmap
 
-- `v2.6.0`: patch write unlock after verified backup, verified PAK, Shizuku READY, and WUWA Global detection.
+- `v2.7.0`: config preset writing, bắt đầu với Safe / Balanced.
 
 Source app hiện đã được migrate sang Kotlin. Build script vẫn là manual pipeline nhẹ, có download Kotlin compiler `2.0.21` từ JetBrains và verify SHA-256 trước khi compile.
 
@@ -152,7 +154,7 @@ Script sẽ tự kiểm tra Android SDK build-tools `36.0.0`, download và verif
 Khi gặp lỗi, hãy gửi kèm log trong app nếu có:
 
 ```text
-[22:31:10] App version: 2.5.0
+[22:31:10] App version: 2.6.0
 [22:31:10] Android version: 14
 [22:31:11] Shizuku: running
 [22:31:11] Permission: granted
@@ -166,7 +168,8 @@ Khi gặp lỗi, hãy gửi kèm log trong app nếu có:
 [22:31:18] Restore write: success
 [22:31:19] Patch download: success
 [22:31:19] SHA-256: verified
-[22:31:20] Patch write: locked
+[22:31:20] Patch write: started
+[22:31:25] Patch write: verified
 ```
 
 ## Security Checklist

@@ -16,6 +16,6 @@ class StatusRenderer(
             "Patch SHA-256: ${manifest.pakSha256.take(12)}...\n" +
             "Mode: Safe / Default\n" +
             "Restore writing: ${if (shizukuFileSystem.isRestoreWriteEnabled(shizukuState)) "enabled" else "locked"}\n" +
-            "Patch writing: ${if (shizukuFileSystem.isPatchWriteEnabled()) "enabled" else "locked"}"
+            "Patch writing: ${shizukuFileSystem.patchWriteStatus(shizukuState)}"
     }
 }

@@ -53,8 +53,8 @@ if (Test-Path $VersionFile) {
     }
 }
 
-$VersionName = if ($env:WUWA_VERSION_NAME) { $env:WUWA_VERSION_NAME } elseif ($VersionProperties["VERSION_NAME"]) { $VersionProperties["VERSION_NAME"] } else { "2.5.0" }
-$VersionCode = if ($env:WUWA_VERSION_CODE) { $env:WUWA_VERSION_CODE } elseif ($VersionProperties["VERSION_CODE"]) { $VersionProperties["VERSION_CODE"] } else { "29" }
+$VersionName = if ($env:WUWA_VERSION_NAME) { $env:WUWA_VERSION_NAME } elseif ($VersionProperties["VERSION_NAME"]) { $VersionProperties["VERSION_NAME"] } else { "2.6.0" }
+$VersionCode = if ($env:WUWA_VERSION_CODE) { $env:WUWA_VERSION_CODE } elseif ($VersionProperties["VERSION_CODE"]) { $VersionProperties["VERSION_CODE"] } else { "30" }
 $PackageName = "com.acceleratorer.wuwavn"
 $ShizukuVersion = "13.1.5"
 $ShizukuApiSha256 = "4def9bde498ef8626614c2fc5db9af4749c86f16f6c33e3f5658d35e70bab59b"
@@ -67,6 +67,7 @@ $CompiledRes = Join-Path $Out "compiled-res.zip"
 $Generated = Join-Path $Out "gen"
 $GeneratedAidl = Join-Path $Out "aidl"
 $Classes = Join-Path $Out "classes"
+$ClassesJar = Join-Path $Out "classes.jar"
 $Dex = Join-Path $Out "dex"
 $BaseApk = Join-Path $Out "base.apk"
 $UnsignedApk = Join-Path $Out "unsigned.apk"
@@ -220,8 +221,10 @@ if (Test-Path $AppKotlinDir) {
     }
 }
 
-$ClassFiles = Get-ChildItem -Path $Classes -Recurse -Filter "*.class" | ForEach-Object { $_.FullName }
-$D8Inputs = @("--min-api", "30", "--output", $Dex) + $ClassFiles + $RuntimeJars
+& $Jar cf $ClassesJar -C $Classes "."
+Assert-LastExitCode "jar classes"
+
+$D8Inputs = @("--min-api", "30", "--output", $Dex, $ClassesJar) + $RuntimeJars
 & $D8 @D8Inputs
 Assert-LastExitCode "d8"
 

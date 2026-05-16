@@ -53,6 +53,8 @@ class PatchDryRunPlanner(
 
         fun backupRelativePaths(): List<String> = BACKUP_RELATIVE_PATHS
 
+        fun patchPakRelativePath(): String = PATCH_PAK
+
         fun displayName(relativePath: String): String {
             val normalized = relativePath.replace('\\', '/')
             val slash = normalized.lastIndexOf('/')

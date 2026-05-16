@@ -10,10 +10,15 @@ class PatchPreparationController(
     private val manifestRepository: PatchManifestRepository,
     private val shizukuFileSystem: ShizukuFileSystem,
     private val downloadClient: DownloadClient,
+    private val patchWritePreconditionChecker: PatchWritePreconditionChecker,
+    private val patchWriter: ShizukuPatchWriter,
+    private val gamePackageDetector: GamePackageDetector,
+    private val shizukuStateChecker: ShizukuStateChecker,
     private val dialogs: DialogFactory,
     private val onBackupPath: (String) -> Unit,
 ) {
     @Volatile private var patchPreparationRunning = false
+    @Volatile private var patchWriteRunning = false
 
     fun showPatchDryRun(
         gameState: GamePackageDetector.State,
@@ -61,7 +66,7 @@ class PatchPreparationController(
                 activity.runOnUiThread {
                     dialogs.showMessage(
                         "Patch verified",
-                        "Patch was downloaded and verified successfully.\n\nUse Backup Game Configs before restore or future patch apply. Patch writing is still locked.",
+                        "Patch was downloaded and verified successfully.\n\nUse Backup Game Configs, then Install Vietnamese Patch. v2.6.0 writes only WuWaVH_99_P.pak; config writing remains locked.",
                     )
                 }
             } catch (exception: Exception) {
@@ -73,5 +78,129 @@ class PatchPreparationController(
                 patchPreparationRunning = false
             }
         }.start()
+    }
+
+    fun showPatchWriteDryRun(
+        gameState: GamePackageDetector.State,
+        shizukuState: ShizukuState,
+    ) {
+        if (patchWriteRunning) {
+            Toast.makeText(activity, "Patch install is already running.", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val precondition = patchWritePreconditionChecker.check(activity, gameState, shizukuState)
+        val summary = patchWriteDryRunSummary(precondition)
+        if (!precondition.isReady()) {
+            dialogs.showMessage("Patch write dry run", summary)
+            logger.add("Patch write: blocked - ${precondition.failures.joinToString("; ")}")
+            return
+        }
+
+        dialogs.showConfirmation(
+            title = "Patch write dry run",
+            message = summary + "\n\nContinue to install the Vietnamese PAK?",
+            positiveLabel = "Continue Install",
+        ) {
+            showFinalPatchConfirmation(precondition.plan!!)
+        }
+    }
+
+    private fun showFinalPatchConfirmation(plan: PatchWritePlan) {
+        dialogs.showConfirmation(
+            title = "Final patch confirmation",
+            message = "This will write only this allowlisted patch file into the game folder:\n\n" +
+                "- ${plan.targetDisplayName}\n\n" +
+                "Config files will not be modified. Continue only if backup and patch details look correct.",
+            positiveLabel = "Install PAK Now",
+        ) {
+            installPatchPak()
+        }
+    }
+
+    private fun installPatchPak() {
+        if (patchWriteRunning) {
+            Toast.makeText(activity, "Patch install is already running.", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val gameState = gamePackageDetector.detect(activity)
+        val shizukuState = shizukuStateChecker.check(activity)
+        val precondition = patchWritePreconditionChecker.check(activity, gameState, shizukuState)
+        val plan = precondition.plan
+        if (plan == null) {
+            dialogs.showMessage("Patch install blocked", patchWriteDryRunSummary(precondition))
+            logger.add("Patch write: blocked before write - ${precondition.failures.joinToString("; ")}")
+            return
+        }
+
+        patchWriteRunning = true
+        logger.add("Patch write: started")
+
+        Thread {
+            try {
+                val result = patchWriter.writePatchPak(activity, plan, logger)
+                logger.add("Patch write: success")
+                activity.runOnUiThread {
+                    dialogs.showMessage("Patch installed", patchWriteResultSummary(result))
+                }
+            } catch (exception: Exception) {
+                logger.add("Patch write failed: ${exception.message}")
+                activity.runOnUiThread {
+                    dialogs.showMessage("Patch install failed", exception.message.orEmpty())
+                }
+            } finally {
+                patchWriteRunning = false
+            }
+        }.start()
+    }
+
+    private fun patchWriteDryRunSummary(precondition: PatchWritePrecondition): String = buildString {
+        val plan = precondition.plan
+        append("Patch write mode:\n")
+            .append("PAK-only install\n\n")
+            .append("Files to write:\n")
+            .append("- WuWaVH_99_P.pak\n\n")
+            .append("Config files:\n")
+            .append("Locked. Engine.ini, DeviceProfiles.ini, and MountLang_en.txt will not be modified.\n")
+
+        if (plan != null) {
+            append("\nVerified PAK:\n")
+                .append(plan.patchFile.absolutePath)
+                .append("\nSize: ")
+                .append(plan.patchSizeBytes)
+                .append(" bytes\nSHA-256: ")
+                .append(plan.patchSha256)
+                .append("\n\nTrusted backup:\n")
+                .append(plan.trustedBackup.sessionDirectory.absolutePath)
+                .append("\nCreated at: ")
+                .append(plan.trustedBackup.createdAt)
+                .append("\nVerified config files: ")
+                .append(plan.trustedBackup.verifiedFiles)
+                .append("/")
+                .append(PatchDryRunPlanner.backupRelativePaths().size)
+                .append("\n\nTarget:\n")
+                .append(plan.targetRelativePath)
+                .append("\n\nAfter write:\n")
+                .append("The app will re-read the game PAK and verify size + SHA-256.")
+        } else {
+            append("\nBlocked:\n")
+            for (failure in precondition.failures) {
+                append("- ").append(failure).append('\n')
+            }
+        }
+    }
+
+    private fun patchWriteResultSummary(result: ShizukuPatchWriter.PatchWriteResult): String = buildString {
+        append("Installed patch file:\n")
+            .append(result.targetDisplayName)
+            .append("\n\nTarget:\n")
+            .append(result.targetRelativePath)
+            .append("\n\nSize:\n")
+            .append(result.sizeBytes)
+            .append(" bytes\n\nSHA-256:\n")
+            .append(result.sha256)
+            .append("\n\nTarget file was re-read from the game folder and verified.")
+            .append("\n\nConfig writing remains locked.")
     }
 }
