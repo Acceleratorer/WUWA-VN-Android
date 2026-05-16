@@ -2,7 +2,7 @@
 
 Ứng dụng hỗ trợ cài bản Việt hoá cho Wuthering Waves trên Android.
 
-> Trạng thái hiện tại: bản `v3.3.1` là Wuthering Waves Global 3.3 remove-patch recovery release. App có kiểm tra game/Shizuku, hiển thị version game nếu Android cung cấp, backup read-only, verify SHA-256, restore write cho backup gốc đã VERIFIED, cài patch PAK, ghi config preset Safe / Default, ảnh header trong UI, và Remove Vietnamese Patch write. App chỉ ghi `WuWaVH_99_P.pak`, xóa đúng `WuWaVH_99_P.pak`, hoặc ghi 3 file config Safe sau khi có backup tin cậy, Shizuku READY, và hai bước xác nhận. Balanced, Performance, và Max Graphics vẫn đang khóa.
+> Trạng thái hiện tại: bản `v3.3.2` là Wuthering Waves Global 3.3 icon refresh + remove-patch recovery release. App có kiểm tra game/Shizuku, hiển thị version game nếu Android cung cấp, backup read-only, verify SHA-256, restore write cho backup gốc đã VERIFIED, cài patch PAK, ghi config preset Safe / Default, icon artwork mới, ảnh header trong UI, và Remove Vietnamese Patch write. App chỉ ghi `WuWaVH_99_P.pak`, xóa đúng `WuWaVH_99_P.pak`, hoặc ghi 3 file config Safe sau khi có backup tin cậy, Shizuku READY, và hai bước xác nhận. Balanced, Performance, và Max Graphics vẫn đang khóa.
 
 ## Tính Năng
 
@@ -18,6 +18,7 @@
 - Remove Vietnamese Patch: restore `MountLang_en.txt` từ backup VERIFIED, xoá đúng `WuWaVH_99_P.pak`, rồi verify PAK không còn tồn tại
 - Chuẩn bị cấu hình đồ hoạ theo lộ trình: Balanced, Performance, Max Graphics vẫn khóa
 - Header UI dùng artwork bundled trong APK, không tải ảnh từ mạng
+- Icon app dùng artwork bundled trong APK
 - Tải PAK vào app storage và kiểm tra SHA-256 trước khi cho phép bước tiếp theo
 - Ghi `metadata.json` với danh sách file backup thật, dung lượng và SHA-256
 - Copy đường dẫn backup để dễ gửi log hoặc tự kiểm tra
@@ -68,7 +69,7 @@ Không cài APK từ mirror lạ, link chat riêng, hoặc file không có SHA-2
 Ví dụ file phát hành hợp lệ:
 
 ```text
-WUWA-VN-v3.3.1-release.apk
+WUWA-VN-v3.3.2-release.apk
 ```
 
 Không phát hành file `app-debug.apk` cho người dùng phổ thông.
@@ -76,7 +77,7 @@ Không phát hành file `app-debug.apk` cho người dùng phổ thông.
 Trước khi phát hành, kiểm tra chữ ký:
 
 ```bash
-apksigner verify --print-certs WUWA-VN-v3.3.1-release.apk
+apksigner verify --print-certs WUWA-VN-v3.3.2-release.apk
 ```
 
 ## Cách Khôi Phục
@@ -103,12 +104,12 @@ Restore chỉ được mở khi backup thoả tất cả điều kiện:
 - Shizuku đang READY
 - Wuthering Waves Global được phát hiện
 
-Từ `v3.3.1`, app tập trung vào compatibility với Wuthering Waves Global `3.3`. PAK-only patch write, Remove PAK write, và Safe / Default config preset write vẫn được mở khóa. Balanced, Performance, và Max Graphics đang khóa.
+Từ `v3.3.2`, app tập trung vào compatibility với Wuthering Waves Global `3.3`. PAK-only patch write, Remove PAK write, và Safe / Default config preset write vẫn được mở khóa. Balanced, Performance, và Max Graphics đang khóa.
 
 ## Các Chế Độ Cấu Hình
 
 - **Safe / Default**: đã mở khóa ở `v2.7.0`, ít thay đổi nhất, không bật CVars đồ hoạ nặng.
-- **Balanced**: đang khóa lại ở `v3.3.1` để ưu tiên compatibility và rollback an toàn. Không bật trong UI.
+- **Balanced**: đang khóa lại ở `v3.3.2` để ưu tiên compatibility và rollback an toàn. Không bật trong UI.
 - **Performance**: dự kiến sau khi compatibility `3.3` ổn định, dành cho máy tầm trung hoặc yếu.
 - **Max Graphics**: dự kiến sau cùng, cấu hình nặng, có thể gây nóng máy, hao pin, crash hoặc tụt FPS. Chỉ nên dùng với máy mạnh.
 
@@ -138,7 +139,7 @@ Hiện tại app mở GitHub Releases để người dùng tự tải bản mớ
 - Game vẫn đang mở và file có thể bị khoá
 - Không đủ dung lượng để tạo backup
 - Android chặn cài APK từ nguồn không xác định
-- Bản `v3.3.1` chỉ mở khóa Safe / Default config preset; Balanced, Performance, và Max Graphics vẫn khóa
+- Bản `v3.3.2` chỉ mở khóa Safe / Default config preset; Balanced, Performance, và Max Graphics vẫn khóa
 - Remove Vietnamese Patch cần backup VERIFIED để restore `MountLang_en.txt` trước khi xoá PAK
 
 ## Roadmap
@@ -165,7 +166,7 @@ Script sẽ tự kiểm tra Android SDK build-tools `36.0.0`, download và verif
 Khi gặp lỗi, hãy gửi kèm log trong app nếu có:
 
 ```text
-[22:31:10] App version: 3.3.1
+[22:31:10] App version: 3.3.2
 [22:31:10] Android version: 14
 [22:31:11] Shizuku: running
 [22:31:11] Permission: granted

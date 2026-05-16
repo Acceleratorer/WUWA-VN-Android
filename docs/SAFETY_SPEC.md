@@ -48,7 +48,7 @@ Each backup should include copied config files and metadata similar to:
 {
   "created_at": "2026-05-15T22:30:00+07:00",
   "game_package": "com.kurogame.wutheringwaves.global",
-  "app_version": "3.3.1",
+  "app_version": "3.3.2",
   "patch_version": "wuwa-3.3-vi-2026.05",
   "backup_type": "shizuku_read_only_config_backup",
   "game_write_enabled": false,
@@ -125,6 +125,7 @@ v2.6.0: PAK-only patch write unlock
 v2.7.0: Safe / Default config preset write unlock
 v3.3.0: WUWA Global 3.3 compatibility metadata and Remove Patch dry-run
 v3.3.1: Remove Patch write unlock with MountLang rollback
+v3.3.2: bundled launcher icon refresh
 future milestone: Balanced config preset dry-run after WUWA 3.3 validation
 future milestone: Balanced config preset write after dry-run validation
 future milestone: Performance config preset write
@@ -234,8 +235,8 @@ Safe config preset write must not:
 {
   "manifest_version": 3,
   "app": {
-    "version_name": "3.3.1",
-    "version_code": 35,
+    "version_name": "3.3.2",
+    "version_code": 36,
     "supported_game_version": "3.3",
     "minimum_game_version": "3.3"
   },
@@ -295,7 +296,7 @@ Remove patch write must not:
 
 ## Balanced config preset write
 
-Balanced config preset write is locked in `v3.3.1` while the launcher focuses on WUWA Global `3.3` compatibility and rollback safety.
+Balanced config preset write is locked in `v3.3.2` while the launcher focuses on WUWA Global `3.3` compatibility and rollback safety.
 
 ## Logs
 
