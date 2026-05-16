@@ -67,7 +67,7 @@ class MainActivity : Activity() {
     private lateinit var backupButton: Button
     private lateinit var downloadPatchButton: Button
     private lateinit var applySafeButton: Button
-    private lateinit var previewBalancedButton: Button
+    private lateinit var applyBalancedButton: Button
     private lateinit var removePatchButton: Button
     private lateinit var restoreButton: Button
     private var shizukuState = ShizukuState.NOT_INSTALLED
@@ -159,6 +159,7 @@ class MainActivity : Activity() {
             configPresetWriter = configPresetWriter,
             gamePackageDetector = gamePackageDetector,
             shizukuStateChecker = shizukuStateChecker,
+            installedStateProvider = { detectInstalledStateSnapshot() },
             dialogs = dialogs,
             onPresetFinished = { refreshStatus() },
         )
@@ -234,12 +235,12 @@ class MainActivity : Activity() {
             configPresetController.showSafeDefaultDryRun(gameState, shizukuState)
         }
         root.addView(applySafeButton)
-        previewBalancedButton = button("Preview Balanced Preset") {
+        applyBalancedButton = button("Apply Balanced Preset") {
             refreshStatus()
-            if (blockIfDisabled(previewBalancedButton, "Preview Balanced Preset")) return@button
+            if (blockIfDisabled(applyBalancedButton, "Apply Balanced Preset")) return@button
             configPresetController.showBalancedDryRun(gameState, shizukuState, installedState)
         }
-        root.addView(previewBalancedButton)
+        root.addView(applyBalancedButton)
         root.addView(button("Update Vietnamese Patch") {
             openUrl(AppConstants.RELEASES_URL)
             logger.add("Update check: opened GitHub Releases")
@@ -332,7 +333,7 @@ class MainActivity : Activity() {
         installPatchButton.isEnabled = state.installPatchEnabled
         removePatchButton.isEnabled = state.removePatchEnabled
         applySafeButton.isEnabled = state.applySafeEnabled
-        previewBalancedButton.isEnabled = state.previewBalancedEnabled
+        applyBalancedButton.isEnabled = state.applyBalancedEnabled
         restoreButton.isEnabled = state.restoreEnabled
         backupButton.isEnabled = state.backupEnabled
         downloadPatchButton.isEnabled = state.downloadPatchEnabled
@@ -362,6 +363,13 @@ class MainActivity : Activity() {
         logger.add("State: pak=${state.pakExists}, mountLang=${state.mountLangPointsToPak}")
         logger.add("State: trustedBackup=${state.hasTrustedBackup}")
         logger.add("Smart UI: ${actions.primaryHint}")
+    }
+
+    private fun detectInstalledStateSnapshot(): InstalledState {
+        val currentGameState = gamePackageDetector.detect(this)
+        val currentGameInfo = gamePackageDetector.detectGlobalInfo(this)
+        val currentShizukuState = shizukuStateChecker.check(this)
+        return installedStateDetector.detect(this, currentGameInfo, currentGameState, currentShizukuState)
     }
 
     private fun blockIfDisabled(button: Button, actionName: String): Boolean {

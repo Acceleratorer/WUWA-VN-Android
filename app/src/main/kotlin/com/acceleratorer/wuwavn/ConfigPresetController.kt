@@ -11,6 +11,7 @@ class ConfigPresetController(
     private val configPresetWriter: ShizukuConfigPresetWriter,
     private val gamePackageDetector: GamePackageDetector,
     private val shizukuStateChecker: ShizukuStateChecker,
+    private val installedStateProvider: () -> InstalledState?,
     private val dialogs: DialogFactory,
     private val onPresetFinished: () -> Unit,
 ) {
@@ -33,14 +34,42 @@ class ConfigPresetController(
             return
         }
 
+        val precondition = preconditionChecker.check(
+            ConfigPresetId.BALANCED,
+            activity,
+            gameState,
+            shizukuState,
+        )
         val dryRun = balancedPresetDryRunPlanner.plan(
             context = activity,
             gameState = gameState,
             shizukuState = shizukuState,
             installedState = installedState,
         )
-        dialogs.showMessage("Balanced Preset Preview", dryRun.describe())
-        logger.add("Balanced preview: shown")
+        val visibleDryRun = if (precondition.isReady()) {
+            dryRun
+        } else {
+            dryRun.copy(
+                writeEnabled = false,
+                blockedReason = dryRun.blockedReason + "\n\nWrite preconditions:\n" +
+                    precondition.failures.joinToString("\n") { "- $it" },
+            )
+        }
+        if (!precondition.isReady() || !visibleDryRun.writeEnabled) {
+            dialogs.showMessage("Balanced preset blocked", visibleDryRun.describe())
+            val reason = precondition.failures.ifEmpty { listOf("unsafe installed state or missing write precondition") }
+            logger.add("Balanced preset: blocked - ${reason.joinToString("; ")}")
+            return
+        }
+
+        dialogs.showConfirmation(
+            title = "Balanced preset dry run",
+            message = visibleDryRun.describe() + "\n\nContinue to apply Balanced preset?",
+            positiveLabel = "Continue Balanced",
+        ) {
+            showFinalPresetConfirmation(precondition.plan!!)
+        }
+        logger.add("Balanced preset dry run: shown")
     }
 
     private fun showPresetDryRun(
@@ -74,13 +103,12 @@ class ConfigPresetController(
     private fun showFinalPresetConfirmation(plan: ConfigPresetPlan) {
         dialogs.showConfirmation(
             title = "Final ${plan.preset.name} confirmation",
-            message = "This will write only bundled ${plan.preset.name} templates to these allowlisted files:\n\n" +
-                "- Engine.ini\n" +
-                "- DeviceProfiles.ini\n" +
-                "- MountLang_en.txt\n\n" +
-                warningBlock(plan.preset) +
-                "Performance and Max Graphics remain locked. Continue only if the trusted backup details look correct.",
-            positiveLabel = "Apply ${plan.preset.name} Now",
+            message = finalConfirmationMessage(plan),
+            positiveLabel = if (plan.preset.id == ConfigPresetId.BALANCED) {
+                "Apply Balanced Now"
+            } else {
+                "Apply ${plan.preset.name} Now"
+            },
         ) {
             applyPreset(plan)
         }
@@ -106,6 +134,11 @@ class ConfigPresetController(
             logger.add("${plan.preset.name} preset: blocked - trusted backup changed after dry-run")
             return
         }
+        if (plan.preset.id == ConfigPresetId.BALANCED && !balancedWriteStateAllowed(installedStateProvider())) {
+            dialogs.showMessage("Balanced preset blocked", "Current patch state is PARTIAL or UNKNOWN. Use Remove Vietnamese Patch or Restore Original Files before applying Balanced.")
+            logger.add("Balanced preset: blocked before write - unsafe patch state")
+            return
+        }
 
         configWriteRunning = true
         logger.add("${plan.preset.name} preset: started")
@@ -128,6 +161,27 @@ class ConfigPresetController(
             }
         }.start()
     }
+
+    private fun finalConfirmationMessage(plan: ConfigPresetPlan): String {
+        val base = "This will write only bundled ${plan.preset.name} templates to these allowlisted files:\n\n" +
+            "- Engine.ini\n" +
+            "- DeviceProfiles.ini\n" +
+            "- MountLang_en.txt\n\n" +
+            warningBlock(plan.preset)
+
+        if (plan.preset.id != ConfigPresetId.BALANCED) {
+            return base + "Performance and Max Graphics remain locked. Continue only if the trusted backup details look correct."
+        }
+
+        return base +
+            "Risk level: MEDIUM\n\n" +
+            "This may change graphics quality and performance. Use Safe / Default if you see heat, lag, stutter, battery drain, or crash.\n\n" +
+            "Performance and Max Graphics remain locked. Continue only if you have a trusted backup."
+    }
+
+    private fun balancedWriteStateAllowed(installedState: InstalledState?): Boolean =
+        installedState?.patchState == PatchInstallState.ORIGINAL ||
+            installedState?.patchState == PatchInstallState.PATCHED
 
     private fun presetDryRunSummary(precondition: ConfigPresetPrecondition): String = buildString {
         val preset = precondition.preset
@@ -159,7 +213,11 @@ class ConfigPresetController(
         }
 
         append("\nConfig/CVar changes:\n")
-            .append("- No graphics CVars changed by this write path.\n")
+            .append(if (preset?.id == ConfigPresetId.BALANCED) {
+                "- Balanced planned CVars are shown in the Balanced dry-run dialog.\n"
+            } else {
+                "- No graphics CVars changed by this write path.\n"
+            })
 
         append("\nPreset rules:\n")
             .append("- No arbitrary config paths\n")

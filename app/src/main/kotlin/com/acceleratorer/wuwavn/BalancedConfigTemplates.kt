@@ -10,8 +10,8 @@ object BalancedConfigTemplates {
     private fun engineIni(): ConfigTemplateFile {
         val content = """
             [/Script/Engine.RendererSettings]
-            ; Balanced preset preview for WUWA VN Android.
-            ; No extreme graphics override in v3.3.4.
+            ; Balanced preset for WUWA VN Android.
+            ; No extreme graphics override in v3.3.5.
         """.trimIndent() + "\n"
 
         return templateFile(
@@ -24,7 +24,7 @@ object BalancedConfigTemplates {
     private fun deviceProfilesIni(): ConfigTemplateFile {
         val content = """
             [Android DeviceProfile]
-            ; Balanced preview only.
+            ; Balanced preset.
             ; Conservative visual tuning.
             +CVars=sg.ViewDistanceQuality=1
             +CVars=sg.ShadowQuality=1

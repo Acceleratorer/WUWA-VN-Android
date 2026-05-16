@@ -24,6 +24,9 @@ class BalancedPresetDryRunPlanner(
         if (trustedBackup == null) {
             failures.add("No trusted VERIFIED backup found. Run Backup Game Configs first.")
         }
+        if (!allowsBalancedWrite(installedState)) {
+            failures.add(stateBlockReason(installedState))
+        }
 
         val dryRun = diffPlanner.planBalancedPreview()
         val reasonParts = mutableListOf(dryRun.blockedReason)
@@ -35,19 +38,29 @@ class BalancedPresetDryRunPlanner(
         reasonParts.add(stateWarning(installedState))
 
         return dryRun.copy(
-            writeEnabled = false,
+            writeEnabled = dryRun.writeEnabled && failures.isEmpty(),
             blockedReason = reasonParts.joinToString("\n\n"),
         )
     }
 
+    private fun allowsBalancedWrite(installedState: InstalledState?): Boolean =
+        installedState?.patchState == PatchInstallState.ORIGINAL ||
+            installedState?.patchState == PatchInstallState.PATCHED
+
+    private fun stateBlockReason(installedState: InstalledState?): String = when (installedState?.patchState) {
+        PatchInstallState.PARTIAL -> "Current patch state is PARTIAL. Use Remove Vietnamese Patch or Restore Original Files before applying Balanced."
+        PatchInstallState.UNKNOWN, null -> "Current patch state is UNKNOWN. Refresh state and complete game/Shizuku setup before applying Balanced."
+        PatchInstallState.ORIGINAL, PatchInstallState.PATCHED -> "Balanced write is available for this state."
+    }
+
     private fun stateWarning(installedState: InstalledState?): String = when (installedState?.patchState) {
         PatchInstallState.ORIGINAL ->
-            "Current patch state is ORIGINAL. Balanced preview is safe, but install the patch before expecting the Vietnamese PAK mount to be active."
+            "Current patch state is ORIGINAL. Balanced can be applied, but install the patch before expecting the Vietnamese PAK mount to be active."
         PatchInstallState.PATCHED ->
-            "Current patch state is PATCHED. Balanced preview can be reviewed safely."
+            "Current patch state is PATCHED. Balanced can be applied after final confirmation."
         PatchInstallState.PARTIAL ->
-            "Current patch state is PARTIAL. Repair or restore before applying future presets."
+            "Current patch state is PARTIAL. Repair or restore before applying Balanced."
         PatchInstallState.UNKNOWN, null ->
-            "Current patch state is UNKNOWN. This preview will not write anything."
+            "Current patch state is UNKNOWN. Balanced write is blocked."
     }
 }

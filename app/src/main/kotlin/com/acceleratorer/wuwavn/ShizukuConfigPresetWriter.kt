@@ -89,8 +89,8 @@ class ShizukuConfigPresetWriter {
     }
 
     private fun requirePresetPlan(plan: ConfigPresetPlan) {
-        if (!ConfigPresets.isUnlocked(plan.preset.id)) {
-            throw IllegalStateException("${plan.preset.name} config preset is locked.")
+        if (!isWriteEnabledPreset(plan.preset.id)) {
+            throw IllegalStateException("${plan.preset.name} write is locked.")
         }
         val requiredPaths = PatchDryRunPlanner.backupRelativePaths().toSet()
         val templatePaths = plan.templateFiles.map { it.relativePath }.toSet()
@@ -111,7 +111,20 @@ class ShizukuConfigPresetWriter {
         if (plan.trustedBackup.verifiedFiles != PatchDryRunPlanner.backupRelativePaths().size) {
             throw IllegalStateException("Trusted backup is incomplete.")
         }
-        if (plan.preset.id == ConfigPresetId.BALANCED && hasForbiddenBalancedLine(plan.templateFiles)) {
+        if (plan.preset.id == ConfigPresetId.BALANCED) {
+            requireNoForbiddenBalancedTokens(plan.templateFiles)
+        }
+    }
+
+    private fun isWriteEnabledPreset(id: ConfigPresetId): Boolean = when (id) {
+        ConfigPresetId.SAFE_DEFAULT -> true
+        ConfigPresetId.BALANCED -> true
+        ConfigPresetId.PERFORMANCE -> false
+        ConfigPresetId.MAX_GRAPHICS -> false
+    }
+
+    private fun requireNoForbiddenBalancedTokens(templateFiles: List<ConfigTemplateFile>) {
+        if (hasForbiddenBalancedLine(templateFiles)) {
             throw IllegalStateException("Balanced preset contains a forbidden high-risk graphics or FPS setting.")
         }
     }

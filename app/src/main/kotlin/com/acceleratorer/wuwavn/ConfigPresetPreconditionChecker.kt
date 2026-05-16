@@ -4,6 +4,7 @@ import android.content.Context
 
 class ConfigPresetPreconditionChecker(
     private val restoreDryRunPlanner: RestoreDryRunPlanner,
+    private val presetRepository: ConfigPresetRepository = ConfigPresetRepository(),
 ) {
     fun check(
         presetId: ConfigPresetId,
@@ -12,11 +13,11 @@ class ConfigPresetPreconditionChecker(
         shizukuState: ShizukuState,
     ): ConfigPresetPrecondition {
         val failures = mutableListOf<String>()
-        val preset = ConfigPresets.get(presetId)
+        val preset = presetRepository.get(presetId)
         val templateFiles = preset.files
         val trustedBackup = TrustedBackupPolicy.findTrustedBackup(context, restoreDryRunPlanner)
 
-        if (!ConfigPresets.isUnlocked(preset.id)) {
+        if (preset.availability != PresetAvailability.WRITE_ENABLED) {
             val lockReason = when (preset.availability) {
                 PresetAvailability.DRY_RUN_ONLY -> "${preset.name} is preview-only in this release."
                 PresetAvailability.LOCKED -> "${preset.name} is still locked."
@@ -48,6 +49,7 @@ class ConfigPresetPreconditionChecker(
                 failures.add("${file.displayName} template hash mismatch.")
             }
         }
+        // v3.3.5: Balanced write is allowed, but high-risk graphics/FPS tokens remain forbidden.
         if (preset.id == ConfigPresetId.BALANCED && hasForbiddenBalancedLine(templateFiles)) {
             failures.add("Balanced preset contains a forbidden high-risk graphics or FPS setting.")
         }

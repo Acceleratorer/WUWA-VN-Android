@@ -23,7 +23,7 @@ data class ConfigPresetDryRun(
             .append("\nAvailability: ")
             .append(preset.availability)
             .append("\n\nWrite status:\n")
-            .append(if (writeEnabled) "WRITE ENABLED" else "LOCKED in v3.3.4. No game files will be modified.")
+            .append(if (writeEnabled) "WRITE ENABLED after dry-run and final confirmation." else "LOCKED. No game files will be modified.")
             .append("\n\nFiles that would be changed:\n")
 
         for (file in filesToWrite) {
@@ -75,6 +75,7 @@ data class ConfigPresetDryRun(
 class ConfigPresetDiffPlanner {
     fun planBalancedPreview(): ConfigPresetDryRun {
         val preset = ConfigPresetRepository().balanced()
+        val writeEnabled = preset.availability == PresetAvailability.WRITE_ENABLED
         return ConfigPresetDryRun(
             preset = preset,
             filesToWrite = preset.files,
@@ -115,8 +116,12 @@ class ConfigPresetDiffPlanner {
                     note = "Keep Vietnamese PAK mount path.",
                 ),
             ),
-            writeEnabled = false,
-            blockedReason = "Balanced write is locked in v3.3.4. This is preview only.",
+            writeEnabled = writeEnabled,
+            blockedReason = if (writeEnabled) {
+                "Balanced write is enabled in v3.3.5 only after this dry-run, trusted backup check, and final confirmation."
+            } else {
+                "Balanced write is locked. This is preview only."
+            },
         )
     }
 }

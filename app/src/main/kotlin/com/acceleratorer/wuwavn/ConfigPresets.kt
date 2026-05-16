@@ -4,12 +4,6 @@ object ConfigPresets {
     const val SAFE_DEFAULT_NAME = "Safe / Default"
     const val BALANCED_NAME = "Balanced"
 
-    fun get(id: ConfigPresetId): ConfigPreset =
-        ConfigPresetRepository().get(id)
-
-    fun isUnlocked(id: ConfigPresetId): Boolean =
-        ConfigPresetAvailabilityPolicy.availability(id) == PresetAvailability.WRITE_ENABLED
-
     fun safeDefaultFilesByName(): Map<String, ConfigTemplateFile> =
         safeDefaultFiles().associateBy { it.displayName }
 

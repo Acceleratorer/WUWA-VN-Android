@@ -33,12 +33,12 @@ class ConfigPresetRepository {
         displayName = "Balanced",
         riskLevel = PresetRiskLevel.MEDIUM,
         availability = ConfigPresetAvailabilityPolicy.availability(ConfigPresetId.BALANCED),
-        description = "Balanced visual preset preview. Dry-run only in v3.3.4.",
+        description = "Balanced visual preset with conservative config writes.",
         files = BalancedConfigTemplates.files(),
         warnings = listOf(
-            "Balanced preset is preview-only in v3.3.4.",
-            "No game files will be modified.",
-            "Real Balanced write is planned for a later release after testing.",
+            "Balanced preset may change visual quality and device performance.",
+            "Use Safe / Default if you experience heat, lag, stutter, battery drain, or crashes.",
+            "Performance and Max Graphics remain locked.",
         ),
     )
 

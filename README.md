@@ -2,7 +2,7 @@
 
 Ứng dụng hỗ trợ cài bản Việt hoá cho Wuthering Waves trên Android.
 
-> Trạng thái hiện tại: bản `v3.3.4` là Wuthering Waves Global 3.3 Balanced preview release. App hỗ trợ smart-state detection, backup, restore, PAK-only install, Remove Vietnamese Patch, Safe / Default config write, và Balanced config preset dry-run only. Balanced write, Performance, và Max Graphics vẫn đang khóa.
+> Trạng thái hiện tại: bản `v3.3.5` là Wuthering Waves Global 3.3 Balanced write release. App hỗ trợ smart-state detection, backup, restore, PAK-only install, Remove Vietnamese Patch, Safe / Default config write, và Balanced config preset write với trusted VERIFIED backup. Performance và Max Graphics vẫn đang khóa.
 
 ## Tính Năng
 
@@ -19,9 +19,9 @@
 - UI tự bật/tắt action theo trạng thái để tránh bấm đè hoặc thao tác sai
 - Ghi config preset **Safe / Default** từ template bundled, không bật CVars đồ hoạ nặng
 - Remove Vietnamese Patch: restore `MountLang_en.txt` từ backup VERIFIED, xoá đúng `WuWaVH_99_P.pak`, rồi verify PAK không còn tồn tại
-- Balanced config preset dry-run only: xem trước file và config sẽ thay đổi, không ghi vào game
-- Hiển thị exact planned config changes cho Balanced preset
-- Chuẩn bị cấu hình đồ hoạ theo lộ trình: Balanced write, Performance, Max Graphics vẫn khóa
+- Balanced config preset write: xem dry-run, xác nhận hai lần, rồi ghi đúng 3 file config bằng template bundled
+- Balanced vẫn chặn FPS unlock, Vulkan override, resolution override, và high-risk graphics tokens
+- Chuẩn bị cấu hình đồ hoạ theo lộ trình: Performance và Max Graphics vẫn khóa
 - Header UI dùng artwork bundled trong APK, không tải ảnh từ mạng
 - Icon app dùng artwork bundled trong APK
 - Tải PAK vào app storage và kiểm tra SHA-256 trước khi cho phép bước tiếp theo
@@ -62,7 +62,7 @@
 9. Bấm **Download & Verify Patch** để tải PAK và kiểm tra SHA-256.
 10. Bấm **Install Vietnamese Patch** để xem patch write dry-run, xác nhận hai lần, rồi cài `WuWaVH_99_P.pak`.
 11. Bấm **Apply Safe Config Preset** để xem config dry-run, xác nhận hai lần, rồi ghi `Engine.ini`, `DeviceProfiles.ini`, `MountLang_en.txt` bằng template bundled.
-12. Bấm **Preview Balanced Preset** nếu muốn xem trước các file và CVar Balanced sẽ thay đổi. Bản `v3.3.4` chỉ preview, không ghi file game.
+12. Bấm **Apply Balanced Preset** nếu muốn xem Balanced dry-run, xác nhận hai lần, rồi ghi `Engine.ini`, `DeviceProfiles.ini`, `MountLang_en.txt` bằng template bundled.
 13. Bấm **Remove Vietnamese Patch** nếu muốn rollback PAK: app sẽ restore `MountLang_en.txt` từ backup VERIFIED, xác nhận hai lần, xoá đúng `WuWaVH_99_P.pak`, rồi verify PAK không còn tồn tại.
 14. Bấm **Restore Original Files** nếu cần khôi phục file gốc từ backup VERIFIED.
 
@@ -75,7 +75,7 @@ Không cài APK từ mirror lạ, link chat riêng, hoặc file không có SHA-2
 Ví dụ file phát hành hợp lệ:
 
 ```text
-WUWA-VN-v3.3.4-release.apk
+WUWA-VN-v3.3.5-release.apk
 ```
 
 Không phát hành file `app-debug.apk` cho người dùng phổ thông.
@@ -83,7 +83,7 @@ Không phát hành file `app-debug.apk` cho người dùng phổ thông.
 Trước khi phát hành, kiểm tra chữ ký:
 
 ```bash
-apksigner verify --print-certs WUWA-VN-v3.3.4-release.apk
+apksigner verify --print-certs WUWA-VN-v3.3.5-release.apk
 ```
 
 ## Cách Khôi Phục
@@ -110,14 +110,14 @@ Restore chỉ được mở khi backup thoả tất cả điều kiện:
 - Shizuku đang READY
 - Wuthering Waves Global được phát hiện
 
-Từ `v3.3.4`, app tập trung vào compatibility với Wuthering Waves Global `3.3`, smart-state detection, và Balanced preset preview. PAK-only patch write, Remove PAK write, và Safe / Default config preset write vẫn được mở khóa. Balanced write, Performance, và Max Graphics đang khóa.
+Từ `v3.3.5`, app tập trung vào compatibility với Wuthering Waves Global `3.3`, smart-state detection, và Balanced preset write. PAK-only patch write, Remove PAK write, Safe / Default config preset write, và Balanced config preset write được mở khóa. Performance và Max Graphics đang khóa.
 
 ## Các Chế Độ Cấu Hình
 
-- **Safe / Default**: đã mở khóa ở `v2.7.0`, ít thay đổi nhất, không bật CVars đồ hoạ nặng.
-- **Balanced**: dry-run only ở `v3.3.4`. UI có nút **Preview Balanced Preset** để xem file và config/CVar sẽ thay đổi, nhưng chưa ghi vào game.
-- **Performance**: dự kiến sau khi compatibility `3.3` ổn định, dành cho máy tầm trung hoặc yếu.
-- **Max Graphics**: dự kiến sau cùng, cấu hình nặng, có thể gây nóng máy, hao pin, crash hoặc tụt FPS. Chỉ nên dùng với máy mạnh.
+- **Safe / Default**: ít thay đổi nhất, ổn định nhất, không bật CVars đồ hoạ nặng.
+- **Balanced**: đã mở khóa write ở `v3.3.5`, chỉ dùng conservative CVars, không unlock FPS/Vulkan/resolution cực đoan.
+- **Performance**: đang khóa, dự kiến sau khi Balanced được test ổn định.
+- **Max Graphics**: đang khóa, cấu hình nặng, có thể gây nóng máy, hao pin, crash hoặc tụt FPS. Chỉ nên dùng với máy mạnh.
 
 Mặc định nên dùng **Safe / Default**.
 
@@ -145,14 +145,15 @@ Hiện tại app mở GitHub Releases để người dùng tự tải bản mớ
 - Game vẫn đang mở và file có thể bị khoá
 - Không đủ dung lượng để tạo backup
 - Android chặn cài APK từ nguồn không xác định
-- Bản `v3.3.4` chỉ preview Balanced; Balanced write, Performance, và Max Graphics vẫn khóa
+- Performance và Max Graphics vẫn khóa
+- Balanced bị block khi state là PARTIAL hoặc UNKNOWN
 - Remove Vietnamese Patch cần backup VERIFIED để restore `MountLang_en.txt` trước khi xoá PAK
 - Khi state là UNKNOWN, các action nguy hiểm sẽ bị tắt để tránh ghi/xoá sai trạng thái
 
 ## Roadmap
 
-- v3.3.5: Balanced config preset write sau khi dry-run được test ổn định
 - v3.3.6: Performance preset dry-run
+- v3.3.7: Performance preset write sau khi test
 - v3.4.0: WUWA Global 3.4 compatibility release
 
 Source app hiện đã được migrate sang Kotlin. Build script vẫn là manual pipeline nhẹ, có download Kotlin compiler `2.0.21` từ JetBrains và verify SHA-256 trước khi compile.
@@ -172,7 +173,7 @@ Script sẽ tự kiểm tra Android SDK build-tools `36.0.0`, download và verif
 Khi gặp lỗi, hãy gửi kèm log trong app nếu có:
 
 ```text
-[22:31:10] App version: 3.3.4
+[22:31:10] App version: 3.3.5
 [22:31:10] Android version: 14
 [22:31:11] Shizuku: running
 [22:31:11] Permission: granted
@@ -197,9 +198,12 @@ Khi gặp lỗi, hãy gửi kèm log trong app nếu có:
 [22:31:26] Safe config preset: started
 [22:31:27] Safe preset write: verified Engine.ini
 [22:31:28] Safe config preset: success
-[22:31:29] Balanced preview: shown
-[22:31:30] Patch remove: MountLang restored
-[22:31:31] Patch remove: verified target deleted
+[22:31:29] Balanced preset dry run: shown
+[22:31:30] Balanced preset: started
+[22:31:31] Balanced write: verified Engine.ini
+[22:31:32] Balanced preset: success
+[22:31:33] Patch remove: MountLang restored
+[22:31:34] Patch remove: verified target deleted
 ```
 
 ## Security Checklist

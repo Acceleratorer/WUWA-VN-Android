@@ -1,18 +1,19 @@
 {
   "manifest_version": 3,
   "app": {
-    "version_name": "3.3.4",
-    "version_code": 38,
+    "version_name": "3.3.5",
+    "version_code": 39,
     "supported_game_version": "3.3",
     "minimum_game_version": "3.3",
-    "apk_url": "https://github.com/Acceleratorer/WUWA-VN-Android/releases/download/v3.3.4/WUWA-VN-v3.3.4-release.apk",
-    "sha256": "58498bcccf7324463ab58a72f3fa95aa34b8c7909a528e1f29fdc7244e6fc92f",
+    "apk_url": "https://github.com/Acceleratorer/WUWA-VN-Android/releases/download/v3.3.5/WUWA-VN-v3.3.5-release.apk",
+    "sha256": "00e6a5087f5d6aeb38bb5f5cf449ee071cd5396785590c61b9494ff5f108ff22",
     "changelog": [
-      "Add Balanced config preset dry-run only",
-      "Show exact files and planned config values for Balanced preset",
-      "Add shared ConfigPreset model and preset availability policy",
-      "Keep Balanced write locked in this release",
-      "Keep Performance and Max Graphics locked"
+      "Unlock Balanced config preset write",
+      "Require trusted VERIFIED backup before Balanced write",
+      "Write only Engine.ini, DeviceProfiles.ini, and MountLang_en.txt for Balanced preset",
+      "Verify Balanced template SHA-256 before write and target SHA-256 after write",
+      "Keep Performance and Max Graphics locked",
+      "Keep high-risk graphics, FPS, Vulkan, and resolution overrides blocked"
     ],
     "force_update": false
   },

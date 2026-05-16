@@ -48,7 +48,7 @@ Each backup should include copied config files and metadata similar to:
 {
   "created_at": "2026-05-15T22:30:00+07:00",
   "game_package": "com.kurogame.wutheringwaves.global",
-  "app_version": "3.3.4",
+  "app_version": "3.3.5",
   "patch_version": "wuwa-3.3-vi-2026.05",
   "backup_type": "shizuku_read_only_config_backup",
   "game_write_enabled": false,
@@ -128,7 +128,7 @@ v3.3.1: Remove Patch write unlock with MountLang rollback
 v3.3.2: bundled launcher icon refresh
 v3.3.3: smart installed-state detection and UI action gating
 v3.3.4: Balanced config preset dry-run after smart state validation
-future milestone: Balanced config preset write after dry-run validation
+v3.3.5: Balanced config preset write after dry-run validation
 future milestone: Performance config preset write
 future milestone: Max Graphics preset with strong warning
 ```
@@ -236,8 +236,8 @@ Safe config preset write must not:
 {
   "manifest_version": 3,
   "app": {
-    "version_name": "3.3.4",
-    "version_code": 38,
+    "version_name": "3.3.5",
+    "version_code": 39,
     "supported_game_version": "3.3",
     "minimum_game_version": "3.3"
   },
@@ -297,20 +297,36 @@ Remove patch write must not:
 
 ## Balanced config preset write
 
-Balanced config preset write is locked in `v3.3.4`. This release may show a Balanced preview only.
+`v3.3.5` may write only the bundled Balanced templates for:
 
-Balanced preview may:
+```text
+UE4Game/Client/Client/Saved/Config/Android/Engine.ini
+UE4Game/Client/Client/Saved/Config/Android/DeviceProfiles.ini
+UE4Game/Client/Client/Saved/Config/Android/MountLang_en.txt
+```
 
-- Show the exact files that would be changed
-- Show the exact planned config keys and CVars
-- Require Wuthering Waves Global, Shizuku READY, and a trusted VERIFIED backup before previewing
-- Warn when the current installed state is PARTIAL or UNKNOWN
+Balanced config preset write must require:
 
-Balanced preview must not:
+- Wuthering Waves Global is detected
+- Shizuku state is `READY`
+- A trusted VERIFIED backup exists
+- The preset availability is `WRITE_ENABLED`
+- The current patch state is `ORIGINAL` or `PATCHED`
+- The template set contains exactly the three config files
+- Two confirmations before writing
 
-- Write any game file
+Balanced config preset write must:
+
+- Use only bundled templates
+- Avoid FPS unlock, Vulkan override, resolution override, and high-risk graphics tokens
+- Verify each template SHA-256 before writing
+- Re-read each target file and verify SHA-256 after writing
+
+Balanced config preset write must not:
+
 - Add a new Shizuku write method
-- Change the Safe / Default write gate
+- Write PAK files
+- Continue when the current patch state is `PARTIAL` or `UNKNOWN`
 - Enable Performance or Max Graphics
 
 ## Installed state detection
