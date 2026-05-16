@@ -96,7 +96,7 @@ Restore chỉ được mở khi backup thoả tất cả điều kiện:
 - Shizuku đang READY
 - Wuthering Waves Global được phát hiện
 
-Patch write vẫn đang khóa tới `v2.6.0`.
+Từ `v2.6.0`, app chỉ mở khóa PAK-only patch write. Ghi config preset vẫn đang khóa tới `v2.7.0`.
 
 ## Các Chế Độ Cấu Hình
 
