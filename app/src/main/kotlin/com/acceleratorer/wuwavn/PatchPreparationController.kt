@@ -66,7 +66,7 @@ class PatchPreparationController(
                 activity.runOnUiThread {
                     dialogs.showMessage(
                         "Patch verified",
-                        "Patch was downloaded and verified successfully.\n\nUse Backup Game Configs, then Install Vietnamese Patch. v2.6.0 writes only WuWaVH_99_P.pak; config writing remains locked.",
+                        "Patch was downloaded and verified successfully.\n\nUse Backup Game Configs, then Install Vietnamese Patch. PAK install writes only WuWaVH_99_P.pak. Safe / Default config writing is handled separately.",
                     )
                 }
             } catch (exception: Exception) {
@@ -111,7 +111,7 @@ class PatchPreparationController(
             title = "Final patch confirmation",
             message = "This will write only this allowlisted patch file into the game folder:\n\n" +
                 "- ${plan.targetDisplayName}\n\n" +
-                "Config files will not be modified. Continue only if backup and patch details look correct.",
+                "Config files will not be modified by this PAK install. Use Apply Safe Config Preset separately. Continue only if backup and patch details look correct.",
             positiveLabel = "Install PAK Now",
         ) {
             installPatchPak()
@@ -162,7 +162,7 @@ class PatchPreparationController(
             .append("Files to write:\n")
             .append("- WuWaVH_99_P.pak\n\n")
             .append("Config files:\n")
-            .append("Locked. Engine.ini, DeviceProfiles.ini, and MountLang_en.txt will not be modified.\n")
+            .append("Not modified by this PAK install. Safe / Default config preset is a separate verified flow.\n")
 
         if (plan != null) {
             append("\nVerified PAK:\n")
@@ -201,6 +201,6 @@ class PatchPreparationController(
             .append(" bytes\n\nSHA-256:\n")
             .append(result.sha256)
             .append("\n\nTarget file was re-read from the game folder and verified.")
-            .append("\n\nConfig writing remains locked.")
+            .append("\n\nSafe / Default config preset writing is handled separately.")
     }
 }

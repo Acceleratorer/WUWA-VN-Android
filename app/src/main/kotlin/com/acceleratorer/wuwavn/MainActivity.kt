@@ -33,6 +33,8 @@ class MainActivity : Activity() {
     private val restoreDryRunPlanner = RestoreDryRunPlanner(backupManager)
     private val restoreWriter = ShizukuRestoreWriter()
     private val downloadClient = DownloadClient()
+    private val configPresetPreconditionChecker = ConfigPresetPreconditionChecker(restoreDryRunPlanner)
+    private val configPresetWriter = ShizukuConfigPresetWriter()
     private val patchWritePreconditionChecker = PatchWritePreconditionChecker(
         manifestRepository,
         downloadClient,
@@ -45,6 +47,7 @@ class MainActivity : Activity() {
     private lateinit var patchPreparationController: PatchPreparationController
     private lateinit var backupFlowController: BackupFlowController
     private lateinit var restoreFlowController: RestoreFlowController
+    private lateinit var configPresetController: ConfigPresetController
 
     private var statusView: TextView? = null
     private var logView: TextView? = null
@@ -123,6 +126,16 @@ class MainActivity : Activity() {
             dialogs = dialogs,
             onRestoreFinished = { refreshStatus() },
         )
+        configPresetController = ConfigPresetController(
+            activity = this,
+            logger = logger,
+            preconditionChecker = configPresetPreconditionChecker,
+            configPresetWriter = configPresetWriter,
+            gamePackageDetector = gamePackageDetector,
+            shizukuStateChecker = shizukuStateChecker,
+            dialogs = dialogs,
+            onPresetFinished = { refreshStatus() },
+        )
     }
 
     override fun onDestroy() {
@@ -179,6 +192,10 @@ class MainActivity : Activity() {
         })
         root.addView(button("Copy Backup Path") { copyBackupPath() })
         root.addView(button("Download & Verify Patch") { patchPreparationController.preparePatchSafely() })
+        root.addView(button("Apply Safe Config Preset") {
+            refreshStatus()
+            configPresetController.showSafeDefaultDryRun(gameState, shizukuState)
+        })
         root.addView(button("Update Vietnamese Patch") {
             openUrl(AppConstants.RELEASES_URL)
             logger.add("Update check: opened GitHub Releases")

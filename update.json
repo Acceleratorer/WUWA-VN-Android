@@ -1,15 +1,15 @@
 {
   "manifest_version": 2,
   "app": {
-    "version_name": "2.6.0",
-    "version_code": 30,
-    "apk_url": "https://github.com/Acceleratorer/WUWA-VN-Android/releases/download/v2.6.0/WUWA-VN-v2.6.0-release.apk",
-    "sha256": "15c2b77050e2ca5105b7d6744b2b8b408544cbce7e233f7ba5933dfd3e07711f",
+    "version_name": "2.7.0",
+    "version_code": 31,
+    "apk_url": "https://github.com/Acceleratorer/WUWA-VN-Android/releases/download/v2.7.0/WUWA-VN-v2.7.0-release.apk",
+    "sha256": "885ec75db5159a0e3e537512970a07baf4d5b10de65a2962c3aea1a7b1311654",
     "changelog": [
-      "Add PAK-only Vietnamese patch install flow",
-      "Require WUWA Global, Shizuku READY, verified backup, and verified PAK before patch write",
-      "Write only WuWaVH_99_P.pak and verify size plus SHA-256 after writing",
-      "Keep config preset writing locked for a later release"
+      "Add Safe / Default config preset write flow",
+      "Require WUWA Global, Shizuku READY, and a trusted VERIFIED backup before config writes",
+      "Write only bundled Safe templates for Engine.ini, DeviceProfiles.ini, and MountLang_en.txt",
+      "Keep Balanced, Performance, and Max Graphics presets locked"
     ],
     "force_update": false
   },

@@ -87,6 +87,6 @@ class BackupFlowController(
             }
         }
         append("\nBackup folder:\n").append(backupDirectory.absolutePath)
-        append("\n\nThis version can restore verified original config files. Patch writing remains locked.")
+        append("\n\nThis version can restore verified original config files, install the verified PAK, and apply the Safe / Default config preset through separate confirmation flows.")
     }
 }

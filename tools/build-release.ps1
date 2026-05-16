@@ -53,8 +53,8 @@ if (Test-Path $VersionFile) {
     }
 }
 
-$VersionName = if ($env:WUWA_VERSION_NAME) { $env:WUWA_VERSION_NAME } elseif ($VersionProperties["VERSION_NAME"]) { $VersionProperties["VERSION_NAME"] } else { "2.6.0" }
-$VersionCode = if ($env:WUWA_VERSION_CODE) { $env:WUWA_VERSION_CODE } elseif ($VersionProperties["VERSION_CODE"]) { $VersionProperties["VERSION_CODE"] } else { "30" }
+$VersionName = if ($env:WUWA_VERSION_NAME) { $env:WUWA_VERSION_NAME } elseif ($VersionProperties["VERSION_NAME"]) { $VersionProperties["VERSION_NAME"] } else { "2.7.0" }
+$VersionCode = if ($env:WUWA_VERSION_CODE) { $env:WUWA_VERSION_CODE } elseif ($VersionProperties["VERSION_CODE"]) { $VersionProperties["VERSION_CODE"] } else { "31" }
 $PackageName = "com.acceleratorer.wuwavn"
 $ShizukuVersion = "13.1.5"
 $ShizukuApiSha256 = "4def9bde498ef8626614c2fc5db9af4749c86f16f6c33e3f5658d35e70bab59b"

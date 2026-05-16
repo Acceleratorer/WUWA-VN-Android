@@ -2,7 +2,7 @@
 
 Ứng dụng hỗ trợ cài bản Việt hoá cho Wuthering Waves trên Android.
 
-> Trạng thái hiện tại: bản `v2.6.0` là APK release-signed sạch, source app đã được rebuild sang Kotlin, có kiểm tra game/Shizuku, backup read-only, verify SHA-256, restore write cho backup gốc đã VERIFIED, và cài patch PAK đầu tiên. App chỉ ghi `WuWaVH_99_P.pak` sau khi có backup tin cậy, PAK đã verify, Shizuku READY, và hai bước xác nhận. Ghi config preset vẫn đang khóa.
+> Trạng thái hiện tại: bản `v2.7.0` là APK release-signed sạch, source app đã được rebuild sang Kotlin, có kiểm tra game/Shizuku, backup read-only, verify SHA-256, restore write cho backup gốc đã VERIFIED, cài patch PAK, và ghi config preset Safe / Default. App chỉ ghi `WuWaVH_99_P.pak` hoặc 3 file config Safe sau khi có backup tin cậy, Shizuku READY, và hai bước xác nhận. Balanced, Performance, và Max Graphics vẫn đang khóa.
 
 ## Tính Năng
 
@@ -13,7 +13,8 @@
 - Restore file gốc từ backup đã VERIFIED bằng Shizuku
 - Cài bản Việt hoá PAK-only: chỉ ghi `WuWaVH_99_P.pak`
 - Hỗ trợ Shizuku để thao tác với thư mục game
-- Hỗ trợ cấu hình đồ hoạ: Safe, Balanced, Performance, Max Graphics
+- Ghi config preset **Safe / Default** từ template bundled, không bật CVars đồ hoạ nặng
+- Chuẩn bị cấu hình đồ hoạ theo lộ trình: Balanced, Performance, Max Graphics vẫn khóa
 - Tải PAK vào app storage và kiểm tra SHA-256 trước khi cho phép bước tiếp theo
 - Ghi `metadata.json` với danh sách file backup thật, dung lượng và SHA-256
 - Copy đường dẫn backup để dễ gửi log hoặc tự kiểm tra
@@ -50,7 +51,8 @@
 8. Bấm **Backup Game Configs** để copy read-only `Engine.ini`, `DeviceProfiles.ini`, `MountLang_en.txt` vào backup.
 9. Bấm **Download & Verify Patch** để tải PAK và kiểm tra SHA-256.
 10. Bấm **Install Vietnamese Patch** để xem patch write dry-run, xác nhận hai lần, rồi cài `WuWaVH_99_P.pak`.
-11. Bấm **Restore Original Files** nếu cần khôi phục file gốc từ backup VERIFIED.
+11. Bấm **Apply Safe Config Preset** để xem config dry-run, xác nhận hai lần, rồi ghi `Engine.ini`, `DeviceProfiles.ini`, `MountLang_en.txt` bằng template Safe / Default.
+12. Bấm **Restore Original Files** nếu cần khôi phục file gốc từ backup VERIFIED.
 
 ## Verify APK
 
@@ -61,7 +63,7 @@ Không cài APK từ mirror lạ, link chat riêng, hoặc file không có SHA-2
 Ví dụ file phát hành hợp lệ:
 
 ```text
-WUWA-VN-v2.6.0-release.apk
+WUWA-VN-v2.7.0-release.apk
 ```
 
 Không phát hành file `app-debug.apk` cho người dùng phổ thông.
@@ -69,7 +71,7 @@ Không phát hành file `app-debug.apk` cho người dùng phổ thông.
 Trước khi phát hành, kiểm tra chữ ký:
 
 ```bash
-apksigner verify --print-certs WUWA-VN-v2.6.0-release.apk
+apksigner verify --print-certs WUWA-VN-v2.7.0-release.apk
 ```
 
 ## Cách Khôi Phục
@@ -96,16 +98,16 @@ Restore chỉ được mở khi backup thoả tất cả điều kiện:
 - Shizuku đang READY
 - Wuthering Waves Global được phát hiện
 
-Từ `v2.6.0`, app chỉ mở khóa PAK-only patch write. Ghi config preset vẫn đang khóa tới `v2.7.0`.
+Từ `v2.7.0`, app mở khóa PAK-only patch write và Safe / Default config preset write. Balanced, Performance, và Max Graphics vẫn đang khóa.
 
 ## Các Chế Độ Cấu Hình
 
-- **Safe / Default**: chỉ cài bản dịch, ít thay đổi nhất, phù hợp với mọi máy.
-- **Balanced**: bản dịch kèm cấu hình ổn định, phù hợp Snapdragon 865 / 870 / 778G / Dimensity 8100 trở lên.
-- **Performance**: bản dịch kèm cấu hình giảm giật, phù hợp máy tầm trung hoặc yếu.
-- **Max Graphics**: cấu hình nặng, có thể gây nóng máy, hao pin, crash hoặc tụt FPS. Chỉ nên dùng với máy mạnh.
+- **Safe / Default**: đã mở khóa ở `v2.7.0`, ít thay đổi nhất, không bật CVars đồ hoạ nặng.
+- **Balanced**: dự kiến `v2.8.0`, phù hợp Snapdragon 865 / 870 / 778G / Dimensity 8100 trở lên.
+- **Performance**: dự kiến `v2.9.0`, dành cho máy tầm trung hoặc yếu.
+- **Max Graphics**: dự kiến `v3.0.0`, cấu hình nặng, có thể gây nóng máy, hao pin, crash hoặc tụt FPS. Chỉ nên dùng với máy mạnh.
 
-Mặc định nên dùng **Safe / Default** hoặc **Balanced**.
+Mặc định nên dùng **Safe / Default**.
 
 ## Shizuku Dùng Để Làm Gì?
 
@@ -131,11 +133,13 @@ Quyền yêu cầu cài APK chỉ dùng khi người dùng chọn cập nhật a
 - Game vẫn đang mở và file có thể bị khoá
 - Không đủ dung lượng để tạo backup
 - Android chặn cài APK từ nguồn không xác định
-- Bản `v2.6.0` chỉ cài PAK Việt hoá; ghi config preset vẫn khóa
+- Bản `v2.7.0` chỉ mở khóa Safe / Default config preset; Balanced, Performance, và Max Graphics vẫn khóa
 
 ## Roadmap
 
-- `v2.7.0`: config preset writing, bắt đầu với Safe / Balanced.
+- `v2.8.0`: Balanced config preset write
+- `v2.9.0`: Performance config preset write
+- `v3.0.0`: Max Graphics preset với cảnh báo mạnh
 
 Source app hiện đã được migrate sang Kotlin. Build script vẫn là manual pipeline nhẹ, có download Kotlin compiler `2.0.21` từ JetBrains và verify SHA-256 trước khi compile.
 
@@ -154,7 +158,7 @@ Script sẽ tự kiểm tra Android SDK build-tools `36.0.0`, download và verif
 Khi gặp lỗi, hãy gửi kèm log trong app nếu có:
 
 ```text
-[22:31:10] App version: 2.6.0
+[22:31:10] App version: 2.7.0
 [22:31:10] Android version: 14
 [22:31:11] Shizuku: running
 [22:31:11] Permission: granted
@@ -170,6 +174,9 @@ Khi gặp lỗi, hãy gửi kèm log trong app nếu có:
 [22:31:19] SHA-256: verified
 [22:31:20] Patch write: started
 [22:31:25] Patch write: verified
+[22:31:26] Safe config preset: started
+[22:31:27] Safe preset write: verified Engine.ini
+[22:31:28] Safe config preset: success
 ```
 
 ## Security Checklist

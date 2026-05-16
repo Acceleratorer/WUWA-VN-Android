@@ -5,7 +5,8 @@
       "id": "safe",
       "name": "Safe / Default",
       "description": "Translation only. Minimal changes and safest default for all devices.",
-      "config_dir": null,
+      "config_dir": "bundled:kotlin/SafeConfigTemplates",
+      "status": "enabled_v2.7.0",
       "warning": null
     },
     {
@@ -13,6 +14,7 @@
       "name": "Balanced",
       "description": "Translation plus stable graphics config for common upper-mid and flagship devices.",
       "config_dir": "config/Balanced Visual",
+      "status": "planned_v2.8.0",
       "recommended_for": [
         "Snapdragon 865",
         "Snapdragon 870",
@@ -26,7 +28,7 @@
       "name": "Performance",
       "description": "Translation plus lower-stutter config for mid-range and lower-end devices.",
       "config_dir": null,
-      "status": "planned",
+      "status": "planned_v2.9.0",
       "warning": null
     },
     {
@@ -34,6 +36,7 @@
       "name": "Max Graphics",
       "description": "Heavy visual config for high-end devices only.",
       "config_dir": "config/Max grafic",
+      "status": "planned_v3.0.0",
       "warning": "Max Graphics may cause heat, battery drain, crashes, or FPS drops. Recommended only for high-end devices."
     }
   ]

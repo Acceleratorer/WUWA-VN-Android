@@ -48,7 +48,7 @@ Each backup should include copied config files and metadata similar to:
 {
   "created_at": "2026-05-15T22:30:00+07:00",
   "game_package": "com.kurogame.wutheringwaves.global",
-  "app_version": "2.6.0",
+  "app_version": "2.7.0",
   "patch_version": "2026.05.15",
   "backup_type": "shizuku_read_only_config_backup",
   "game_write_enabled": false,
@@ -122,7 +122,10 @@ Keep the main actions simple:
 previous milestone: restore dry-run only
 previous milestone: restore write unlock for verified original config backups
 v2.6.0: PAK-only patch write unlock
-v2.7.0: config preset writing, Safe / Balanced first
+v2.7.0: Safe / Default config preset write unlock
+v2.8.0: Balanced config preset write unlock
+v2.9.0: Performance config preset write unlock
+v3.0.0: Max Graphics preset with strong warning
 ```
 
 ## Restore dry-run
@@ -182,11 +185,43 @@ Patch write must:
 
 Patch write must not:
 
-- Modify `Engine.ini`
-- Modify `DeviceProfiles.ini`
-- Modify `MountLang_en.txt`
+- Modify `Engine.ini`, `DeviceProfiles.ini`, or `MountLang_en.txt` inside the PAK-only flow
 - Write arbitrary PAK names
-- Enable graphics presets
+- Enable Balanced, Performance, or Max Graphics presets
+
+## Safe config preset write
+
+`v2.7.0` may write only the bundled Safe / Default templates for:
+
+```text
+UE4Game/Client/Client/Saved/Config/Android/Engine.ini
+UE4Game/Client/Client/Saved/Config/Android/DeviceProfiles.ini
+UE4Game/Client/Client/Saved/Config/Android/MountLang_en.txt
+```
+
+Safe config preset write must require:
+
+- Wuthering Waves Global is detected
+- Shizuku state is `READY`
+- A trusted VERIFIED backup exists
+- Restore write is available through the same exact allowlisted config service
+- The preset is exactly Safe / Default
+- The template set contains exactly the three config files
+- Two confirmations before writing
+
+Safe config preset write must:
+
+- Use only bundled templates
+- Avoid Balanced, Performance, Max Graphics, FPS, resolution, Vulkan, or quality CVars
+- Verify each template SHA-256 before writing
+- Re-read each target file and verify SHA-256 after writing
+
+Safe config preset write must not:
+
+- Write arbitrary config paths
+- Write PAK files
+- Apply Balanced, Performance, or Max Graphics presets
+- Continue if the trusted backup is missing or incomplete
 
 ## Logs
 

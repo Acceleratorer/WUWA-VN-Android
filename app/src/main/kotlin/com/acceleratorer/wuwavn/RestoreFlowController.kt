@@ -90,7 +90,7 @@ class RestoreFlowController(
                 "- Engine.ini\n" +
                 "- DeviceProfiles.ini\n" +
                 "- MountLang_en.txt\n\n" +
-                "Patch writing remains locked. Continue only if you want to restore the original files.",
+                "Patch install and config preset writing are separate flows. Continue only if you want to restore the original files.",
             positiveLabel = "Restore Now",
         ) {
             restoreOriginalFiles(dryRun)
@@ -205,7 +205,7 @@ class RestoreFlowController(
         } else {
             append("\n\nRestore writing is blocked:\n").append(blockReason)
         }
-        append("\n\nVietnamese PAK install is handled separately. Config preset writing remains locked.")
+        append("\n\nVietnamese PAK install and Safe / Default config preset writing are handled separately.")
     }
 
     private fun restoreWriteSummary(result: ShizukuRestoreWriter.RestoreResult): String = buildString {
@@ -220,6 +220,6 @@ class RestoreFlowController(
                 .append("...)\n")
         }
         append("\nAll restored files were re-read from the game folder and verified.")
-        append("\n\nPatch writing remains locked.")
+        append("\n\nPatch install and config preset writing are handled separately.")
     }
 }

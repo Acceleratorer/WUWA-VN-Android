@@ -14,7 +14,7 @@ data class PatchDryRun(
         appendList("Files to modify:", filesToModify)
         append("\nBackup target:\n")
         append(backupDirectory.absolutePath)
-        append("\n\nv2.6.0 can install only WuWaVH_99_P.pak. Config file modification remains locked for a later release.")
+        append("\n\nUnlocked write flows are separate and verified: PAK-only install and Safe / Default config preset. Balanced, Performance, and Max Graphics remain locked.")
     }
 
     private fun StringBuilder.appendList(title: String, values: List<String>) {
