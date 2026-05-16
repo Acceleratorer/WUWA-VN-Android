@@ -11,12 +11,12 @@ import java.util.concurrent.atomic.AtomicReference
 import rikka.shizuku.Shizuku
 
 class ShizukuConfigPresetWriter {
-    fun writeSafeDefaultPreset(
+    fun writeConfigPreset(
         context: Context,
         plan: ConfigPresetPlan,
         logger: DebugLogger,
     ): ConfigPresetWriteResult {
-        requireSafePlan(plan)
+        requirePresetPlan(plan)
 
         val serviceRef = AtomicReference<IWuwaRestoreService?>()
         val connected = CountDownLatch(1)
@@ -56,7 +56,7 @@ class ShizukuConfigPresetWriter {
                 }
 
                 val targetPath = gameAbsolutePath(template.relativePath)
-                logger.add("Safe preset write: writing ${template.displayName}")
+                logger.add("${plan.preset.name} write: writing ${template.displayName}")
                 service.writeConfigFile(targetPath, template.content, template.sha256)
 
                 val targetBytes = service.readFile(targetPath, MAX_CONFIG_BYTES)
@@ -73,11 +73,11 @@ class ShizukuConfigPresetWriter {
                         sha256 = targetSha256,
                     ),
                 )
-                logger.add("Safe preset write: verified ${template.displayName} (${targetSha256.take(12)}...)")
+                logger.add("${plan.preset.name} write: verified ${template.displayName} (${targetSha256.take(12)}...)")
             }
 
             return ConfigPresetWriteResult(
-                presetName = plan.presetName,
+                presetName = plan.preset.name,
                 writtenFiles = writtenFiles,
             )
         } finally {
@@ -88,14 +88,14 @@ class ShizukuConfigPresetWriter {
         }
     }
 
-    private fun requireSafePlan(plan: ConfigPresetPlan) {
-        if (plan.presetId != SafeConfigTemplates.SAFE_DEFAULT_ID) {
-            throw IllegalStateException("Only Safe / Default config preset is unlocked.")
+    private fun requirePresetPlan(plan: ConfigPresetPlan) {
+        if (!ConfigPresets.isUnlocked(plan.preset.id)) {
+            throw IllegalStateException("${plan.preset.name} config preset is locked.")
         }
         val requiredPaths = PatchDryRunPlanner.backupRelativePaths().toSet()
         val templatePaths = plan.templateFiles.map { it.relativePath }.toSet()
         if (plan.templateFiles.size != requiredPaths.size || templatePaths != requiredPaths) {
-            throw IllegalStateException("Safe preset must contain exactly the three required config files.")
+            throw IllegalStateException("Config preset must contain exactly the three required config files.")
         }
         for (template in plan.templateFiles) {
             if (!PatchDryRunPlanner.isAllowedTarget(template.relativePath)) {
@@ -110,6 +110,16 @@ class ShizukuConfigPresetWriter {
         }
         if (plan.trustedBackup.verifiedFiles != PatchDryRunPlanner.backupRelativePaths().size) {
             throw IllegalStateException("Trusted backup is incomplete.")
+        }
+        if (plan.preset.id == ConfigPresets.BALANCED_ID && hasForbiddenBalancedLine(plan.templateFiles)) {
+            throw IllegalStateException("Balanced preset contains a forbidden high-risk graphics or FPS setting.")
+        }
+    }
+
+    private fun hasForbiddenBalancedLine(templateFiles: List<ConfigTemplateFile>): Boolean {
+        val content = templateFiles.joinToString("\n") { it.content.toString(Charsets.UTF_8) }
+        return FORBIDDEN_BALANCED_TOKENS.any { token ->
+            content.contains(token, ignoreCase = true)
         }
     }
 
@@ -134,5 +144,17 @@ class ShizukuConfigPresetWriter {
 
     private companion object {
         const val MAX_CONFIG_BYTES = 512 * 1024
+        val FORBIDDEN_BALANCED_TOKENS = listOf(
+            "r.Android.DisableVulkanSupport",
+            "bSupportsVulkan",
+            "bEnableDynamicMaxFPS",
+            "r.MobileContentScaleFactor",
+            "r.ScreenPercentage",
+            "t.MaxFPS",
+            "dp.override",
+            "Windows_ExtraHigh",
+            "Android_VeryHigh",
+            "Nvidia_RTX",
+        )
     }
 }

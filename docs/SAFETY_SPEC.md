@@ -48,7 +48,7 @@ Each backup should include copied config files and metadata similar to:
 {
   "created_at": "2026-05-15T22:30:00+07:00",
   "game_package": "com.kurogame.wutheringwaves.global",
-  "app_version": "2.7.1",
+  "app_version": "2.8.0",
   "patch_version": "2026.05.15",
   "backup_type": "shizuku_read_only_config_backup",
   "game_write_enabled": false,
@@ -123,7 +123,7 @@ previous milestone: restore dry-run only
 previous milestone: restore write unlock for verified original config backups
 v2.6.0: PAK-only patch write unlock
 v2.7.0: Safe / Default config preset write unlock
-v2.8.0: Balanced config preset write unlock
+v2.8.0: conservative Balanced config preset write unlock
 v2.9.0: Performance config preset write unlock
 v3.0.0: Max Graphics preset with strong warning
 ```
@@ -222,6 +222,38 @@ Safe config preset write must not:
 - Write PAK files
 - Apply Balanced, Performance, or Max Graphics presets
 - Continue if the trusted backup is missing or incomplete
+
+## Balanced config preset write
+
+`v2.8.0` may write only the bundled Balanced templates for the same three config files:
+
+```text
+UE4Game/Client/Client/Saved/Config/Android/Engine.ini
+UE4Game/Client/Client/Saved/Config/Android/DeviceProfiles.ini
+UE4Game/Client/Client/Saved/Config/Android/MountLang_en.txt
+```
+
+Balanced config preset write must require everything required by Safe config preset write, plus:
+
+- Risk level is shown as `medium`
+- A device warning is shown before write
+- Dry-run lists every config/CVar value the preset changes
+- The preset blocks forced Vulkan toggles
+- The preset blocks resolution scale overrides
+- The preset blocks aggressive FPS unlock settings
+- The preset blocks high-end profile spoofing such as fake RTX/Windows profiles
+
+Balanced config preset write must not:
+
+- Set `r.Android.DisableVulkanSupport`
+- Set `bSupportsVulkan`
+- Set `bEnableDynamicMaxFPS`
+- Set `r.MobileContentScaleFactor`
+- Set `r.ScreenPercentage`
+- Set `t.MaxFPS`
+- Set `dp.override`
+- Use fake `Windows_ExtraHigh`, `Android_VeryHigh`, or `Nvidia_RTX` profiles
+- Enable Performance or Max Graphics presets
 
 ## Logs
 

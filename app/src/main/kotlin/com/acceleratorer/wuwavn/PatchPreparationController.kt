@@ -66,7 +66,7 @@ class PatchPreparationController(
                 activity.runOnUiThread {
                     dialogs.showMessage(
                         "Patch verified",
-                        "Patch was downloaded and verified successfully.\n\nUse Backup Game Configs, then Install Vietnamese Patch. PAK install writes only WuWaVH_99_P.pak. Safe / Default config writing is handled separately.",
+                        "Patch was downloaded and verified successfully.\n\nUse Backup Game Configs, then Install Vietnamese Patch. PAK install writes only WuWaVH_99_P.pak. Config presets are handled separately.",
                     )
                 }
             } catch (exception: Exception) {
@@ -162,7 +162,7 @@ class PatchPreparationController(
             .append("Files to write:\n")
             .append("- WuWaVH_99_P.pak\n\n")
             .append("Config files:\n")
-            .append("Not modified by this PAK install. Safe / Default config preset is a separate verified flow.\n")
+            .append("Not modified by this PAK install. Config presets are separate verified flows.\n")
 
         if (plan != null) {
             append("\nVerified PAK:\n")
@@ -201,6 +201,6 @@ class PatchPreparationController(
             .append(" bytes\n\nSHA-256:\n")
             .append(result.sha256)
             .append("\n\nTarget file was re-read from the game folder and verified.")
-            .append("\n\nSafe / Default config preset writing is handled separately.")
+            .append("\n\nConfig preset writing is handled separately.")
     }
 }

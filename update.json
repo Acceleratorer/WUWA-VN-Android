@@ -1,15 +1,15 @@
 {
   "manifest_version": 2,
   "app": {
-    "version_name": "2.7.1",
-    "version_code": 32,
-    "apk_url": "https://github.com/Acceleratorer/WUWA-VN-Android/releases/download/v2.7.1/WUWA-VN-v2.7.1-release.apk",
-    "sha256": "ef6acd1f06020147b5a5098780da1943b0cd0a2fa261a2aee1eda1fc7c5a1bc1",
+    "version_name": "2.8.0",
+    "version_code": 33,
+    "apk_url": "https://github.com/Acceleratorer/WUWA-VN-Android/releases/download/v2.8.0/WUWA-VN-v2.8.0-release.apk",
+    "sha256": "8b964cc58557519a90a24d87def91c9fb1d5b94aab5840ae2c5bfdef5573c968",
     "changelog": [
-      "Add bundled Phrolova artwork to the app home UI",
-      "Rename the Shizuku config write service for clearer restore and preset architecture",
-      "Clarify that app updates open GitHub Releases and do not silently install APKs",
-      "Keep Safe / Default as the only unlocked config preset"
+      "Add shared ConfigPreset model for Safe and Balanced presets",
+      "Unlock conservative Balanced config preset with a warning and full config/CVar dry-run summary",
+      "Block high-risk Balanced settings such as forced Vulkan, resolution scale, FPS unlock, and profile spoofing",
+      "Keep Performance and Max Graphics presets locked"
     ],
     "force_update": false
   },

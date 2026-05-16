@@ -205,7 +205,7 @@ class RestoreFlowController(
         } else {
             append("\n\nRestore writing is blocked:\n").append(blockReason)
         }
-        append("\n\nVietnamese PAK install and Safe / Default config preset writing are handled separately.")
+        append("\n\nVietnamese PAK install and config preset writing are handled separately.")
     }
 
     private fun restoreWriteSummary(result: ShizukuRestoreWriter.RestoreResult): String = buildString {

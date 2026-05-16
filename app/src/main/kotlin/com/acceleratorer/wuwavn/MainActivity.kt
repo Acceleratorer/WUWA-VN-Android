@@ -199,6 +199,10 @@ class MainActivity : Activity() {
             refreshStatus()
             configPresetController.showSafeDefaultDryRun(gameState, shizukuState)
         })
+        root.addView(button("Apply Balanced Config Preset") {
+            refreshStatus()
+            configPresetController.showBalancedDryRun(gameState, shizukuState)
+        })
         root.addView(button("Update Vietnamese Patch") {
             openUrl(AppConstants.RELEASES_URL)
             logger.add("Update check: opened GitHub Releases")

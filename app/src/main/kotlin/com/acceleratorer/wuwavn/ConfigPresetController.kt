@@ -19,78 +19,95 @@ class ConfigPresetController(
         gameState: GamePackageDetector.State,
         shizukuState: ShizukuState,
     ) {
+        showPresetDryRun(ConfigPresets.SAFE_DEFAULT_ID, gameState, shizukuState)
+    }
+
+    fun showBalancedDryRun(
+        gameState: GamePackageDetector.State,
+        shizukuState: ShizukuState,
+    ) {
+        showPresetDryRun(ConfigPresets.BALANCED_ID, gameState, shizukuState)
+    }
+
+    private fun showPresetDryRun(
+        presetId: String,
+        gameState: GamePackageDetector.State,
+        shizukuState: ShizukuState,
+    ) {
         if (configWriteRunning) {
-            Toast.makeText(activity, "Safe config preset is already running.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(activity, "Config preset is already running.", Toast.LENGTH_SHORT).show()
             return
         }
 
-        val precondition = preconditionChecker.checkSafeDefault(activity, gameState, shizukuState)
-        val summary = safePresetDryRunSummary(precondition)
+        val precondition = preconditionChecker.check(presetId, activity, gameState, shizukuState)
+        val presetName = precondition.preset?.name ?: "Config preset"
+        val summary = presetDryRunSummary(precondition)
         if (!precondition.isReady()) {
-            dialogs.showMessage("Safe config dry run", summary)
-            logger.add("Safe config preset: blocked - ${precondition.failures.joinToString("; ")}")
+            dialogs.showMessage("$presetName dry run", summary)
+            logger.add("$presetName preset: blocked - ${precondition.failures.joinToString("; ")}")
             return
         }
 
         dialogs.showConfirmation(
-            title = "Safe config dry run",
-            message = summary + "\n\nContinue to apply the Safe / Default config preset?",
-            positiveLabel = "Continue Safe Preset",
+            title = "$presetName dry run",
+            message = summary + "\n\nContinue to apply the $presetName config preset?",
+            positiveLabel = "Continue Preset",
         ) {
-            showFinalSafePresetConfirmation(precondition.plan!!)
+            showFinalPresetConfirmation(precondition.plan!!)
         }
     }
 
-    private fun showFinalSafePresetConfirmation(plan: ConfigPresetPlan) {
+    private fun showFinalPresetConfirmation(plan: ConfigPresetPlan) {
         dialogs.showConfirmation(
-            title = "Final Safe preset confirmation",
-            message = "This will write only bundled Safe / Default templates to these allowlisted files:\n\n" +
+            title = "Final ${plan.preset.name} confirmation",
+            message = "This will write only bundled ${plan.preset.name} templates to these allowlisted files:\n\n" +
                 "- Engine.ini\n" +
                 "- DeviceProfiles.ini\n" +
                 "- MountLang_en.txt\n\n" +
-                "Balanced, Performance, and Max Graphics remain locked. Continue only if the trusted backup details look correct.",
-            positiveLabel = "Apply Safe Preset Now",
+                warningBlock(plan.preset) +
+                "Performance and Max Graphics remain locked. Continue only if the trusted backup details look correct.",
+            positiveLabel = "Apply ${plan.preset.name} Now",
         ) {
-            applySafeDefaultPreset(plan)
+            applyPreset(plan)
         }
     }
 
-    private fun applySafeDefaultPreset(previousPlan: ConfigPresetPlan) {
+    private fun applyPreset(previousPlan: ConfigPresetPlan) {
         if (configWriteRunning) {
-            Toast.makeText(activity, "Safe config preset is already running.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(activity, "Config preset is already running.", Toast.LENGTH_SHORT).show()
             return
         }
 
         val gameState = gamePackageDetector.detect(activity)
         val shizukuState = shizukuStateChecker.check(activity)
-        val precondition = preconditionChecker.checkSafeDefault(activity, gameState, shizukuState)
+        val precondition = preconditionChecker.check(previousPlan.preset.id, activity, gameState, shizukuState)
         val plan = precondition.plan
         if (plan == null) {
-            dialogs.showMessage("Safe config blocked", safePresetDryRunSummary(precondition))
-            logger.add("Safe config preset: blocked before write - ${precondition.failures.joinToString("; ")}")
+            dialogs.showMessage("${previousPlan.preset.name} blocked", presetDryRunSummary(precondition))
+            logger.add("${previousPlan.preset.name} preset: blocked before write - ${precondition.failures.joinToString("; ")}")
             return
         }
         if (plan.trustedBackup.sessionDirectory != previousPlan.trustedBackup.sessionDirectory) {
-            dialogs.showMessage("Safe config blocked", "Trusted backup changed after dry-run. Reopen the Safe config dry-run and confirm again.")
-            logger.add("Safe config preset: blocked - trusted backup changed after dry-run")
+            dialogs.showMessage("${plan.preset.name} blocked", "Trusted backup changed after dry-run. Reopen the config dry-run and confirm again.")
+            logger.add("${plan.preset.name} preset: blocked - trusted backup changed after dry-run")
             return
         }
 
         configWriteRunning = true
-        logger.add("Safe config preset: started")
+        logger.add("${plan.preset.name} preset: started")
 
         Thread {
             try {
-                val result = configPresetWriter.writeSafeDefaultPreset(activity, plan, logger)
-                logger.add("Safe config preset: success")
+                val result = configPresetWriter.writeConfigPreset(activity, plan, logger)
+                logger.add("${plan.preset.name} preset: success")
                 activity.runOnUiThread {
                     onPresetFinished()
-                    dialogs.showMessage("Safe config applied", safePresetWriteSummary(result))
+                    dialogs.showMessage("${plan.preset.name} applied", presetWriteSummary(result, plan.preset))
                 }
             } catch (exception: Exception) {
-                logger.add("Safe config preset failed: ${exception.message}")
+                logger.add("${plan.preset.name} preset failed: ${exception.message}")
                 activity.runOnUiThread {
-                    dialogs.showMessage("Safe config failed", exception.message.orEmpty())
+                    dialogs.showMessage("${plan.preset.name} failed", exception.message.orEmpty())
                 }
             } finally {
                 configWriteRunning = false
@@ -98,13 +115,16 @@ class ConfigPresetController(
         }.start()
     }
 
-    private fun safePresetDryRunSummary(precondition: ConfigPresetPrecondition): String = buildString {
+    private fun presetDryRunSummary(precondition: ConfigPresetPrecondition): String = buildString {
+        val preset = precondition.preset
         val plan = precondition.plan
         append("Config preset:\n")
-            .append(SafeConfigTemplates.SAFE_DEFAULT_NAME)
+            .append(preset?.name ?: "unknown")
+            .append("\nRisk level: ")
+            .append(preset?.riskLevel?.label ?: "unknown")
             .append("\n\nFiles to write:\n")
 
-        val files = plan?.templateFiles ?: SafeConfigTemplates.safeDefaultFiles()
+        val files = plan?.templateFiles ?: preset?.files.orEmpty()
         for (file in files) {
             append("- ")
                 .append(file.displayName)
@@ -117,9 +137,24 @@ class ConfigPresetController(
                 .append('\n')
         }
 
+        if (preset != null) {
+            append("\nWarning:\n")
+                .append(preset.warning)
+                .append("\n")
+        }
+
+        append("\nConfig/CVar changes:\n")
+        if (preset == null || preset.cvarChanges.isEmpty()) {
+            append("- No graphics CVars changed.\n")
+        } else {
+            for (change in preset.cvarChanges) {
+                append("- ").append(change).append('\n')
+            }
+        }
+
         append("\nPreset rules:\n")
-            .append("- Translation-safe config only\n")
-            .append("- No Balanced, Performance, or Max Graphics CVars\n")
+            .append("- No arbitrary config paths\n")
+            .append("- No Performance or Max Graphics CVars\n")
             .append("- Target files are re-read and SHA-256 verified after write\n")
 
         if (plan != null) {
@@ -139,7 +174,10 @@ class ConfigPresetController(
         }
     }
 
-    private fun safePresetWriteSummary(result: ShizukuConfigPresetWriter.ConfigPresetWriteResult): String = buildString {
+    private fun presetWriteSummary(
+        result: ShizukuConfigPresetWriter.ConfigPresetWriteResult,
+        preset: ConfigPreset,
+    ): String = buildString {
         append("Applied config preset:\n")
             .append(result.presetName)
             .append("\n\nWritten files:\n")
@@ -153,6 +191,14 @@ class ConfigPresetController(
                 .append("...)\n")
         }
         append("\nAll target files were re-read from the game folder and verified.")
-        append("\n\nBalanced, Performance, and Max Graphics remain locked.")
+        append("\n\nRisk level: ").append(preset.riskLevel.label)
+        append("\nPerformance and Max Graphics remain locked.")
     }
+
+    private fun warningBlock(preset: ConfigPreset): String =
+        if (preset.warning.isBlank()) {
+            ""
+        } else {
+            "Warning:\n${preset.warning}\n\n"
+        }
 }
