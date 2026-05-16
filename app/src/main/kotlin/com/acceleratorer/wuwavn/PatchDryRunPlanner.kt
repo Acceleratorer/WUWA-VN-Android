@@ -53,6 +53,12 @@ class PatchDryRunPlanner(
 
         fun backupRelativePaths(): List<String> = BACKUP_RELATIVE_PATHS
 
+        fun engineIniRelativePath(): String = ENGINE_INI
+
+        fun deviceProfilesRelativePath(): String = DEVICE_PROFILES_INI
+
+        fun mountLangRelativePath(): String = MOUNT_LANG
+
         fun patchPakRelativePath(): String = PATCH_PAK
 
         fun displayName(relativePath: String): String {

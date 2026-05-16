@@ -48,7 +48,7 @@ Each backup should include copied config files and metadata similar to:
 {
   "created_at": "2026-05-15T22:30:00+07:00",
   "game_package": "com.kurogame.wutheringwaves.global",
-  "app_version": "3.3.2",
+  "app_version": "3.3.3",
   "patch_version": "wuwa-3.3-vi-2026.05",
   "backup_type": "shizuku_read_only_config_backup",
   "game_write_enabled": false,
@@ -126,7 +126,8 @@ v2.7.0: Safe / Default config preset write unlock
 v3.3.0: WUWA Global 3.3 compatibility metadata and Remove Patch dry-run
 v3.3.1: Remove Patch write unlock with MountLang rollback
 v3.3.2: bundled launcher icon refresh
-future milestone: Balanced config preset dry-run after WUWA 3.3 validation
+v3.3.3: smart installed-state detection and UI action gating
+future milestone: Balanced config preset dry-run after smart state validation
 future milestone: Balanced config preset write after dry-run validation
 future milestone: Performance config preset write
 future milestone: Max Graphics preset with strong warning
@@ -235,8 +236,8 @@ Safe config preset write must not:
 {
   "manifest_version": 3,
   "app": {
-    "version_name": "3.3.2",
-    "version_code": 36,
+    "version_name": "3.3.3",
+    "version_code": 37,
     "supported_game_version": "3.3",
     "minimum_game_version": "3.3"
   },
@@ -296,7 +297,27 @@ Remove patch write must not:
 
 ## Balanced config preset write
 
-Balanced config preset write is locked in `v3.3.2` while the launcher focuses on WUWA Global `3.3` compatibility and rollback safety.
+Balanced config preset write is locked in `v3.3.3` while the launcher focuses on WUWA Global `3.3` smart-state detection and rollback safety.
+
+## Installed state detection
+
+`v3.3.3` may read allowlisted state only; it must not add new write operations.
+
+Installed state detection may read:
+
+- `UE4Game/Client/Client/Saved/Config/Android/Engine.ini`
+- `UE4Game/Client/Client/Saved/Config/Android/DeviceProfiles.ini`
+- `UE4Game/Client/Client/Saved/Config/Android/MountLang_en.txt`
+- PAK existence for `UE4Game/Client/Client/Content/Paks/WuWaVH_99_P.pak`
+
+Patch state rules:
+
+- `PATCHED`: PAK exists and `MountLang_en.txt` points to `WuWaVH_99_P.pak`
+- `ORIGINAL`: PAK is missing and `MountLang_en.txt` exists but does not point to `WuWaVH_99_P.pak`
+- `PARTIAL`: PAK and `MountLang_en.txt` disagree, or `MountLang_en.txt` is missing
+- `UNKNOWN`: game/Shizuku/state read is unavailable
+
+Smart UI gating must not replace write preconditions. It only disables unsafe duplicate actions earlier in the UI.
 
 ## Logs
 

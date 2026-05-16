@@ -3,7 +3,7 @@ package com.acceleratorer.wuwavn
 import android.content.Context
 
 class RemovePatchPreconditionChecker(
-    private val restoreDryRunPlanner: RestoreDryRunPlanner,
+    private val trustedBackupFinder: TrustedBackupFinder,
 ) {
     fun check(
         context: Context,
@@ -23,7 +23,7 @@ class RemovePatchPreconditionChecker(
             failures.add("Patch target is not allowlisted.")
         }
 
-        val trustedBackupDryRun = findTrustedBackupDryRun(context)
+        val trustedBackupDryRun = trustedBackupFinder.find(context)
         val mountLangFile = trustedBackupDryRun?.files
             ?.firstOrNull { it.displayName == MOUNT_LANG_DISPLAY_NAME }
         if (trustedBackupDryRun == null) {
@@ -46,21 +46,6 @@ class RemovePatchPreconditionChecker(
         }
 
         return RemovePatchPrecondition(plan, failures)
-    }
-
-    private fun findTrustedBackupDryRun(context: Context): RestoreDryRun? {
-        for (session in restoreDryRunPlanner.listBackupSessions(context)) {
-            val dryRun = try {
-                restoreDryRunPlanner.plan(session)
-            } catch (exception: Exception) {
-                null
-            } ?: continue
-
-            if (TrustedBackupPolicy.isTrustedBackup(dryRun)) {
-                return dryRun
-            }
-        }
-        return null
     }
 
     private companion object {

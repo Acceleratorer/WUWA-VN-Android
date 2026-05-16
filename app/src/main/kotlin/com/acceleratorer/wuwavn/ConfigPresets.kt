@@ -15,6 +15,9 @@ object ConfigPresets {
     fun isUnlocked(id: String): Boolean =
         id == SAFE_DEFAULT_ID
 
+    fun safeDefaultFilesByName(): Map<String, ConfigTemplateFile> =
+        safeDefaultFiles().associateBy { it.displayName }
+
     private fun safeDefault(): ConfigPreset = ConfigPreset(
         id = SAFE_DEFAULT_ID,
         name = SAFE_DEFAULT_NAME,

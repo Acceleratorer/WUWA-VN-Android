@@ -1,19 +1,18 @@
 {
   "manifest_version": 3,
   "app": {
-    "version_name": "3.3.2",
-    "version_code": 36,
+    "version_name": "3.3.3",
+    "version_code": 37,
     "supported_game_version": "3.3",
     "minimum_game_version": "3.3",
-    "apk_url": "https://github.com/Acceleratorer/WUWA-VN-Android/releases/download/v3.3.2/WUWA-VN-v3.3.2-release.apk",
-    "sha256": "92a81d1397bf37149957e5b7847b268964cd2e237349c3a9592ad030844f8809",
+    "apk_url": "https://github.com/Acceleratorer/WUWA-VN-Android/releases/download/v3.3.3/WUWA-VN-v3.3.3-release.apk",
+    "sha256": "28428a401b07197b7db53214c83d62aeb7c880705887ae8cea016b086515f76f",
     "changelog": [
-      "Align launcher release with Wuthering Waves Global 3.3",
-      "Add game compatibility metadata and in-app game version display",
-      "Unlock Remove Vietnamese Patch write for WuWaVH_99_P.pak only",
-      "Refresh launcher icon with bundled artwork",
-      "Restore MountLang_en.txt from a trusted VERIFIED backup before removing the PAK",
-      "Verify WuWaVH_99_P.pak no longer exists after removal",
+      "Add smart installed-state detection for Original, Patched, Partial, and Unknown states",
+      "Detect whether WuWaVH_99_P.pak exists in the WUWA Global game folder",
+      "Detect whether MountLang_en.txt points to the Vietnamese PAK",
+      "Show patch state, config state, trusted backup state, and recommended actions in the home status card",
+      "Disable unsafe duplicate actions based on detected state",
       "Keep Balanced, Performance, and Max Graphics locked"
     ],
     "force_update": false

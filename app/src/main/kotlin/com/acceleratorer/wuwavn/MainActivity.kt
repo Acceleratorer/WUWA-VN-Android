@@ -34,6 +34,12 @@ class MainActivity : Activity() {
     private val restoreDryRunPlanner = RestoreDryRunPlanner(backupManager)
     private val restoreWriter = ShizukuRestoreWriter()
     private val downloadClient = DownloadClient()
+    private val trustedBackupFinder = TrustedBackupFinder(restoreDryRunPlanner)
+    private val installedStateDetector = InstalledStateDetector(
+        ShizukuInstalledStateReader(),
+        trustedBackupFinder,
+        ConfigStateDetector(),
+    )
     private val configPresetPreconditionChecker = ConfigPresetPreconditionChecker(restoreDryRunPlanner)
     private val configPresetWriter = ShizukuConfigPresetWriter()
     private val patchWritePreconditionChecker = PatchWritePreconditionChecker(
@@ -41,7 +47,7 @@ class MainActivity : Activity() {
         downloadClient,
         restoreDryRunPlanner,
     )
-    private val removePatchPreconditionChecker = RemovePatchPreconditionChecker(restoreDryRunPlanner)
+    private val removePatchPreconditionChecker = RemovePatchPreconditionChecker(trustedBackupFinder)
     private val patchWriter = ShizukuPatchWriter()
     private val statusRenderer = StatusRenderer(manifestRepository, shizukuFileSystem)
 
@@ -53,9 +59,18 @@ class MainActivity : Activity() {
 
     private var statusView: TextView? = null
     private var logView: TextView? = null
+    private lateinit var installPatchButton: Button
+    private lateinit var backupButton: Button
+    private lateinit var downloadPatchButton: Button
+    private lateinit var applySafeButton: Button
+    private lateinit var removePatchButton: Button
+    private lateinit var restoreButton: Button
     private var shizukuState = ShizukuState.NOT_INSTALLED
     private var gameState = GamePackageDetector.State.NOT_INSTALLED
     private var gameInfo: GamePackageDetector.GameInfo? = null
+    private var installedState: InstalledState? = null
+    private var actionState: HomeActionState? = null
+    private var lastStateSignature: String? = null
     @Volatile private var lastBackupPath: String? = null
 
     private val binderReceivedListener = Shizuku.OnBinderReceivedListener {
@@ -185,35 +200,50 @@ class MainActivity : Activity() {
         }
 
         root.addView(space(14))
-        root.addView(primaryButton("Install Vietnamese Patch") {
+        installPatchButton = primaryButton("Install Vietnamese Patch") {
             refreshStatus()
+            if (blockIfDisabled(installPatchButton, "Install Vietnamese Patch")) return@primaryButton
             patchPreparationController.showPatchWriteDryRun(gameState, shizukuState)
-        })
+        }
+        root.addView(installPatchButton)
         root.addView(button("Show Patch Plan") {
             refreshStatus()
             patchPreparationController.showPatchDryRun(gameState, shizukuState)
         })
-        root.addView(button("Backup Game Configs") {
+        backupButton = button("Backup Game Configs") {
             refreshStatus()
+            if (blockIfDisabled(backupButton, "Backup Game Configs")) return@button
             backupFlowController.backupGameConfigs(gameState, shizukuState)
-        })
+        }
+        root.addView(backupButton)
         root.addView(button("Copy Backup Path") { copyBackupPath() })
-        root.addView(button("Download & Verify Patch") { patchPreparationController.preparePatchSafely() })
-        root.addView(button("Apply Safe Config Preset") {
+        downloadPatchButton = button("Download & Verify Patch") {
+            if (blockIfDisabled(downloadPatchButton, "Download & Verify Patch")) return@button
+            patchPreparationController.preparePatchSafely()
+        }
+        root.addView(downloadPatchButton)
+        applySafeButton = button("Apply Safe Config Preset") {
             refreshStatus()
+            if (blockIfDisabled(applySafeButton, "Apply Safe Config Preset")) return@button
             configPresetController.showSafeDefaultDryRun(gameState, shizukuState)
-        })
+        }
+        root.addView(applySafeButton)
         root.addView(button("Update Vietnamese Patch") {
             openUrl(AppConstants.RELEASES_URL)
             logger.add("Update check: opened GitHub Releases")
         })
-        root.addView(button("Remove Vietnamese Patch") {
+        removePatchButton = button("Remove Vietnamese Patch") {
             refreshStatus()
+            if (blockIfDisabled(removePatchButton, "Remove Vietnamese Patch")) return@button
             patchPreparationController.showRemovePatchDryRun(gameState, shizukuState)
-        })
-        root.addView(button("Restore Original Files") {
+        }
+        root.addView(removePatchButton)
+        restoreButton = button("Restore Original Files") {
+            refreshStatus()
+            if (blockIfDisabled(restoreButton, "Restore Original Files")) return@button
             restoreFlowController.showRestoreSessions()
-        })
+        }
+        root.addView(restoreButton)
         root.addView(button("Check Game Folder") {
             refreshStatus()
             logger.add("Game folder: checked package state")
@@ -276,7 +306,59 @@ class MainActivity : Activity() {
         gameState = gamePackageDetector.detect(this)
         gameInfo = gamePackageDetector.detectGlobalInfo(this)
         shizukuState = shizukuStateChecker.check(this)
-        statusView?.text = statusRenderer.render(gameState, gameInfo, shizukuState)
+        installedState = installedStateDetector.detect(this, gameInfo, gameState, shizukuState)
+        actionState = HomeActionStateResolver.resolve(installedState, gameState, shizukuState)
+        statusView?.text = statusRenderer.render(gameState, gameInfo, shizukuState, installedState)
+        applyHomeActionState(actionState)
+        logInstalledStateIfChanged(installedState, actionState)
+    }
+
+    private fun applyHomeActionState(state: HomeActionState?) {
+        if (state == null) {
+            return
+        }
+        installPatchButton.isEnabled = state.installPatchEnabled
+        removePatchButton.isEnabled = state.removePatchEnabled
+        applySafeButton.isEnabled = state.applySafeEnabled
+        restoreButton.isEnabled = state.restoreEnabled
+        backupButton.isEnabled = state.backupEnabled
+        downloadPatchButton.isEnabled = state.downloadPatchEnabled
+    }
+
+    private fun logInstalledStateIfChanged(
+        state: InstalledState?,
+        actions: HomeActionState?,
+    ) {
+        if (state == null || actions == null) {
+            return
+        }
+        val signature = listOf(
+            state.patchState,
+            state.configState,
+            state.pakExists,
+            state.mountLangExists,
+            state.mountLangPointsToPak,
+            state.hasTrustedBackup,
+            actions.primaryHint,
+        ).joinToString("|")
+        if (signature == lastStateSignature) {
+            return
+        }
+        lastStateSignature = signature
+        logger.add("State: patch=${state.patchState}, config=${state.configState}")
+        logger.add("State: pak=${state.pakExists}, mountLang=${state.mountLangPointsToPak}")
+        logger.add("State: trustedBackup=${state.hasTrustedBackup}")
+        logger.add("Smart UI: ${actions.primaryHint}")
+    }
+
+    private fun blockIfDisabled(button: Button, actionName: String): Boolean {
+        if (button.isEnabled) {
+            return false
+        }
+        val hint = actionState?.primaryHint ?: "Refresh status and complete setup first."
+        showMessage("$actionName blocked", hint)
+        logger.add("$actionName: blocked by smart state - $hint")
+        return true
     }
 
     private fun openOrRequestShizuku() {
