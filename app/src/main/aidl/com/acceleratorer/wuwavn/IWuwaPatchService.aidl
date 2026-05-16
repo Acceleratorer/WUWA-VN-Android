@@ -7,4 +7,5 @@ interface IWuwaPatchService {
     void beginWritePatch(String absolutePath, long expectedSize, String expectedSha256);
     void writePatchChunk(String absolutePath, in byte[] chunk, int length, long expectedSize);
     void finishWritePatch(String absolutePath, long expectedSize, String expectedSha256);
+    boolean deletePatch(String absolutePath);
 }

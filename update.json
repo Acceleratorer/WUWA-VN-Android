@@ -1,17 +1,19 @@
 {
   "manifest_version": 3,
   "app": {
-    "version_name": "3.3.0",
-    "version_code": 34,
+    "version_name": "3.3.1",
+    "version_code": 35,
     "supported_game_version": "3.3",
     "minimum_game_version": "3.3",
-    "apk_url": "https://github.com/Acceleratorer/WUWA-VN-Android/releases/download/v3.3.0/WUWA-VN-v3.3.0-release.apk",
-    "sha256": "09f65dd3c416e1eb72ba83e1f7c6d281dd1d08e255479b450247f7f9c1b907d9",
+    "apk_url": "https://github.com/Acceleratorer/WUWA-VN-Android/releases/download/v3.3.1/WUWA-VN-v3.3.1-release.apk",
+    "sha256": "3ec2c645f1c3cc63d842db9cebe1e31d36ebb6f389092d87dea97ed75846a242",
     "changelog": [
       "Align launcher release with Wuthering Waves Global 3.3",
       "Add game compatibility metadata and in-app game version display",
-      "Add Remove Vietnamese Patch dry-run planning",
-      "Keep Safe / Default as the only unlocked config preset"
+      "Unlock Remove Vietnamese Patch write for WuWaVH_99_P.pak only",
+      "Restore MountLang_en.txt from a trusted VERIFIED backup before removing the PAK",
+      "Verify WuWaVH_99_P.pak no longer exists after removal",
+      "Keep Balanced, Performance, and Max Graphics locked"
     ],
     "force_update": false
   },

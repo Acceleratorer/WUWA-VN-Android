@@ -48,7 +48,7 @@ Each backup should include copied config files and metadata similar to:
 {
   "created_at": "2026-05-15T22:30:00+07:00",
   "game_package": "com.kurogame.wutheringwaves.global",
-  "app_version": "3.3.0",
+  "app_version": "3.3.1",
   "patch_version": "wuwa-3.3-vi-2026.05",
   "backup_type": "shizuku_read_only_config_backup",
   "game_write_enabled": false,
@@ -124,8 +124,9 @@ previous milestone: restore write unlock for verified original config backups
 v2.6.0: PAK-only patch write unlock
 v2.7.0: Safe / Default config preset write unlock
 v3.3.0: WUWA Global 3.3 compatibility metadata and Remove Patch dry-run
-future milestone: Remove Patch write unlock
-future milestone: Balanced config preset write after WUWA 3.3 validation
+v3.3.1: Remove Patch write unlock with MountLang rollback
+future milestone: Balanced config preset dry-run after WUWA 3.3 validation
+future milestone: Balanced config preset write after dry-run validation
 future milestone: Performance config preset write
 future milestone: Max Graphics preset with strong warning
 ```
@@ -233,8 +234,8 @@ Safe config preset write must not:
 {
   "manifest_version": 3,
   "app": {
-    "version_name": "3.3.0",
-    "version_code": 34,
+    "version_name": "3.3.1",
+    "version_code": 35,
     "supported_game_version": "3.3",
     "minimum_game_version": "3.3"
   },
@@ -264,28 +265,37 @@ Game package detected, version unknown.
 
 Do not block users only because the game version is unknown.
 
-## Remove patch dry-run
+## Remove patch write
 
-`v3.3.0` may show a dry-run plan for removing `WuWaVH_99_P.pak`.
+`v3.3.1` may remove only `WuWaVH_99_P.pak` after restoring `MountLang_en.txt` from a trusted VERIFIED backup.
 
-Remove patch dry-run must:
+Remove patch write must require:
 
 - Plan only `UE4Game/Client/Client/Content/Paks/WuWaVH_99_P.pak`
-- Show that no config files will be changed
-- Show that no delete happens in this release
+- Wuthering Waves Global is detected
+- Shizuku state is `READY`
+- A trusted VERIFIED backup exists
+- `MountLang_en.txt` in that backup is `VERIFIED`
 - Keep the target allowlisted
+- Two confirmations before writing or deleting
 
-Remove patch dry-run must not:
+Remove patch write must:
 
-- Delete the PAK
+- Restore `MountLang_en.txt` from the trusted backup before deleting the PAK
+- Delete only `WuWaVH_99_P.pak`
+- Verify the PAK target no longer exists after delete
+- Leave `Engine.ini` and `DeviceProfiles.ini` untouched
+
+Remove patch write must not:
+
 - Delete arbitrary PAK names
 - Modify `Engine.ini`
 - Modify `DeviceProfiles.ini`
-- Modify `MountLang_en.txt`
+- Modify `MountLang_en.txt` from any unverified source
 
 ## Balanced config preset write
 
-Balanced config preset write is locked in `v3.3.0` while the launcher focuses on WUWA Global `3.3` compatibility.
+Balanced config preset write is locked in `v3.3.1` while the launcher focuses on WUWA Global `3.3` compatibility and rollback safety.
 
 ## Logs
 

@@ -96,6 +96,66 @@ class ShizukuPatchWriter {
         }
     }
 
+    fun removePatchPak(
+        context: Context,
+        plan: RemovePatchPlan,
+        logger: DebugLogger,
+    ): PatchRemoveResult {
+        requireSafeRemovePlan(plan)
+
+        val serviceRef = AtomicReference<IWuwaPatchService?>()
+        val connected = CountDownLatch(1)
+        val componentName = ComponentName(context, WuwaPatchUserService::class.java)
+        val args = Shizuku.UserServiceArgs(componentName)
+            .daemon(false)
+            .debuggable(false)
+            .processNameSuffix("patch_remove")
+            .tag("patch_remove")
+            .version(AppConstants.VERSION_CODE)
+
+        val connection = object : ServiceConnection {
+            override fun onServiceConnected(name: ComponentName, service: IBinder) {
+                serviceRef.set(IWuwaPatchService.Stub.asInterface(service))
+                connected.countDown()
+            }
+
+            override fun onServiceDisconnected(name: ComponentName) {
+                serviceRef.set(null)
+            }
+        }
+
+        try {
+            Shizuku.bindUserService(args, connection)
+            if (!connected.await(15, TimeUnit.SECONDS)) {
+                throw IllegalStateException("Timed out while connecting Shizuku patch remove service.")
+            }
+
+            val service = serviceRef.get()
+                ?: throw IllegalStateException("Shizuku patch remove service did not connect.")
+
+            val targetPath = gameAbsolutePath(plan.targetRelativePath)
+            val existedBefore = service.exists(targetPath)
+            logger.add("Patch remove: target existed before delete = $existedBefore")
+            val deleted = service.deletePatch(targetPath)
+            if (service.exists(targetPath)) {
+                throw IllegalStateException("Patch target still exists after delete.")
+            }
+
+            logger.add("Patch remove: verified target deleted")
+            return PatchRemoveResult(
+                targetRelativePath = plan.targetRelativePath,
+                targetDisplayName = plan.targetDisplayName,
+                existedBefore = existedBefore,
+                deleted = deleted,
+            )
+        } finally {
+            try {
+                Shizuku.unbindUserService(args, connection, true)
+            } catch (ignored: Throwable) {
+            }
+        }
+    }
+
     private fun requireSafePlan(plan: PatchWritePlan) {
         if (plan.targetRelativePath != PatchDryRunPlanner.patchPakRelativePath()) {
             throw IllegalStateException("Patch write target must be WuWaVH_99_P.pak only.")
@@ -111,6 +171,23 @@ class ShizukuPatchWriter {
         }
         if (plan.trustedBackup.verifiedFiles != PatchDryRunPlanner.backupRelativePaths().size) {
             throw IllegalStateException("Trusted backup is incomplete.")
+        }
+    }
+
+    private fun requireSafeRemovePlan(plan: RemovePatchPlan) {
+        if (plan.targetRelativePath != PatchDryRunPlanner.patchPakRelativePath()) {
+            throw IllegalStateException("Patch remove target must be WuWaVH_99_P.pak only.")
+        }
+        if (!PatchDryRunPlanner.isAllowedTarget(plan.targetRelativePath)) {
+            throw IllegalStateException("Patch remove target is not allowlisted.")
+        }
+        if (!TrustedBackupPolicy.isTrustedBackup(plan.trustedBackupDryRun)) {
+            throw IllegalStateException("Patch remove requires a trusted VERIFIED backup.")
+        }
+        if (plan.mountLangFile.displayName != MOUNT_LANG_DISPLAY_NAME ||
+            plan.mountLangFile.status != RestoreFileStatus.VERIFIED
+        ) {
+            throw IllegalStateException("Patch remove requires VERIFIED MountLang_en.txt backup.")
         }
     }
 
@@ -131,8 +208,16 @@ class ShizukuPatchWriter {
         val sha256: String,
     )
 
+    data class PatchRemoveResult(
+        val targetRelativePath: String,
+        val targetDisplayName: String,
+        val existedBefore: Boolean,
+        val deleted: Boolean,
+    )
+
     private companion object {
         const val CHUNK_BYTES = 256 * 1024
         const val MAX_PATCH_BYTES = 1024L * 1024L * 1024L
+        const val MOUNT_LANG_DISPLAY_NAME = "MountLang_en.txt"
     }
 }

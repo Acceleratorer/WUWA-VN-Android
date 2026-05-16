@@ -87,6 +87,6 @@ class BackupFlowController(
             }
         }
         append("\nBackup folder:\n").append(backupDirectory.absolutePath)
-        append("\n\nThis version can restore verified original config files, install the verified PAK, apply Safe / Default config preset, and show Remove Patch dry-run planning.")
+        append("\n\nThis version can restore verified original config files, install the verified PAK, apply Safe / Default config preset, and remove the PAK with MountLang rollback.")
     }
 }

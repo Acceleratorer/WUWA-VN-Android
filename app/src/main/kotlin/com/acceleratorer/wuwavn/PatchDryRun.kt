@@ -14,7 +14,7 @@ data class PatchDryRun(
         appendList("Files to modify:", filesToModify)
         append("\nBackup target:\n")
         append(backupDirectory.absolutePath)
-        append("\n\nUnlocked write flows are separate and verified: PAK-only install and Safe / Default config preset. Remove Patch is dry-run only. Balanced, Performance, and Max Graphics remain locked.")
+        append("\n\nUnlocked write flows are separate and verified: PAK-only install, Safe / Default config preset, and Remove Patch with MountLang rollback. Balanced, Performance, and Max Graphics remain locked.")
     }
 
     private fun StringBuilder.appendList(title: String, values: List<String>) {

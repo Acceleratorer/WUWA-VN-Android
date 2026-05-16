@@ -2,7 +2,7 @@
 
 Ứng dụng hỗ trợ cài bản Việt hoá cho Wuthering Waves trên Android.
 
-> Trạng thái hiện tại: bản `v3.3.0` là Wuthering Waves Global 3.3 compatibility release. App có kiểm tra game/Shizuku, hiển thị version game nếu Android cung cấp, backup read-only, verify SHA-256, restore write cho backup gốc đã VERIFIED, cài patch PAK, ghi config preset Safe / Default, ảnh header trong UI, và Remove Vietnamese Patch dry-run. App chỉ ghi `WuWaVH_99_P.pak` hoặc 3 file config Safe sau khi có backup tin cậy, Shizuku READY, và hai bước xác nhận. Balanced, Performance, và Max Graphics vẫn đang khóa.
+> Trạng thái hiện tại: bản `v3.3.1` là Wuthering Waves Global 3.3 remove-patch recovery release. App có kiểm tra game/Shizuku, hiển thị version game nếu Android cung cấp, backup read-only, verify SHA-256, restore write cho backup gốc đã VERIFIED, cài patch PAK, ghi config preset Safe / Default, ảnh header trong UI, và Remove Vietnamese Patch write. App chỉ ghi `WuWaVH_99_P.pak`, xóa đúng `WuWaVH_99_P.pak`, hoặc ghi 3 file config Safe sau khi có backup tin cậy, Shizuku READY, và hai bước xác nhận. Balanced, Performance, và Max Graphics vẫn đang khóa.
 
 ## Tính Năng
 
@@ -15,7 +15,7 @@
 - Hỗ trợ Shizuku để thao tác với thư mục game
 - Hiển thị compatibility với Wuthering Waves Global `3.3`
 - Ghi config preset **Safe / Default** từ template bundled, không bật CVars đồ hoạ nặng
-- Remove Vietnamese Patch dry-run: lên kế hoạch xoá `WuWaVH_99_P.pak`, chưa xoá thật
+- Remove Vietnamese Patch: restore `MountLang_en.txt` từ backup VERIFIED, xoá đúng `WuWaVH_99_P.pak`, rồi verify PAK không còn tồn tại
 - Chuẩn bị cấu hình đồ hoạ theo lộ trình: Balanced, Performance, Max Graphics vẫn khóa
 - Header UI dùng artwork bundled trong APK, không tải ảnh từ mạng
 - Tải PAK vào app storage và kiểm tra SHA-256 trước khi cho phép bước tiếp theo
@@ -56,7 +56,7 @@
 9. Bấm **Download & Verify Patch** để tải PAK và kiểm tra SHA-256.
 10. Bấm **Install Vietnamese Patch** để xem patch write dry-run, xác nhận hai lần, rồi cài `WuWaVH_99_P.pak`.
 11. Bấm **Apply Safe Config Preset** để xem config dry-run, xác nhận hai lần, rồi ghi `Engine.ini`, `DeviceProfiles.ini`, `MountLang_en.txt` bằng template bundled.
-12. Bấm **Remove Vietnamese Patch** nếu muốn xem kế hoạch rollback PAK. Bản này chỉ dry-run, chưa xoá thật.
+12. Bấm **Remove Vietnamese Patch** nếu muốn rollback PAK: app sẽ restore `MountLang_en.txt` từ backup VERIFIED, xác nhận hai lần, xoá đúng `WuWaVH_99_P.pak`, rồi verify PAK không còn tồn tại.
 13. Bấm **Restore Original Files** nếu cần khôi phục file gốc từ backup VERIFIED.
 
 ## Verify APK
@@ -68,7 +68,7 @@ Không cài APK từ mirror lạ, link chat riêng, hoặc file không có SHA-2
 Ví dụ file phát hành hợp lệ:
 
 ```text
-WUWA-VN-v3.3.0-release.apk
+WUWA-VN-v3.3.1-release.apk
 ```
 
 Không phát hành file `app-debug.apk` cho người dùng phổ thông.
@@ -76,7 +76,7 @@ Không phát hành file `app-debug.apk` cho người dùng phổ thông.
 Trước khi phát hành, kiểm tra chữ ký:
 
 ```bash
-apksigner verify --print-certs WUWA-VN-v3.3.0-release.apk
+apksigner verify --print-certs WUWA-VN-v3.3.1-release.apk
 ```
 
 ## Cách Khôi Phục
@@ -103,12 +103,12 @@ Restore chỉ được mở khi backup thoả tất cả điều kiện:
 - Shizuku đang READY
 - Wuthering Waves Global được phát hiện
 
-Từ `v3.3.0`, app tập trung vào compatibility với Wuthering Waves Global `3.3`. PAK-only patch write và Safe / Default config preset write vẫn được mở khóa. Balanced, Performance, và Max Graphics đang khóa.
+Từ `v3.3.1`, app tập trung vào compatibility với Wuthering Waves Global `3.3`. PAK-only patch write, Remove PAK write, và Safe / Default config preset write vẫn được mở khóa. Balanced, Performance, và Max Graphics đang khóa.
 
 ## Các Chế Độ Cấu Hình
 
 - **Safe / Default**: đã mở khóa ở `v2.7.0`, ít thay đổi nhất, không bật CVars đồ hoạ nặng.
-- **Balanced**: đang khóa lại ở `v3.3.0` để ưu tiên compatibility release. Không bật trong UI.
+- **Balanced**: đang khóa lại ở `v3.3.1` để ưu tiên compatibility và rollback an toàn. Không bật trong UI.
 - **Performance**: dự kiến sau khi compatibility `3.3` ổn định, dành cho máy tầm trung hoặc yếu.
 - **Max Graphics**: dự kiến sau cùng, cấu hình nặng, có thể gây nóng máy, hao pin, crash hoặc tụt FPS. Chỉ nên dùng với máy mạnh.
 
@@ -138,13 +138,13 @@ Hiện tại app mở GitHub Releases để người dùng tự tải bản mớ
 - Game vẫn đang mở và file có thể bị khoá
 - Không đủ dung lượng để tạo backup
 - Android chặn cài APK từ nguồn không xác định
-- Bản `v3.3.0` chỉ mở khóa Safe / Default config preset; Balanced, Performance, và Max Graphics vẫn khóa
-- Remove Vietnamese Patch mới là dry-run, chưa xoá PAK thật
+- Bản `v3.3.1` chỉ mở khóa Safe / Default config preset; Balanced, Performance, và Max Graphics vẫn khóa
+- Remove Vietnamese Patch cần backup VERIFIED để restore `MountLang_en.txt` trước khi xoá PAK
 
 ## Roadmap
 
-- Remove Vietnamese Patch write unlock: xoá đúng `WuWaVH_99_P.pak` sau hai xác nhận
-- Balanced config preset write: chỉ bật lại sau khi test WUWA 3.3 ổn định
+- v3.3.3: Balanced config preset dry-run only, show exact CVars changed, no write
+- v3.3.4: Balanced config preset write sau khi Safe preset và backup/restore đã ổn định
 - Performance config preset write
 - Max Graphics preset với cảnh báo mạnh
 
@@ -165,7 +165,7 @@ Script sẽ tự kiểm tra Android SDK build-tools `36.0.0`, download và verif
 Khi gặp lỗi, hãy gửi kèm log trong app nếu có:
 
 ```text
-[22:31:10] App version: 3.3.0
+[22:31:10] App version: 3.3.1
 [22:31:10] Android version: 14
 [22:31:11] Shizuku: running
 [22:31:11] Permission: granted
@@ -186,7 +186,8 @@ Khi gặp lỗi, hãy gửi kèm log trong app nếu có:
 [22:31:26] Safe config preset: started
 [22:31:27] Safe preset write: verified Engine.ini
 [22:31:28] Safe config preset: success
-[22:31:29] Remove patch dry run: planned PAK removal
+[22:31:29] Patch remove: MountLang restored
+[22:31:30] Patch remove: verified target deleted
 ```
 
 ## Security Checklist

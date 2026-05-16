@@ -120,6 +120,27 @@ class WuwaPatchUserService : IWuwaPatchService.Stub() {
         }
     }
 
+    override fun deletePatch(absolutePath: String?): Boolean {
+        val target = validate(absolutePath)
+        val temp = tempFile(target)
+        if (temp.exists() && !temp.delete()) {
+            throw RemoteException("Could not delete patch temp file.")
+        }
+        if (!target.exists()) {
+            return false
+        }
+        if (!target.isFile) {
+            throw RemoteException("Patch target is not a file.")
+        }
+        if (!target.delete()) {
+            throw RemoteException("Could not delete patch target.")
+        }
+        if (target.exists()) {
+            throw RemoteException("Patch target still exists after delete.")
+        }
+        return true
+    }
+
     private fun validate(absolutePath: String?): File {
         if (absolutePath == null) {
             throw RemoteException("Path is null.")

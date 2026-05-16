@@ -41,6 +41,7 @@ class MainActivity : Activity() {
         downloadClient,
         restoreDryRunPlanner,
     )
+    private val removePatchPreconditionChecker = RemovePatchPreconditionChecker(restoreDryRunPlanner)
     private val patchWriter = ShizukuPatchWriter()
     private val statusRenderer = StatusRenderer(manifestRepository, shizukuFileSystem)
 
@@ -102,7 +103,9 @@ class MainActivity : Activity() {
             shizukuFileSystem = shizukuFileSystem,
             downloadClient = downloadClient,
             patchWritePreconditionChecker = patchWritePreconditionChecker,
+            removePatchPreconditionChecker = removePatchPreconditionChecker,
             patchWriter = patchWriter,
+            restoreWriter = restoreWriter,
             gamePackageDetector = gamePackageDetector,
             shizukuStateChecker = shizukuStateChecker,
             dialogs = dialogs,

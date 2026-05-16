@@ -11,7 +11,9 @@ class PatchPreparationController(
     private val shizukuFileSystem: ShizukuFileSystem,
     private val downloadClient: DownloadClient,
     private val patchWritePreconditionChecker: PatchWritePreconditionChecker,
+    private val removePatchPreconditionChecker: RemovePatchPreconditionChecker,
     private val patchWriter: ShizukuPatchWriter,
+    private val restoreWriter: ShizukuRestoreWriter,
     private val gamePackageDetector: GamePackageDetector,
     private val shizukuStateChecker: ShizukuStateChecker,
     private val dialogs: DialogFactory,
@@ -19,6 +21,7 @@ class PatchPreparationController(
 ) {
     @Volatile private var patchPreparationRunning = false
     @Volatile private var patchWriteRunning = false
+    @Volatile private var patchRemoveRunning = false
 
     fun showPatchDryRun(
         gameState: GamePackageDetector.State,
@@ -110,23 +113,25 @@ class PatchPreparationController(
         gameState: GamePackageDetector.State,
         shizukuState: ShizukuState,
     ) {
-        val failures = mutableListOf<String>()
-        if (gameState != GamePackageDetector.State.GLOBAL_INSTALLED) {
-            failures.add("Wuthering Waves Global is not detected.")
-        }
-        if (shizukuState != ShizukuState.READY) {
-            failures.add("Shizuku is not ready.")
-        }
-        if (!PatchDryRunPlanner.isAllowedTarget(PatchDryRunPlanner.patchPakRelativePath())) {
-            failures.add("Patch target is not allowlisted.")
+        if (patchRemoveRunning) {
+            Toast.makeText(activity, "Patch removal is already running.", Toast.LENGTH_SHORT).show()
+            return
         }
 
-        val summary = removePatchDryRunSummary(failures)
-        dialogs.showMessage("Remove patch dry run", summary)
-        if (failures.isEmpty()) {
-            logger.add("Remove patch dry run: planned PAK removal")
-        } else {
-            logger.add("Remove patch dry run: blocked - ${failures.joinToString("; ")}")
+        val precondition = removePatchPreconditionChecker.check(activity, gameState, shizukuState)
+        val summary = removePatchDryRunSummary(precondition)
+        if (!precondition.isReady()) {
+            dialogs.showMessage("Remove patch dry run", summary)
+            logger.add("Patch remove: blocked - ${precondition.failures.joinToString("; ")}")
+            return
+        }
+
+        dialogs.showConfirmation(
+            title = "Remove patch dry run",
+            message = summary + "\n\nContinue to the final removal confirmation?",
+            positiveLabel = "Continue Remove",
+        ) {
+            showFinalRemoveConfirmation(precondition.plan!!)
         }
     }
 
@@ -175,6 +180,69 @@ class PatchPreparationController(
                 }
             } finally {
                 patchWriteRunning = false
+            }
+        }.start()
+    }
+
+    private fun showFinalRemoveConfirmation(plan: RemovePatchPlan) {
+        dialogs.showConfirmation(
+            title = "Final remove confirmation",
+            message = "This will restore MountLang_en.txt from a trusted VERIFIED backup, then delete only this allowlisted PAK:\n\n" +
+                "- ${plan.targetDisplayName}\n\n" +
+                "Engine.ini and DeviceProfiles.ini will not be changed by this remove flow. Continue only if the backup and target look correct.",
+            positiveLabel = "Remove Patch Now",
+        ) {
+            removePatchPak(plan)
+        }
+    }
+
+    private fun removePatchPak(confirmedPlan: RemovePatchPlan) {
+        if (patchRemoveRunning) {
+            Toast.makeText(activity, "Patch removal is already running.", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val gameState = gamePackageDetector.detect(activity)
+        val shizukuState = shizukuStateChecker.check(activity)
+        val precondition = removePatchPreconditionChecker.check(activity, gameState, shizukuState)
+        val plan = precondition.plan
+        if (plan == null) {
+            dialogs.showMessage("Patch removal blocked", removePatchDryRunSummary(precondition))
+            logger.add("Patch remove: blocked before write - ${precondition.failures.joinToString("; ")}")
+            return
+        }
+        if (plan.trustedBackupDryRun.sessionDirectory != confirmedPlan.trustedBackupDryRun.sessionDirectory ||
+            plan.mountLangFile.expectedSha256 != confirmedPlan.mountLangFile.expectedSha256
+        ) {
+            dialogs.showMessage("Patch removal blocked", "Trusted backup changed after dry-run. Reopen Remove Vietnamese Patch and confirm again.")
+            logger.add("Patch remove: blocked - trusted backup changed after dry-run")
+            return
+        }
+
+        patchRemoveRunning = true
+        logger.add("Patch remove: started")
+
+        Thread {
+            try {
+                val mountLangResult = restoreWriter.restoreConfigFile(
+                    activity,
+                    plan.trustedBackupDryRun,
+                    MOUNT_LANG_DISPLAY_NAME,
+                    logger,
+                )
+                logger.add("Patch remove: MountLang restored")
+                val removeResult = patchWriter.removePatchPak(activity, plan, logger)
+                logger.add("Patch remove: success")
+                activity.runOnUiThread {
+                    dialogs.showMessage("Patch removed", removePatchResultSummary(removeResult, mountLangResult))
+                }
+            } catch (exception: Exception) {
+                logger.add("Patch remove failed: ${exception.message}")
+                activity.runOnUiThread {
+                    dialogs.showMessage("Patch removal failed", exception.message.orEmpty())
+                }
+            } finally {
+                patchRemoveRunning = false
             }
         }.start()
     }
@@ -228,26 +296,57 @@ class PatchPreparationController(
             .append("\n\nConfig preset writing is handled separately.")
     }
 
-    private fun removePatchDryRunSummary(failures: List<String>): String = buildString {
+    private fun removePatchDryRunSummary(precondition: RemovePatchPrecondition): String = buildString {
+        val plan = precondition.plan
         append("Remove Vietnamese Patch plan:\n")
-            .append("Dry-run only in v3.3.0\n\n")
-            .append("File that would be removed:\n")
+            .append("PAK-only removal with MountLang rollback\n\n")
+            .append("File to remove:\n")
             .append("- WuWaVH_99_P.pak\n\n")
             .append("Target:\n")
             .append(PatchDryRunPlanner.patchPakRelativePath())
             .append("\n\nSafety rules:\n")
-            .append("- Only this exact allowlisted PAK target is planned\n")
-            .append("- No config files are modified\n")
-            .append("- No delete is performed in this release\n")
+            .append("- Restore MountLang_en.txt from a trusted VERIFIED backup first\n")
+            .append("- Delete only this exact allowlisted PAK target\n")
+            .append("- Verify WuWaVH_99_P.pak no longer exists after delete\n")
+            .append("- Do not modify Engine.ini or DeviceProfiles.ini\n")
 
-        if (failures.isEmpty()) {
-            append("\nNext unlock step:\n")
-                .append("A future release can add two confirmations, delete only WuWaVH_99_P.pak, and verify the target no longer exists.")
+        if (plan != null) {
+            append("\nTrusted backup:\n")
+                .append(plan.trustedBackupDryRun.sessionDirectory.absolutePath)
+                .append("\nCreated at: ")
+                .append(plan.trustedBackupDryRun.createdAt)
+                .append("\nMountLang_en.txt: ")
+                .append(plan.mountLangFile.status.label)
+                .append("\nSHA-256: ")
+                .append(plan.mountLangFile.expectedSha256.orEmpty())
+                .append("\n\nAfter write:\n")
+                .append("The app will verify MountLang_en.txt after restore and verify the PAK target is deleted.")
         } else {
             append("\nBlocked:\n")
-            for (failure in failures) {
+            for (failure in precondition.failures) {
                 append("- ").append(failure).append('\n')
             }
         }
+    }
+
+    private fun removePatchResultSummary(
+        removeResult: ShizukuPatchWriter.PatchRemoveResult,
+        mountLangResult: ShizukuRestoreWriter.RestoreWriteInfo,
+    ): String = buildString {
+        append("Removed patch target:\n")
+            .append(removeResult.targetDisplayName)
+            .append("\n\nTarget:\n")
+            .append(removeResult.targetRelativePath)
+            .append("\n\nPAK existed before removal:\n")
+            .append(removeResult.existedBefore)
+            .append("\nDelete performed:\n")
+            .append(removeResult.deleted)
+            .append("\n\nMountLang_en.txt restored from trusted backup:\n")
+            .append(mountLangResult.sha256)
+            .append("\n\nThe app verified WuWaVH_99_P.pak no longer exists after removal.")
+    }
+
+    private companion object {
+        const val MOUNT_LANG_DISPLAY_NAME = "MountLang_en.txt"
     }
 }
