@@ -12,6 +12,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Looper
+import android.provider.Settings
 import android.view.Gravity
 import android.view.View
 import android.widget.Button
@@ -67,6 +68,7 @@ class MainActivity : Activity() {
     private lateinit var configPresetController: ConfigPresetController
 
     private var statusView: TextView? = null
+    private var setupChecklistView: TextView? = null
     private var logView: TextView? = null
     private lateinit var installPatchButton: Button
     private lateinit var backupButton: Button
@@ -120,6 +122,9 @@ class MainActivity : Activity() {
         logger.add("App version: ${AppConstants.VERSION_NAME} (${AppConstants.VERSION_CODE})")
         logger.add("Android version: ${Build.VERSION.RELEASE}")
         refreshStatus()
+        if (!OnboardingState.hasSeen(this)) {
+            showOnboarding()
+        }
     }
 
     private fun initializeControllers() {
@@ -220,14 +225,27 @@ class MainActivity : Activity() {
             root.addView(it, matchWrap())
         }
 
-        root.addView(space(14))
-        installPatchButton = primaryButton("Install Vietnamese Patch") {
-            refreshStatus()
-            if (blockIfDisabled(installPatchButton, "Install Vietnamese Patch")) return@primaryButton
-            lastAction = "Install Vietnamese Patch requested"
-            patchPreparationController.showPatchWriteDryRun(gameState, shizukuState)
+        root.addView(space(12))
+        setupChecklistView = text("", 14, Color.WHITE, false).also {
+            it.setPadding(dp(14), dp(14), dp(14), dp(14))
+            it.setBackgroundColor(Color.rgb(18, 39, 36))
+            root.addView(it, matchWrap())
         }
-        root.addView(installPatchButton)
+
+        root.addView(space(14))
+        root.addView(sectionTitle("Setup"))
+        root.addView(button("Show Setup Guide") { showOnboarding() })
+        root.addView(button("Shizuku Setup Help") { showShizukuHelp() })
+        root.addView(button("Open Shizuku") { openOrRequestShizuku() })
+        root.addView(button("Open Developer Options") { openDeveloperOptions() })
+        root.addView(button("Check Game Folder") {
+            refreshStatus()
+            lastAction = "Check Game Folder"
+            logger.add("Game folder: checked package state")
+        })
+
+        root.addView(space(18))
+        root.addView(sectionTitle("Patch"))
         root.addView(button("Show Patch Plan") {
             refreshStatus()
             lastAction = "Show Patch Plan"
@@ -247,6 +265,35 @@ class MainActivity : Activity() {
             patchPreparationController.preparePatchSafely()
         }
         root.addView(downloadPatchButton)
+        installPatchButton = primaryButton("Install Vietnamese Patch") {
+            refreshStatus()
+            if (blockIfDisabled(installPatchButton, "Install Vietnamese Patch")) return@primaryButton
+            lastAction = "Install Vietnamese Patch requested"
+            patchPreparationController.showPatchWriteDryRun(gameState, shizukuState)
+        }
+        root.addView(installPatchButton)
+        root.addView(button("Update Vietnamese Patch") {
+            openUrl(AppConstants.RELEASES_URL)
+            lastAction = "Opened GitHub Releases"
+            logger.add("Update check: opened GitHub Releases")
+        })
+        removePatchButton = button("Remove Vietnamese Patch") {
+            refreshStatus()
+            if (blockIfDisabled(removePatchButton, "Remove Vietnamese Patch")) return@button
+            lastAction = "Remove Vietnamese Patch requested"
+            patchPreparationController.showRemovePatchDryRun(gameState, shizukuState)
+        }
+        root.addView(removePatchButton)
+        restoreButton = button("Restore Original Files") {
+            refreshStatus()
+            if (blockIfDisabled(restoreButton, "Restore Original Files")) return@button
+            lastAction = "Restore Original Files opened"
+            restoreFlowController.showRestoreSessions()
+        }
+        root.addView(restoreButton)
+
+        root.addView(space(18))
+        root.addView(sectionTitle("Config Presets"))
         applySafeButton = button("Apply Safe Config Preset") {
             refreshStatus()
             if (blockIfDisabled(applySafeButton, "Apply Safe Config Preset")) return@button
@@ -271,31 +318,6 @@ class MainActivity : Activity() {
             configPresetController.showPerformanceDryRun(gameState, shizukuState, installedState)
         }
         root.addView(applyPerformanceButton)
-        root.addView(button("Update Vietnamese Patch") {
-            openUrl(AppConstants.RELEASES_URL)
-            lastAction = "Opened GitHub Releases"
-            logger.add("Update check: opened GitHub Releases")
-        })
-        removePatchButton = button("Remove Vietnamese Patch") {
-            refreshStatus()
-            if (blockIfDisabled(removePatchButton, "Remove Vietnamese Patch")) return@button
-            lastAction = "Remove Vietnamese Patch requested"
-            patchPreparationController.showRemovePatchDryRun(gameState, shizukuState)
-        }
-        root.addView(removePatchButton)
-        restoreButton = button("Restore Original Files") {
-            refreshStatus()
-            if (blockIfDisabled(restoreButton, "Restore Original Files")) return@button
-            lastAction = "Restore Original Files opened"
-            restoreFlowController.showRestoreSessions()
-        }
-        root.addView(restoreButton)
-        root.addView(button("Check Game Folder") {
-            refreshStatus()
-            lastAction = "Check Game Folder"
-            logger.add("Game folder: checked package state")
-        })
-        root.addView(button("Open Shizuku") { openOrRequestShizuku() })
 
         root.addView(space(18))
         root.addView(text("Safety rules", 18, Color.WHITE, true))
@@ -305,7 +327,7 @@ class MainActivity : Activity() {
                 "- DeviceProfiles.ini\n" +
                 "- MountLang_en.txt\n" +
                 "- WuWaVH_99_P.pak\n\n" +
-                "Max Graphics remains locked in v3.3.12.\n\n" +
+                "Max Graphics remains locked in v3.3.13.\n\n" +
                 "Always backup first. Never use this app for cheating, anti-cheat bypass, or gameplay manipulation.",
             14,
             Color.rgb(198, 207, 220),
@@ -322,6 +344,8 @@ class MainActivity : Activity() {
             root.addView(it, matchWrap())
         }
 
+        root.addView(space(10))
+        root.addView(sectionTitle("Diagnostics"))
         root.addView(button("Copy Debug Log") { copyLog() })
         root.addView(button("Copy State Snapshot") { copyStateSnapshot() })
         root.addView(button("Recovery Guide") { showRecoveryGuide() })
@@ -381,6 +405,7 @@ class MainActivity : Activity() {
         val resolvedActionState = HomeActionStateResolver.resolve(state, gameState, shizukuState)
         actionState = resolvedActionState
         statusView?.text = statusRenderer.render(gameState, gameInfo, shizukuState, state)
+        setupChecklistView?.text = setupChecklistText()
         applyHomeActionState(resolvedActionState)
     }
 
@@ -494,6 +519,83 @@ class MainActivity : Activity() {
         logger.add("$actionName: blocked by smart state - $hint")
         return true
     }
+
+    private fun showOnboarding() {
+        lastAction = "Opened Setup Guide"
+        logger.add("Onboarding: shown")
+        dialogs.showConfirmation(
+            title = "WUWA VN Setup",
+            message = OnboardingRenderer.render(),
+            positiveLabel = "Got it",
+        ) {
+            OnboardingState.markSeen(this)
+            logger.add("Onboarding: completed")
+        }
+    }
+
+    private fun showShizukuHelp() {
+        refreshStatus()
+        val message = when (shizukuState) {
+            ShizukuState.NOT_INSTALLED ->
+                "Shizuku is not installed.\n\nInstall Shizuku first, then start it using Wireless Debugging."
+            ShizukuState.INSTALLED_NOT_RUNNING ->
+                "Shizuku is installed but not running.\n\nOpen Shizuku and start the service."
+            ShizukuState.RUNNING_PERMISSION_DENIED ->
+                "Shizuku is running but permission is not granted.\n\nGrant permission to WUWA VN in Shizuku."
+            ShizukuState.READY ->
+                "Shizuku is READY.\n\nYou can backup, install, remove, restore, and apply config presets."
+        }
+
+        dialogs.showMessage("Shizuku Setup Help", message)
+        lastAction = "Opened Shizuku Setup Help"
+        logger.add("Shizuku help: shown")
+    }
+
+    private fun openDeveloperOptions() {
+        try {
+            startActivity(Intent(Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS))
+            lastAction = "Opened Developer Options"
+            logger.add("Developer Options: opened")
+        } catch (exception: Exception) {
+            openUrl("https://shizuku.rikka.app/guide/setup/")
+            lastAction = "Opened Shizuku setup guide"
+            logger.add("Developer Options unavailable, opened Shizuku guide")
+        }
+    }
+
+    private fun setupChecklistText(): String = buildString {
+        appendLine("Setup Checklist")
+        appendLine("Game installed: ${if (gameState == GamePackageDetector.State.GLOBAL_INSTALLED) "OK" else "Missing"}")
+        appendLine("Shizuku ready: ${if (shizukuState == ShizukuState.READY) "OK" else "Not ready"}")
+        appendLine("Trusted backup: ${if (installedState?.hasTrustedBackup == true) "OK" else "Missing"}")
+        appendLine("Patch state: ${installedState?.patchState ?: "UNKNOWN"}")
+        appendLine("Ready to install patch: ${isReadyToInstallPatchLabel()}")
+        appendLine("Ready to apply presets: ${isReadyToApplyPresetsLabel()}")
+    }
+
+    private fun isReadyToInstallPatchLabel(): String =
+        if (
+            gameState == GamePackageDetector.State.GLOBAL_INSTALLED &&
+            shizukuState == ShizukuState.READY &&
+            installedState?.hasTrustedBackup == true &&
+            installedState?.patchState == PatchInstallState.ORIGINAL
+        ) {
+            "YES"
+        } else {
+            "NO"
+        }
+
+    private fun isReadyToApplyPresetsLabel(): String =
+        if (
+            gameState == GamePackageDetector.State.GLOBAL_INSTALLED &&
+            shizukuState == ShizukuState.READY &&
+            installedState?.hasTrustedBackup == true &&
+            installedState?.patchState == PatchInstallState.PATCHED
+        ) {
+            "YES"
+        } else {
+            "NO"
+        }
 
     private fun openOrRequestShizuku() {
         lastAction = "Open Shizuku"
@@ -684,6 +786,11 @@ class MainActivity : Activity() {
         button.setBackgroundColor(Color.rgb(25, 118, 210))
         return button
     }
+
+    private fun sectionTitle(label: String): TextView =
+        text(label, 18, Color.WHITE, true).also {
+            it.setPadding(0, dp(4), 0, dp(2))
+        }
 
     private fun button(label: String, listener: View.OnClickListener): Button {
         val button = Button(this)

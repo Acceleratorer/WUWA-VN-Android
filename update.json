@@ -1,18 +1,18 @@
 {
   "manifest_version": 3,
   "app": {
-    "version_name": "3.3.12",
-    "version_code": 46,
+    "version_name": "3.3.13",
+    "version_code": 47,
     "supported_game_version": "3.3",
     "minimum_game_version": "3.3",
-    "apk_url": "https://github.com/Acceleratorer/WUWA-VN-Android/releases/download/v3.3.12/WUWA-VN-v3.3.12-release.apk",
+    "apk_url": "https://github.com/Acceleratorer/WUWA-VN-Android/releases/download/v3.3.13/WUWA-VN-v3.3.13-release.apk",
     "sha256": "PUT_REAL_APK_SHA256_HERE",
     "changelog": [
-      "Add GitHub Actions release automation",
-      "Build release APK with Gradle on GitHub Actions",
-      "Sign release APK using GitHub Secrets",
-      "Generate sha256.txt automatically",
-      "Upload APK and SHA-256 file to GitHub Release",
+      "Add first-run setup guide",
+      "Add setup checklist for game, Shizuku, backup, and patch state",
+      "Add Shizuku Setup Help",
+      "Add Developer Options shortcut with Shizuku guide fallback",
+      "Group home actions into Setup, Patch, Config Presets, and Diagnostics sections",
       "No app behavior changes",
       "Keep Max Graphics locked"
     ],

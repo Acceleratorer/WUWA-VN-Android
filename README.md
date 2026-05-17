@@ -2,7 +2,7 @@
 
 Ứng dụng hỗ trợ cài bản Việt hoá cho Wuthering Waves trên Android.
 
-> Trạng thái hiện tại: bản `v3.3.12` là Wuthering Waves Global 3.3 GitHub Actions release automation. App hỗ trợ smart-state detection, diagnostics snapshot, Recovery Guide, backup, restore, PAK-only install, Remove Vietnamese Patch, Safe / Default config write, Balanced config preset write, và Performance config preset write chỉ khi state là PATCHED. Bản này chỉ thêm CI/CD build/sign/upload release APK, không đổi app behavior. Max Graphics vẫn đang khóa.
+> Trạng thái hiện tại: bản `v3.3.13` là WUWA Global 3.3 onboarding polish release. App thêm first-run setup guide, setup checklist, Shizuku help, Developer Options shortcut, và nhóm lại các action trên màn chính. Không đổi write logic. Max Graphics vẫn khóa.
 
 ## Tính Năng
 
@@ -36,6 +36,11 @@
 - Recovery Guide hướng dẫn xử lý Original / Patched / Partial / Unknown state
 - Gradle build path từ `v3.3.11`; manual PowerShell pipeline vẫn giữ làm legacy fallback
 - GitHub Actions release automation từ `v3.3.12`: build/sign APK, tạo `sha256.txt`, và upload release assets
+- First-run setup guide cho user mới
+- Setup Checklist hiển thị game/Shizuku/backup/patch state và Ready YES/NO
+- Shizuku Setup Help giải thích trạng thái Shizuku hiện tại
+- Shortcut mở Developer Options, fallback sang Shizuku setup guide nếu ROM không hỗ trợ
+- Màn chính được nhóm thành Setup, Patch, Config Presets, và Diagnostics
 
 ## Screenshots
 
@@ -58,7 +63,7 @@ Nút **Copy State Snapshot** copy thông tin ngắn gọn để debug issue repo
 
 ```text
 WUWA VN State Snapshot
-App version: 3.3.12 (46)
+App version: 3.3.13 (47)
 Game package: com.kurogame.wutheringwaves.global
 Game version: 3.3.x
 Launcher compatibility: WUWA Global 3.3
@@ -136,7 +141,7 @@ Không cài APK từ mirror lạ, link chat riêng, hoặc file không có SHA-2
 Ví dụ file phát hành hợp lệ:
 
 ```text
-WUWA-VN-v3.3.12-release.apk
+WUWA-VN-v3.3.13-release.apk
 ```
 
 Không phát hành file `app-debug.apk` cho người dùng phổ thông.
@@ -144,7 +149,7 @@ Không phát hành file `app-debug.apk` cho người dùng phổ thông.
 Trước khi phát hành, kiểm tra chữ ký:
 
 ```bash
-apksigner verify --print-certs WUWA-VN-v3.3.12-release.apk
+apksigner verify --print-certs WUWA-VN-v3.3.13-release.apk
 ```
 
 ## Cách Khôi Phục
@@ -221,10 +226,10 @@ Hiện tại app mở GitHub Releases để người dùng tự tải bản mớ
 - v3.3.10: WUWA Global 3.3 LTS release, thêm Recovery Guide, preset policy trong snapshot, và checklist test LTS.
 - v3.3.11: Gradle migration release, không đổi app behavior.
 - v3.3.12: GitHub Actions release automation, build/sign/upload APK tự động.
+- v3.3.13: Low-tech onboarding polish, thêm setup guide/checklist/Shizuku help, không đổi app behavior.
 
 ## Roadmap
 
-- v3.3.13: Low-tech onboarding polish
 - v3.4.0: WUWA Global 3.4 compatibility release
 
 Source app hiện đã được migrate sang Kotlin. Từ `v3.3.11`, Gradle là build path chính và vẫn dùng `version.properties` làm source of truth cho app version. Từ `v3.3.12`, GitHub Actions có thể build release APK khi tạo GitHub Release tag mới.
@@ -278,7 +283,7 @@ Sau khi CI tạo `sha256.txt`, cập nhật `update.json` bằng SHA-256 thật 
 Khi gặp lỗi, hãy bấm **Copy State Snapshot** hoặc **Send Issue Report** trước, rồi gửi kèm log trong app nếu có:
 
 ```text
-[22:31:10] App version: 3.3.12
+[22:31:10] App version: 3.3.13
 [22:31:10] Android version: 14
 [22:31:11] Shizuku: running
 [22:31:11] Permission: granted
@@ -319,6 +324,12 @@ Xem checklist test LTS tại [`docs/WUWA-3.3-LTS-TEST-CHECKLIST.md`](docs/WUWA-3
 - [ ] PATCHED: Install disabled, Safe enabled nếu có trusted backup, Balanced enabled nếu có trusted backup, Performance enabled nếu có trusted backup, Remove enabled nếu có trusted backup, Restore enabled nếu có trusted backup
 - [ ] PARTIAL: Install disabled, Safe disabled, Balanced disabled, Performance disabled, Remove/Restore enabled nếu có trusted backup
 - [ ] UNKNOWN: dangerous actions disabled, Performance disabled
+- [ ] First install shows setup guide, **Got it** hides it next launch
+- [ ] **Show Setup Guide** opens onboarding again
+- [ ] Setup Checklist shows correct YES/NO for install and presets
+- [ ] Shizuku Setup Help explains the current Shizuku state
+- [ ] Open Developer Options works or opens Shizuku setup guide fallback
+- [ ] Home actions are grouped into Setup, Patch, Config Presets, and Diagnostics
 - [ ] Backup copy đúng `Engine.ini`, `DeviceProfiles.ini`, `MountLang_en.txt` và ghi metadata
 - [ ] Download verify PAK SHA-256 trước khi install
 - [ ] Install Vietnamese Patch chỉ ghi `WuWaVH_99_P.pak`
