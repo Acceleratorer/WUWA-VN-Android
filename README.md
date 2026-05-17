@@ -195,6 +195,7 @@ Hiện tại app mở GitHub Releases để người dùng tự tải bản mớ
 - Android chặn cài APK từ nguồn không xác định
 - Max Graphics vẫn khóa
 - Balanced bị block khi state là ORIGINAL, PARTIAL hoặc UNKNOWN
+- Performance bị block khi state là ORIGINAL, PARTIAL hoặc UNKNOWN
 - Remove Vietnamese Patch cần backup VERIFIED để restore `MountLang_en.txt` trước khi xoá PAK
 - Khi state là UNKNOWN, các action nguy hiểm sẽ bị tắt để tránh ghi/xoá sai trạng thái
 
