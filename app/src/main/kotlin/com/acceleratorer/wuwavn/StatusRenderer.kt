@@ -17,10 +17,10 @@ class StatusRenderer(
             "\nPatch state: ${installedState.patchState}\n" +
                 "Config state: ${configStateLabel(installedState.configState)}\n" +
                 "Trusted backup: ${if (installedState.hasTrustedBackup) "found" else "missing"}\n" +
-                "PAK: ${if (installedState.pakExists) "exists" else "not found"}\n" +
+                "PAK: ${stateFileLabel(installedState, installedState.pakExists, "exists", "not found")}\n" +
                 "MountLang_en.txt: ${mountLangLabel(installedState)}\n" +
-                "Engine.ini: ${if (installedState.engineIniReadable) "readable" else "not readable"}\n" +
-                "DeviceProfiles.ini: ${if (installedState.deviceProfilesReadable) "readable" else "not readable"}\n" +
+                "Engine.ini: ${stateFileLabel(installedState, installedState.engineIniReadable, "readable", "not readable")}\n" +
+                "DeviceProfiles.ini: ${stateFileLabel(installedState, installedState.deviceProfilesReadable, "readable", "not readable")}\n" +
                 "Recommended action: ${recommendedAction(installedState)}\n" +
                 recoveryGuide(installedState)
         }
@@ -52,9 +52,23 @@ class StatusRenderer(
     }
 
     private fun mountLangLabel(installedState: InstalledState): String = when {
+        installedState.patchState == PatchInstallState.UNKNOWN -> "unknown"
         !installedState.mountLangExists -> "missing"
         installedState.mountLangPointsToPak -> "points to WuWaVH_99_P.pak"
         else -> "does not point to WuWaVH_99_P.pak"
+    }
+
+    private fun stateFileLabel(
+        installedState: InstalledState,
+        value: Boolean,
+        trueLabel: String,
+        falseLabel: String,
+    ): String = if (installedState.patchState == PatchInstallState.UNKNOWN) {
+        "unknown"
+    } else if (value) {
+        trueLabel
+    } else {
+        falseLabel
     }
 
     private fun recommendedAction(installedState: InstalledState): String = when (installedState.patchState) {

@@ -397,7 +397,10 @@ class MainActivity : Activity() {
         }
         lastStateSignature = signature
         logger.add("State: patch=${state.patchState}, config=${state.configState}")
-        logger.add("State: pak=${state.pakExists}, mountLang=${state.mountLangPointsToPak}")
+        logger.add(
+            "State: pak=${readableStateValue(state, state.pakExists)}, " +
+                "mountLang=${readableStateValue(state, state.mountLangPointsToPak)}",
+        )
         logger.add("State: trustedBackup=${state.hasTrustedBackup}")
         logger.add("Smart UI: ${actions.primaryHint}")
     }
@@ -518,11 +521,11 @@ class MainActivity : Activity() {
                 appendLine("Patch state: ${state.patchState}")
                 appendLine("Config state: ${state.configState}")
                 appendLine("Trusted backup: ${state.hasTrustedBackup}")
-                appendLine("PAK exists: ${state.pakExists}")
-                appendLine("MountLang exists: ${state.mountLangExists}")
-                appendLine("MountLang points to PAK: ${state.mountLangPointsToPak}")
-                appendLine("Engine.ini readable: ${state.engineIniReadable}")
-                appendLine("DeviceProfiles.ini readable: ${state.deviceProfilesReadable}")
+                appendLine("PAK exists: ${readableStateValue(state, state.pakExists)}")
+                appendLine("MountLang exists: ${readableStateValue(state, state.mountLangExists)}")
+                appendLine("MountLang points to PAK: ${readableStateValue(state, state.mountLangPointsToPak)}")
+                appendLine("Engine.ini readable: ${readableStateValue(state, state.engineIniReadable)}")
+                appendLine("DeviceProfiles.ini readable: ${readableStateValue(state, state.deviceProfilesReadable)}")
             }
 
             appendLine()
@@ -543,6 +546,13 @@ class MainActivity : Activity() {
             appendLine("Last action: $lastAction")
         }
     }
+
+    private fun readableStateValue(state: InstalledState, value: Boolean): String =
+        if (state.patchState == PatchInstallState.UNKNOWN) {
+            "unknown"
+        } else {
+            value.toString()
+        }
 
     private fun showRecoveryGuide() {
         refreshStatus()
