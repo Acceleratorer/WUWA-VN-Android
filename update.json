@@ -1,16 +1,18 @@
 {
   "manifest_version": 3,
   "app": {
-    "version_name": "3.3.11",
-    "version_code": 45,
+    "version_name": "3.3.12",
+    "version_code": 46,
     "supported_game_version": "3.3",
     "minimum_game_version": "3.3",
-    "apk_url": "https://github.com/Acceleratorer/WUWA-VN-Android/releases/download/v3.3.11/WUWA-VN-v3.3.11-release.apk",
-    "sha256": "ecb2acc6282c676f385f79b06cc6d88f54d885540f1c1cc88a8ab0968d24f818",
+    "apk_url": "https://github.com/Acceleratorer/WUWA-VN-Android/releases/download/v3.3.12/WUWA-VN-v3.3.12-release.apk",
+    "sha256": "PUT_REAL_APK_SHA256_HERE",
     "changelog": [
-      "Migrate Android build system to Gradle",
-      "Keep version.properties as app version source of truth",
-      "Keep manual PowerShell build pipeline as legacy fallback",
+      "Add GitHub Actions release automation",
+      "Build release APK with Gradle on GitHub Actions",
+      "Sign release APK using GitHub Secrets",
+      "Generate sha256.txt automatically",
+      "Upload APK and SHA-256 file to GitHub Release",
       "No app behavior changes",
       "Keep Max Graphics locked"
     ],
