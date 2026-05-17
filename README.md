@@ -2,7 +2,7 @@
 
 Ứng dụng hỗ trợ cài bản Việt hoá cho Wuthering Waves trên Android.
 
-> Trạng thái hiện tại: bản `v3.3.6` là Wuthering Waves Global 3.3 Stability release. App hỗ trợ smart-state detection, backup, restore, PAK-only install, Remove Vietnamese Patch, Safe / Default config write, và Balanced config preset write chỉ khi state là PATCHED. Performance và Max Graphics vẫn đang khóa.
+> Trạng thái hiện tại: bản `v3.3.7` là Wuthering Waves Global 3.3 QA hardening release. App hỗ trợ smart-state detection, diagnostics snapshot, recovery guide, backup, restore, PAK-only install, Remove Vietnamese Patch, Safe / Default config write, và Balanced config preset write chỉ khi state là PATCHED. Performance và Max Graphics vẫn đang khóa.
 
 ## Tính Năng
 
@@ -29,6 +29,7 @@
 - Ghi `metadata.json` với danh sách file backup thật, dung lượng và SHA-256
 - Copy đường dẫn backup để dễ gửi log hoặc tự kiểm tra
 - Copy debug log để gửi báo lỗi
+- Copy State Snapshot để gửi nhanh trạng thái app/game/Shizuku/backup khi báo lỗi
 
 ## Screenshots
 
@@ -44,6 +45,25 @@
 | PATCHED | Disabled | Enabled if trusted backup exists | Enabled if trusted backup exists | Enabled if trusted backup exists | Enabled if trusted backup exists |
 | PARTIAL | Disabled | Disabled | Disabled | Enabled if trusted backup exists | Enabled if trusted backup exists |
 | UNKNOWN | Disabled | Disabled | Disabled | Disabled | Disabled |
+
+## Diagnostics Snapshot
+
+Nút **Copy State Snapshot** copy thông tin ngắn gọn để debug issue report:
+
+```text
+App version: 3.3.7
+Game package: com.kurogame.wutheringwaves.global
+Game version: 3.3.x
+Shizuku: READY
+Patch state: PATCHED
+Config state: BALANCED
+Trusted backup: true
+PAK exists: true
+MountLang points to PAK: true
+Engine.ini readable: true
+DeviceProfiles.ini readable: true
+Last action: Balanced preset applied
+```
 
 ## Yêu Cầu
 
@@ -85,7 +105,7 @@ Không cài APK từ mirror lạ, link chat riêng, hoặc file không có SHA-2
 Ví dụ file phát hành hợp lệ:
 
 ```text
-WUWA-VN-v3.3.6-release.apk
+WUWA-VN-v3.3.7-release.apk
 ```
 
 Không phát hành file `app-debug.apk` cho người dùng phổ thông.
@@ -93,7 +113,7 @@ Không phát hành file `app-debug.apk` cho người dùng phổ thông.
 Trước khi phát hành, kiểm tra chữ ký:
 
 ```bash
-apksigner verify --print-certs WUWA-VN-v3.3.6-release.apk
+apksigner verify --print-certs WUWA-VN-v3.3.7-release.apk
 ```
 
 ## Cách Khôi Phục
@@ -120,12 +140,12 @@ Restore chỉ được mở khi backup thoả tất cả điều kiện:
 - Shizuku đang READY
 - Wuthering Waves Global được phát hiện
 
-Từ `v3.3.6`, app tập trung vào stability cho Wuthering Waves Global `3.3`. PAK-only patch write, Remove PAK write, Safe / Default config preset write, và Balanced config preset write được mở khóa, nhưng Balanced chỉ được ghi khi state là PATCHED. Performance và Max Graphics đang khóa.
+Từ `v3.3.7`, app tập trung vào QA hardening cho Wuthering Waves Global `3.3`. PAK-only patch write, Remove PAK write, Safe / Default config preset write, và Balanced config preset write được mở khóa, nhưng Balanced chỉ được ghi khi state là PATCHED. Performance và Max Graphics đang khóa.
 
 ## Các Chế Độ Cấu Hình
 
 - **Safe / Default**: ít thay đổi nhất, ổn định nhất, không bật CVars đồ hoạ nặng.
-- **Balanced**: đã mở khóa write, chỉ dùng conservative CVars, không unlock FPS/Vulkan/resolution cực đoan. Từ `v3.3.6`, chỉ apply khi state là PATCHED.
+- **Balanced**: đã mở khóa write, chỉ dùng conservative CVars, không unlock FPS/Vulkan/resolution cực đoan. Từ `v3.3.7`, chỉ apply khi state là PATCHED.
 - **Performance**: đang khóa, dự kiến sau khi Balanced được test ổn định.
 - **Max Graphics**: đang khóa, cấu hình nặng, có thể gây nóng máy, hao pin, crash hoặc tụt FPS. Chỉ nên dùng với máy mạnh.
 
@@ -162,8 +182,8 @@ Hiện tại app mở GitHub Releases để người dùng tự tải bản mớ
 
 ## Roadmap
 
-- v3.3.7: Performance preset dry-run
-- v3.3.8: Performance preset write sau khi test
+- v3.3.8: Performance preset dry-run
+- v3.3.9: Performance preset write sau khi test
 - v3.4.0: WUWA Global 3.4 compatibility release
 
 Source app hiện đã được migrate sang Kotlin. Build script vẫn là manual pipeline nhẹ, có download Kotlin compiler `2.0.21` từ JetBrains và verify SHA-256 trước khi compile.
@@ -180,10 +200,10 @@ Script sẽ tự kiểm tra Android SDK build-tools `36.0.0`, download và verif
 
 ## Báo Lỗi
 
-Khi gặp lỗi, hãy gửi kèm log trong app nếu có:
+Khi gặp lỗi, hãy bấm **Copy State Snapshot** hoặc **Send Issue Report** trước, rồi gửi kèm log trong app nếu có:
 
 ```text
-[22:31:10] App version: 3.3.6
+[22:31:10] App version: 3.3.7
 [22:31:10] Android version: 14
 [22:31:11] Shizuku: running
 [22:31:11] Permission: granted
@@ -215,6 +235,22 @@ Khi gặp lỗi, hãy gửi kèm log trong app nếu có:
 [22:31:33] Patch remove: MountLang restored
 [22:31:34] Patch remove: verified target deleted
 ```
+
+## Test Checklist 3.3
+
+- [ ] ORIGINAL: Install enabled nếu có trusted backup, Safe enabled nếu có trusted backup, Balanced disabled, Remove disabled, Restore enabled nếu có trusted backup
+- [ ] PATCHED: Install disabled, Safe enabled nếu có trusted backup, Balanced enabled nếu có trusted backup, Remove enabled nếu có trusted backup, Restore enabled nếu có trusted backup
+- [ ] PARTIAL: Install disabled, Safe disabled, Balanced disabled, Remove/Restore enabled nếu có trusted backup
+- [ ] UNKNOWN: dangerous actions disabled
+- [ ] Backup copy đúng `Engine.ini`, `DeviceProfiles.ini`, `MountLang_en.txt` và ghi metadata
+- [ ] Download verify PAK SHA-256 trước khi install
+- [ ] Install Vietnamese Patch chỉ ghi `WuWaVH_99_P.pak`
+- [ ] Safe / Default chỉ ghi 3 file config allowlisted
+- [ ] Balanced chỉ ghi 3 file config khi state là PATCHED
+- [ ] Remove Patch restore `MountLang_en.txt`, xoá PAK, rồi verify target deleted
+- [ ] Restore Original Files chỉ restore backup VERIFIED
+- [ ] Performance và Max Graphics vẫn khóa
+- [ ] Manifest không thêm permission mới và `android:debuggable=false`
 
 ## Security Checklist
 

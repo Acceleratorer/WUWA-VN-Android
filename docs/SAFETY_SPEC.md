@@ -48,7 +48,7 @@ Each backup should include copied config files and metadata similar to:
 {
   "created_at": "2026-05-15T22:30:00+07:00",
   "game_package": "com.kurogame.wutheringwaves.global",
-  "app_version": "3.3.6",
+  "app_version": "3.3.7",
   "patch_version": "wuwa-3.3-vi-2026.05",
   "backup_type": "shizuku_read_only_config_backup",
   "game_write_enabled": false,
@@ -130,6 +130,7 @@ v3.3.3: smart installed-state detection and UI action gating
 v3.3.4: Balanced config preset dry-run after smart state validation
 v3.3.5: Balanced config preset write after dry-run validation
 v3.3.6: Balanced write stability gate requiring PATCHED state
+v3.3.7: diagnostics snapshot, recovery guidance, and WUWA 3.3 QA checklist
 future milestone: Performance config preset write
 future milestone: Max Graphics preset with strong warning
 ```
@@ -237,8 +238,8 @@ Safe config preset write must not:
 {
   "manifest_version": 3,
   "app": {
-    "version_name": "3.3.6",
-    "version_code": 40,
+    "version_name": "3.3.7",
+    "version_code": 41,
     "supported_game_version": "3.3",
     "minimum_game_version": "3.3"
   },
@@ -298,7 +299,7 @@ Remove patch write must not:
 
 ## Balanced config preset write
 
-`v3.3.6` may write only the bundled Balanced templates for:
+`v3.3.7` may write only the bundled Balanced templates for:
 
 ```text
 UE4Game/Client/Client/Saved/Config/Android/Engine.ini
@@ -356,7 +357,35 @@ Smart UI gating must not replace write preconditions. It only disables unsafe du
 The app should offer:
 
 - Copy Debug Log
+- Copy State Snapshot
 - Export Log
 - Send Issue Report
 
 Logs should include app version, Android version, Shizuku state, permission state, game folder result, backup result, download result, SHA-256 result, and patch result.
+
+State snapshots should include:
+
+- App version
+- Game package
+- Game version
+- Shizuku state
+- Patch state
+- Config state
+- Trusted backup state
+- PAK existence
+- MountLang PAK pointer state
+- Engine.ini and DeviceProfiles.ini readability
+- Last action
+
+## WUWA 3.3 QA checklist
+
+- ORIGINAL state should enable Install/Safe/Restore only when a trusted backup exists and should keep Balanced/Remove disabled.
+- PATCHED state should disable Install and enable Safe/Balanced/Remove/Restore only when a trusted backup exists.
+- PARTIAL state should disable Install/Safe/Balanced and allow Remove/Restore only when a trusted backup exists.
+- UNKNOWN state should disable dangerous actions.
+- Backup must copy exactly `Engine.ini`, `DeviceProfiles.ini`, and `MountLang_en.txt`.
+- Patch install must write only `WuWaVH_99_P.pak`.
+- Safe and Balanced preset writes must write only the three allowlisted config files.
+- Balanced write must require `PATCHED` state.
+- Remove Patch must restore `MountLang_en.txt`, delete only `WuWaVH_99_P.pak`, and verify deletion.
+- Performance and Max Graphics must remain locked.

@@ -11,7 +11,7 @@ object BalancedConfigTemplates {
         val content = """
             [/Script/Engine.RendererSettings]
             ; Balanced preset for WUWA VN Android.
-            ; No extreme graphics override in v3.3.6.
+            ; No extreme graphics override in v3.3.7.
         """.trimIndent() + "\n"
 
         return templateFile(

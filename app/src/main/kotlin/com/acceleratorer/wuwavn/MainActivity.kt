@@ -76,6 +76,8 @@ class MainActivity : Activity() {
     private var installedState: InstalledState? = null
     private var actionState: HomeActionState? = null
     private var lastStateSignature: String? = null
+    private var lastAction: String = "App started"
+    private var pendingConfigPresetName: String? = null
     @Volatile private var lastBackupPath: String? = null
 
     private val binderReceivedListener = Shizuku.OnBinderReceivedListener {
@@ -161,7 +163,11 @@ class MainActivity : Activity() {
             shizukuStateChecker = shizukuStateChecker,
             installedStateProvider = { detectInstalledStateSnapshot() },
             dialogs = dialogs,
-            onPresetFinished = { refreshStatus() },
+            onPresetFinished = {
+                lastAction = "${pendingConfigPresetName ?: "Config"} preset applied"
+                pendingConfigPresetName = null
+                refreshStatus()
+            },
         )
     }
 
@@ -210,55 +216,67 @@ class MainActivity : Activity() {
         installPatchButton = primaryButton("Install Vietnamese Patch") {
             refreshStatus()
             if (blockIfDisabled(installPatchButton, "Install Vietnamese Patch")) return@primaryButton
+            lastAction = "Install Vietnamese Patch requested"
             patchPreparationController.showPatchWriteDryRun(gameState, shizukuState)
         }
         root.addView(installPatchButton)
         root.addView(button("Show Patch Plan") {
             refreshStatus()
+            lastAction = "Show Patch Plan"
             patchPreparationController.showPatchDryRun(gameState, shizukuState)
         })
         backupButton = button("Backup Game Configs") {
             refreshStatus()
             if (blockIfDisabled(backupButton, "Backup Game Configs")) return@button
+            lastAction = "Backup Game Configs requested"
             backupFlowController.backupGameConfigs(gameState, shizukuState)
         }
         root.addView(backupButton)
         root.addView(button("Copy Backup Path") { copyBackupPath() })
         downloadPatchButton = button("Download & Verify Patch") {
             if (blockIfDisabled(downloadPatchButton, "Download & Verify Patch")) return@button
+            lastAction = "Download & Verify Patch requested"
             patchPreparationController.preparePatchSafely()
         }
         root.addView(downloadPatchButton)
         applySafeButton = button("Apply Safe Config Preset") {
             refreshStatus()
             if (blockIfDisabled(applySafeButton, "Apply Safe Config Preset")) return@button
+            pendingConfigPresetName = "Safe / Default"
+            lastAction = "Apply Safe Config Preset requested"
             configPresetController.showSafeDefaultDryRun(gameState, shizukuState)
         }
         root.addView(applySafeButton)
         applyBalancedButton = button("Apply Balanced Preset") {
             refreshStatus()
             if (blockIfDisabled(applyBalancedButton, "Apply Balanced Preset")) return@button
+            pendingConfigPresetName = "Balanced"
+            lastAction = "Apply Balanced Preset requested"
             configPresetController.showBalancedDryRun(gameState, shizukuState, installedState)
         }
         root.addView(applyBalancedButton)
         root.addView(button("Update Vietnamese Patch") {
             openUrl(AppConstants.RELEASES_URL)
+            lastAction = "Opened GitHub Releases"
             logger.add("Update check: opened GitHub Releases")
         })
         removePatchButton = button("Remove Vietnamese Patch") {
             refreshStatus()
             if (blockIfDisabled(removePatchButton, "Remove Vietnamese Patch")) return@button
+            lastAction = "Remove Vietnamese Patch requested"
             patchPreparationController.showRemovePatchDryRun(gameState, shizukuState)
         }
         root.addView(removePatchButton)
         restoreButton = button("Restore Original Files") {
             refreshStatus()
             if (blockIfDisabled(restoreButton, "Restore Original Files")) return@button
+            lastAction = "Restore Original Files opened"
             restoreFlowController.showRestoreSessions()
         }
         root.addView(restoreButton)
         root.addView(button("Check Game Folder") {
             refreshStatus()
+            lastAction = "Check Game Folder"
             logger.add("Game folder: checked package state")
         })
         root.addView(button("Open Shizuku") { openOrRequestShizuku() })
@@ -288,6 +306,7 @@ class MainActivity : Activity() {
         }
 
         root.addView(button("Copy Debug Log") { copyLog() })
+        root.addView(button("Copy State Snapshot") { copyStateSnapshot() })
         root.addView(button("Send Issue Report") { shareLog() })
 
         return scroll
@@ -383,6 +402,7 @@ class MainActivity : Activity() {
     }
 
     private fun openOrRequestShizuku() {
+        lastAction = "Open Shizuku"
         if (shizukuState == ShizukuState.RUNNING_PERMISSION_DENIED && shizukuStateChecker.requestPermissionIfPossible(this)) {
             logger.add("Shizuku: permission request sent")
             return
@@ -434,9 +454,39 @@ class MainActivity : Activity() {
         val intent = Intent(Intent.ACTION_SEND)
         intent.type = "text/plain"
         intent.putExtra(Intent.EXTRA_SUBJECT, "WUWA VN issue report")
-        intent.putExtra(Intent.EXTRA_TEXT, logger.text())
+        intent.putExtra(
+            Intent.EXTRA_TEXT,
+            stateSnapshotText() + "\n\nDebug log:\n" + logger.text(),
+        )
         startActivity(Intent.createChooser(intent, "Send Issue Report"))
+        lastAction = "Issue report share opened"
         logger.add("Issue report: share sheet opened")
+    }
+
+    private fun copyStateSnapshot() {
+        refreshStatus()
+        val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
+        if (clipboard != null) {
+            clipboard.setPrimaryClip(ClipData.newPlainText("WUWA VN state snapshot", stateSnapshotText()))
+            Toast.makeText(this, "State snapshot copied.", Toast.LENGTH_SHORT).show()
+            logger.add("State snapshot: copied")
+        }
+    }
+
+    private fun stateSnapshotText(): String {
+        val state = installedState
+        return "App version: ${AppConstants.VERSION_NAME}\n" +
+            "Game package: ${gameInfo?.packageName ?: AppConstants.GLOBAL_GAME_PACKAGE}\n" +
+            "Game version: ${gameInfo?.versionName ?: "unknown"}\n" +
+            "Shizuku: ${shizukuState.label}\n" +
+            "Patch state: ${state?.patchState ?: "UNKNOWN"}\n" +
+            "Config state: ${state?.configState ?: "UNKNOWN"}\n" +
+            "Trusted backup: ${state?.hasTrustedBackup ?: false}\n" +
+            "PAK exists: ${state?.pakExists ?: false}\n" +
+            "MountLang points to PAK: ${state?.mountLangPointsToPak ?: false}\n" +
+            "Engine.ini readable: ${state?.engineIniReadable ?: false}\n" +
+            "DeviceProfiles.ini readable: ${state?.deviceProfilesReadable ?: false}\n" +
+            "Last action: $lastAction"
     }
 
     private fun showMessage(title: String, message: String) {

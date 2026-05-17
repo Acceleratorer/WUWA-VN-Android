@@ -49,7 +49,7 @@ class ConfigPresetPreconditionChecker(
                 failures.add("${file.displayName} template hash mismatch.")
             }
         }
-        // v3.3.6: Balanced write is allowed only after PATCHED state, and high-risk graphics/FPS tokens remain forbidden.
+        // Balanced write is allowed only after PATCHED state, and high-risk graphics/FPS tokens remain forbidden.
         if (preset.id == ConfigPresetId.BALANCED && hasForbiddenBalancedLine(templateFiles)) {
             failures.add("Balanced preset contains a forbidden high-risk graphics or FPS setting.")
         }

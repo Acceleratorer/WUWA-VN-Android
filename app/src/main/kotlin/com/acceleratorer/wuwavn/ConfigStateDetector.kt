@@ -15,8 +15,16 @@ class ConfigStateDetector {
         val deviceMatches = matchesTemplate(deviceProfilesIni, safeFiles["DeviceProfiles.ini"])
         val mountMatches = matchesTemplate(mountLang, safeFiles["MountLang_en.txt"])
 
-        return if (engineMatches && deviceMatches && mountMatches) {
-            ConfigInstallState.SAFE_DEFAULT
+        if (engineMatches && deviceMatches && mountMatches) {
+            return ConfigInstallState.SAFE_DEFAULT
+        }
+
+        val balancedFiles = BalancedConfigTemplates.files().associateBy { it.displayName }
+        val balancedEngineMatches = matchesTemplate(engineIni, balancedFiles["Engine.ini"])
+        val balancedDeviceMatches = matchesTemplate(deviceProfilesIni, balancedFiles["DeviceProfiles.ini"])
+        val balancedMountMatches = matchesTemplate(mountLang, balancedFiles["MountLang_en.txt"])
+        return if (balancedEngineMatches && balancedDeviceMatches && balancedMountMatches) {
+            ConfigInstallState.BALANCED
         } else {
             ConfigInstallState.CUSTOM
         }
