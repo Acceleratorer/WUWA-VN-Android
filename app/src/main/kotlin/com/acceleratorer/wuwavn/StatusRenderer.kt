@@ -59,13 +59,25 @@ class StatusRenderer(
 
     private fun recommendedAction(installedState: InstalledState): String = when (installedState.patchState) {
         PatchInstallState.ORIGINAL ->
-            "Backup Game Configs -> Download & Verify Patch -> Install Vietnamese Patch."
+            if (installedState.hasTrustedBackup) {
+                "Install Vietnamese Patch first. Balanced and Performance require PATCHED state."
+            } else {
+                "Run Backup Game Configs before installing patch."
+            }
         PatchInstallState.PATCHED ->
-            "Remove Vietnamese Patch or Restore Original Files is available."
+            if (installedState.hasTrustedBackup) {
+                "Safe, Balanced, Performance, Remove Patch, or Restore Original Files is available."
+            } else {
+                "Run Backup Game Configs before write actions."
+            }
         PatchInstallState.PARTIAL ->
-            "Use Remove Vietnamese Patch or Restore Original Files."
+            if (installedState.hasTrustedBackup) {
+                "Use Remove Vietnamese Patch or Restore Original Files before applying presets."
+            } else {
+                "Recover or create a trusted backup before repair."
+            }
         PatchInstallState.UNKNOWN ->
-            "Complete game/Shizuku setup or restore from a trusted backup."
+            "Dangerous actions are disabled. Refresh state, check Shizuku, or restore from trusted backup."
     }
 
     private fun recoveryGuide(installedState: InstalledState): String = when (installedState.patchState) {
