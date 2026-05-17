@@ -11,7 +11,7 @@ object PerformanceConfigTemplates {
         val content = """
             [/Script/Engine.RendererSettings]
             ; Performance preset for WUWA VN Android.
-            ; Write enabled in v3.3.9 after dry-run and final confirmation.
+            ; Write enabled after dry-run and final confirmation.
             ; No FPS unlock, no Vulkan override, no resolution override.
         """.trimIndent() + "\n"
 

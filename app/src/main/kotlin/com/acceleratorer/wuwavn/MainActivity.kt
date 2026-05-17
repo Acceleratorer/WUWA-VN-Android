@@ -303,6 +303,7 @@ class MainActivity : Activity() {
                 "- DeviceProfiles.ini\n" +
                 "- MountLang_en.txt\n" +
                 "- WuWaVH_99_P.pak\n\n" +
+                "Max Graphics remains locked in v3.3.10.\n\n" +
                 "Always backup first. Never use this app for cheating, anti-cheat bypass, or gameplay manipulation.",
             14,
             Color.rgb(198, 207, 220),
@@ -321,6 +322,7 @@ class MainActivity : Activity() {
 
         root.addView(button("Copy Debug Log") { copyLog() })
         root.addView(button("Copy State Snapshot") { copyStateSnapshot() })
+        root.addView(button("Recovery Guide") { showRecoveryGuide() })
         root.addView(button("Send Issue Report") { shareLog() })
 
         return scroll
@@ -467,6 +469,7 @@ class MainActivity : Activity() {
     }
 
     private fun shareLog() {
+        refreshStatus()
         val intent = Intent(Intent.ACTION_SEND)
         intent.type = "text/plain"
         intent.putExtra(Intent.EXTRA_SUBJECT, "WUWA VN issue report")
@@ -498,6 +501,14 @@ class MainActivity : Activity() {
             appendLine("Game package: ${gameInfo?.packageName ?: AppConstants.GLOBAL_GAME_PACKAGE}")
             appendLine("Game version: ${gameInfo?.versionName ?: "unknown"}")
             appendLine("Launcher compatibility: WUWA Global ${AppConstants.SUPPORTED_GAME_VERSION}")
+            appendLine("Supported game version: ${AppConstants.SUPPORTED_GAME_VERSION}")
+            appendLine()
+            appendLine("Preset write policy:")
+            appendLine("Safe: ${ConfigPresetAvailabilityPolicy.availability(ConfigPresetId.SAFE_DEFAULT)}")
+            appendLine("Balanced: ${ConfigPresetAvailabilityPolicy.availability(ConfigPresetId.BALANCED)}")
+            appendLine("Performance: ${ConfigPresetAvailabilityPolicy.availability(ConfigPresetId.PERFORMANCE)}")
+            appendLine("Max Graphics: ${ConfigPresetAvailabilityPolicy.availability(ConfigPresetId.MAX_GRAPHICS)}")
+            appendLine()
             appendLine("Shizuku: ${shizukuState.label}")
             appendLine()
 
@@ -531,6 +542,41 @@ class MainActivity : Activity() {
             }
             appendLine("Last action: $lastAction")
         }
+    }
+
+    private fun showRecoveryGuide() {
+        refreshStatus()
+        val message = when (installedState?.patchState) {
+            PatchInstallState.ORIGINAL ->
+                "Original state detected.\n\nRecommended:\n" +
+                    "1. Run Backup Game Configs.\n" +
+                    "2. Download & Verify Patch.\n" +
+                    "3. Install Vietnamese Patch.\n" +
+                    "4. Apply Safe / Balanced / Performance only after state becomes PATCHED."
+            PatchInstallState.PATCHED ->
+                "Patched state detected.\n\nAvailable:\n" +
+                    "1. Apply Safe / Default.\n" +
+                    "2. Apply Balanced.\n" +
+                    "3. Apply Performance.\n" +
+                    "4. Remove Vietnamese Patch.\n" +
+                    "5. Restore Original Files."
+            PatchInstallState.PARTIAL ->
+                "Partial state detected.\n\nRecommended recovery:\n" +
+                    "1. Do not apply config presets.\n" +
+                    "2. Use Remove Vietnamese Patch if available.\n" +
+                    "3. Use Restore Original Files if config files look wrong.\n" +
+                    "4. Refresh state after recovery."
+            PatchInstallState.UNKNOWN, null ->
+                "State unknown.\n\nRecommended:\n" +
+                    "1. Check Shizuku is running.\n" +
+                    "2. Grant Shizuku permission.\n" +
+                    "3. Check Game Folder.\n" +
+                    "4. Restore from trusted backup if needed."
+        }
+
+        dialogs.showMessage("Recovery Guide", message)
+        lastAction = "Opened Recovery Guide"
+        logger.add("Recovery guide: shown")
     }
 
     private fun showMessage(title: String, message: String) {

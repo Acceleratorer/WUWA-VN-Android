@@ -2,7 +2,7 @@
 
 Ứng dụng hỗ trợ cài bản Việt hoá cho Wuthering Waves trên Android.
 
-> Trạng thái hiện tại: bản `v3.3.9` là Wuthering Waves Global 3.3 Performance write release. App hỗ trợ smart-state detection, diagnostics snapshot, backup, restore, PAK-only install, Remove Vietnamese Patch, Safe / Default config write, Balanced config preset write, và Performance config preset write chỉ khi state là PATCHED. Max Graphics vẫn đang khóa.
+> Trạng thái hiện tại: bản `v3.3.10` là Wuthering Waves Global 3.3 LTS release. App hỗ trợ smart-state detection, diagnostics snapshot, Recovery Guide, backup, restore, PAK-only install, Remove Vietnamese Patch, Safe / Default config write, Balanced config preset write, và Performance config preset write chỉ khi state là PATCHED. Max Graphics vẫn đang khóa.
 
 ## Tính Năng
 
@@ -33,6 +33,7 @@
 - Copy đường dẫn backup để dễ gửi log hoặc tự kiểm tra
 - Copy debug log để gửi báo lỗi
 - Copy State Snapshot để gửi nhanh trạng thái app/game/Shizuku/backup khi báo lỗi
+- Recovery Guide hướng dẫn xử lý Original / Patched / Partial / Unknown state
 
 ## Screenshots
 
@@ -55,10 +56,18 @@ Nút **Copy State Snapshot** copy thông tin ngắn gọn để debug issue repo
 
 ```text
 WUWA VN State Snapshot
-App version: 3.3.9 (43)
+App version: 3.3.10 (44)
 Game package: com.kurogame.wutheringwaves.global
 Game version: 3.3.x
 Launcher compatibility: WUWA Global 3.3
+Supported game version: 3.3
+
+Preset write policy:
+Safe: WRITE_ENABLED
+Balanced: WRITE_ENABLED
+Performance: WRITE_ENABLED
+Max Graphics: LOCKED
+
 Shizuku: READY
 
 Patch state: PATCHED
@@ -79,7 +88,7 @@ Remove Patch: true
 Restore Original: true
 Backup Configs: true
 Download Patch: true
-Hint: Vietnamese patch appears installed. Remove or restore is available.
+Hint: Vietnamese patch appears installed. Safe, Balanced, Performance, Remove, or Restore is available.
 Last action: Balanced preset applied
 ```
 
@@ -111,8 +120,10 @@ Last action: Balanced preset applied
 10. Bấm **Install Vietnamese Patch** để xem patch write dry-run, xác nhận hai lần, rồi cài `WuWaVH_99_P.pak`.
 11. Bấm **Apply Safe Config Preset** để xem config dry-run, xác nhận hai lần, rồi ghi `Engine.ini`, `DeviceProfiles.ini`, `MountLang_en.txt` bằng template bundled.
 12. Bấm **Apply Balanced Preset** sau khi state là PATCHED nếu muốn xem Balanced dry-run, xác nhận hai lần, rồi ghi `Engine.ini`, `DeviceProfiles.ini`, `MountLang_en.txt` bằng template bundled.
-13. Bấm **Remove Vietnamese Patch** nếu muốn rollback PAK: app sẽ restore `MountLang_en.txt` từ backup VERIFIED, xác nhận hai lần, xoá đúng `WuWaVH_99_P.pak`, rồi verify PAK không còn tồn tại.
-14. Bấm **Restore Original Files** nếu cần khôi phục file gốc từ backup VERIFIED.
+13. Bấm **Apply Performance Preset** sau khi state là PATCHED nếu muốn xem Performance dry-run, xác nhận hai lần, rồi ghi `Engine.ini`, `DeviceProfiles.ini`, `MountLang_en.txt` bằng template bundled.
+14. Bấm **Remove Vietnamese Patch** nếu muốn rollback PAK: app sẽ restore `MountLang_en.txt` từ backup VERIFIED, xác nhận hai lần, xoá đúng `WuWaVH_99_P.pak`, rồi verify PAK không còn tồn tại.
+15. Bấm **Restore Original Files** nếu cần khôi phục file gốc từ backup VERIFIED.
+16. Bấm **Recovery Guide** nếu state là PARTIAL hoặc UNKNOWN để xem hướng dẫn khôi phục an toàn.
 
 ## Verify APK
 
@@ -123,7 +134,7 @@ Không cài APK từ mirror lạ, link chat riêng, hoặc file không có SHA-2
 Ví dụ file phát hành hợp lệ:
 
 ```text
-WUWA-VN-v3.3.9-release.apk
+WUWA-VN-v3.3.10-release.apk
 ```
 
 Không phát hành file `app-debug.apk` cho người dùng phổ thông.
@@ -131,7 +142,7 @@ Không phát hành file `app-debug.apk` cho người dùng phổ thông.
 Trước khi phát hành, kiểm tra chữ ký:
 
 ```bash
-apksigner verify --print-certs WUWA-VN-v3.3.9-release.apk
+apksigner verify --print-certs WUWA-VN-v3.3.10-release.apk
 ```
 
 ## Cách Khôi Phục
@@ -205,10 +216,10 @@ Hiện tại app mở GitHub Releases để người dùng tự tải bản mớ
 - v3.3.7: QA hardening release, thêm diagnostics snapshot, recovery guidance, và test checklist.
 - v3.3.8: Performance preview release, thêm Performance dry-run only và giữ Performance write khóa.
 - v3.3.9: Performance write release, chỉ apply khi state là PATCHED và có trusted backup.
+- v3.3.10: WUWA Global 3.3 LTS release, thêm Recovery Guide, preset policy trong snapshot, và checklist test LTS.
 
 ## Roadmap
 
-- v3.3.10: WUWA Global 3.3 final polish / LTS
 - v3.4.0: WUWA Global 3.4 compatibility release
 
 Source app hiện đã được migrate sang Kotlin. Build script vẫn là manual pipeline nhẹ, có download Kotlin compiler `2.0.21` từ JetBrains và verify SHA-256 trước khi compile.
@@ -228,7 +239,7 @@ Script sẽ tự kiểm tra Android SDK build-tools `36.0.0`, download và verif
 Khi gặp lỗi, hãy bấm **Copy State Snapshot** hoặc **Send Issue Report** trước, rồi gửi kèm log trong app nếu có:
 
 ```text
-[22:31:10] App version: 3.3.9
+[22:31:10] App version: 3.3.10
 [22:31:10] Android version: 14
 [22:31:11] Shizuku: running
 [22:31:11] Permission: granted
@@ -262,6 +273,8 @@ Khi gặp lỗi, hãy bấm **Copy State Snapshot** hoặc **Send Issue Report**
 ```
 
 ## Test Checklist 3.3
+
+Xem checklist test LTS tại [`docs/WUWA-3.3-LTS-TEST-CHECKLIST.md`](docs/WUWA-3.3-LTS-TEST-CHECKLIST.md).
 
 - [ ] ORIGINAL: Install enabled nếu có trusted backup, Safe enabled nếu có trusted backup, Balanced disabled, Performance disabled, Remove disabled, Restore enabled nếu có trusted backup
 - [ ] PATCHED: Install disabled, Safe enabled nếu có trusted backup, Balanced enabled nếu có trusted backup, Performance enabled nếu có trusted backup, Remove enabled nếu có trusted backup, Restore enabled nếu có trusted backup

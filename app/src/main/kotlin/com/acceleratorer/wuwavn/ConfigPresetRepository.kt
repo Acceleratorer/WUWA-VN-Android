@@ -42,7 +42,7 @@ class ConfigPresetRepository {
         displayName = "Performance",
         riskLevel = PresetRiskLevel.HIGH,
         availability = ConfigPresetAvailabilityPolicy.availability(ConfigPresetId.PERFORMANCE),
-        description = "Performance preset with conservative lower graphics load. Write enabled in v3.3.9 after trusted backup and final confirmation.",
+        description = "Performance preset with conservative lower graphics load. Write enabled after trusted backup and final confirmation.",
         files = PerformanceConfigTemplates.files(),
         warnings = listOf(
             "Performance preset may reduce visual quality.",

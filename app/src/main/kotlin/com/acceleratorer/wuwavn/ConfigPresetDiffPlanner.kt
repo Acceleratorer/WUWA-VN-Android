@@ -177,7 +177,7 @@ class ConfigPresetDiffPlanner {
             ),
             writeEnabled = writeEnabled,
             blockedReason = if (writeEnabled) {
-                "Performance write is enabled in v3.3.9 only after PATCHED state, this dry-run, trusted backup check, and final confirmation."
+                "Performance write is enabled only after PATCHED state, this dry-run, trusted backup check, and final confirmation."
             } else {
                 "Performance write is locked. This is preview only."
             },

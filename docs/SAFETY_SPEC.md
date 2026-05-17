@@ -48,7 +48,7 @@ Each backup should include copied config files and metadata similar to:
 {
   "created_at": "2026-05-15T22:30:00+07:00",
   "game_package": "com.kurogame.wutheringwaves.global",
-  "app_version": "3.3.9",
+  "app_version": "3.3.10",
   "patch_version": "wuwa-3.3-vi-2026.05",
   "backup_type": "shizuku_read_only_config_backup",
   "game_write_enabled": false,
@@ -133,6 +133,7 @@ v3.3.6: Balanced write stability gate requiring PATCHED state
 v3.3.7: diagnostics snapshot, recovery guidance, and WUWA 3.3 QA checklist
 v3.3.8: Performance config preset dry-run only
 v3.3.9: Performance config preset write after dry-run validation
+v3.3.10: WUWA Global 3.3 LTS polish, recovery guide, and test checklist
 future milestone: Max Graphics preset with strong warning
 ```
 
@@ -239,8 +240,8 @@ Safe config preset write must not:
 {
   "manifest_version": 3,
   "app": {
-    "version_name": "3.3.9",
-    "version_code": 43,
+    "version_name": "3.3.10",
+    "version_code": 44,
     "supported_game_version": "3.3",
     "minimum_game_version": "3.3"
   },

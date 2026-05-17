@@ -1,20 +1,19 @@
 {
   "manifest_version": 3,
   "app": {
-    "version_name": "3.3.9",
-    "version_code": 43,
+    "version_name": "3.3.10",
+    "version_code": 44,
     "supported_game_version": "3.3",
     "minimum_game_version": "3.3",
-    "apk_url": "https://github.com/Acceleratorer/WUWA-VN-Android/releases/download/v3.3.9/WUWA-VN-v3.3.9-release.apk",
-    "sha256": "3b2ec9178987e8773fc0d895487728376628d6f08927ab142fcd7e23eaffb994",
+    "apk_url": "https://github.com/Acceleratorer/WUWA-VN-Android/releases/download/v3.3.10/WUWA-VN-v3.3.10-release.apk",
+    "sha256": "1c2db730de06297b6e1f26ee6e4d6e8bfad5a048437f81ea89cad14509e28c6d",
     "changelog": [
-      "Unlock Performance config preset write after v3.3.8 dry-run",
-      "Require PATCHED state before Performance write",
-      "Require trusted VERIFIED backup before Performance write",
-      "Write only Engine.ini, DeviceProfiles.ini, and MountLang_en.txt for Performance preset",
-      "Verify Performance template SHA-256 before write and target SHA-256 after write",
-      "Keep Max Graphics locked",
-      "Keep FPS, Vulkan, resolution, and high-risk graphics overrides blocked"
+      "Finalize WUWA Global 3.3 LTS release",
+      "Improve Recovery Guide for Original, Patched, Partial, and Unknown states",
+      "Improve Copy State Snapshot with preset policy details",
+      "Add WUWA 3.3 LTS manual test checklist",
+      "Clarify Safe, Balanced, and Performance write behavior",
+      "Keep Max Graphics locked"
     ],
     "force_update": false
   },
