@@ -15,9 +15,9 @@ $env:JAVA_HOME = $JavaHome
 $env:PATH = (Join-Path $JavaHome "bin") + ";" + $env:PATH
 Add-Type -AssemblyName System.IO.Compression.FileSystem
 
-$IsWindows = $PSVersionTable.Platform -eq "Win32NT" -or $env:OS -eq "Windows_NT"
-$Exe = if ($IsWindows) { ".exe" } else { "" }
-$Bat = if ($IsWindows) { ".bat" } else { "" }
+$IsWindowsHost = $PSVersionTable.Platform -eq "Win32NT" -or $env:OS -eq "Windows_NT"
+$Exe = if ($IsWindowsHost) { ".exe" } else { "" }
+$Bat = if ($IsWindowsHost) { ".bat" } else { "" }
 
 $Aapt2 = Join-Path $BuildTools "aapt2$Exe"
 $Aidl = Join-Path $BuildTools "aidl$Exe"

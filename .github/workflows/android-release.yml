@@ -70,15 +70,18 @@ jobs:
           patch = root_manifest["patch"]
           app = root_manifest.get("app", {})
           manifest = {
-              "manifest_version": 2,
+              "manifest_version": root_manifest.get("manifest_version", 3),
               "app": {
                   "version_name": "$VERSION",
                   "version_code": int("$VERSION_CODE"),
+                  "supported_game_version": app.get("supported_game_version"),
+                  "minimum_game_version": app.get("minimum_game_version"),
                   "apk_url": "https://github.com/Acceleratorer/WUWA-VN-Android/releases/download/v$VERSION/$APK_NAME",
                   "sha256": "$APK_SHA256",
                   "changelog": app.get("changelog") or ["Release $VERSION"],
                   "force_update": bool(app.get("force_update", False)),
               },
+              "game": root_manifest.get("game"),
               "patch": patch,
           }
           Path("release/update.json").write_text(
@@ -90,9 +93,24 @@ jobs:
       - name: Verify generated manifest
         run: python -m json.tool release/update.json > /dev/null
 
+      - name: Check existing release assets
+        id: release_assets
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          ASSET_COUNT="$(gh release view "$GITHUB_REF_NAME" --json assets --jq '.assets | length' 2>/dev/null || echo 0)"
+          if [ "$ASSET_COUNT" -gt 0 ]; then
+            echo "skip_upload=true" >> "$GITHUB_OUTPUT"
+            echo "Release $GITHUB_REF_NAME already has assets; skipping upload to keep published hashes stable."
+          else
+            echo "skip_upload=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Upload release files
+        if: steps.release_assets.outputs.skip_upload != 'true'
         uses: softprops/action-gh-release@v2
         with:
+          overwrite_files: true
           files: |
             release/*.apk
             release/sha256.txt
