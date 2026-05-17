@@ -161,7 +161,7 @@ Từ `v3.3.8`, app thêm Performance preview cho Wuthering Waves Global `3.3`. P
 ## Các Chế Độ Cấu Hình
 
 - **Safe / Default**: ít thay đổi nhất, ổn định nhất, không bật CVars đồ hoạ nặng.
-- **Balanced**: đã mở khóa write, chỉ dùng conservative CVars, không unlock FPS/Vulkan/resolution cực đoan. Từ `v3.3.7`, chỉ apply khi state là PATCHED.
+- **Balanced**: đã mở khóa write, chỉ dùng conservative CVars, không unlock FPS/Vulkan/resolution cực đoan. Từ `v3.3.6`, chỉ apply khi state là PATCHED.
 - **Performance**: dry-run only từ `v3.3.8`, chỉ preview file và CVar sẽ đổi, chưa ghi vào game.
 - **Max Graphics**: đang khóa, cấu hình nặng, có thể gây nóng máy, hao pin, crash hoặc tụt FPS. Chỉ nên dùng với máy mạnh.
 
@@ -195,6 +195,12 @@ Hiện tại app mở GitHub Releases để người dùng tự tải bản mớ
 - Balanced bị block khi state là ORIGINAL, PARTIAL hoặc UNKNOWN
 - Remove Vietnamese Patch cần backup VERIFIED để restore `MountLang_en.txt` trước khi xoá PAK
 - Khi state là UNKNOWN, các action nguy hiểm sẽ bị tắt để tránh ghi/xoá sai trạng thái
+
+## Release Line 3.3
+
+- v3.3.6: Stability release, Balanced chỉ apply khi state là PATCHED.
+- v3.3.7: QA hardening release, thêm diagnostics snapshot, recovery guidance, và test checklist.
+- v3.3.8: Performance preview release, thêm Performance dry-run only và giữ Performance write khóa.
 
 ## Roadmap
 
