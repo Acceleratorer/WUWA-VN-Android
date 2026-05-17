@@ -5,7 +5,7 @@ data class HomeActionState(
     val removePatchEnabled: Boolean,
     val applySafeEnabled: Boolean,
     val applyBalancedEnabled: Boolean,
-    val previewPerformanceEnabled: Boolean,
+    val applyPerformanceEnabled: Boolean,
     val restoreEnabled: Boolean,
     val backupEnabled: Boolean,
     val downloadPatchEnabled: Boolean,
@@ -27,7 +27,7 @@ object HomeActionStateResolver {
                 removePatchEnabled = false,
                 applySafeEnabled = false,
                 applyBalancedEnabled = false,
-                previewPerformanceEnabled = false,
+                applyPerformanceEnabled = false,
                 restoreEnabled = false,
                 backupEnabled = baseReady,
                 downloadPatchEnabled = true,
@@ -41,12 +41,12 @@ object HomeActionStateResolver {
                 removePatchEnabled = false,
                 applySafeEnabled = installedState.hasTrustedBackup,
                 applyBalancedEnabled = false,
-                previewPerformanceEnabled = false,
+                applyPerformanceEnabled = false,
                 restoreEnabled = installedState.hasTrustedBackup,
                 backupEnabled = true,
                 downloadPatchEnabled = true,
                 primaryHint = if (installedState.hasTrustedBackup) {
-                    "Original state detected. Install Vietnamese Patch before applying Balanced."
+                    "Original state detected. Install Vietnamese Patch before applying Balanced or Performance."
                 } else {
                     "Original state detected. Run Backup Game Configs before patch install."
                 },
@@ -57,12 +57,12 @@ object HomeActionStateResolver {
                 removePatchEnabled = installedState.hasTrustedBackup,
                 applySafeEnabled = installedState.hasTrustedBackup,
                 applyBalancedEnabled = installedState.hasTrustedBackup,
-                previewPerformanceEnabled = installedState.hasTrustedBackup,
+                applyPerformanceEnabled = installedState.hasTrustedBackup,
                 restoreEnabled = installedState.hasTrustedBackup,
                 backupEnabled = true,
                 downloadPatchEnabled = true,
                 primaryHint = if (installedState.hasTrustedBackup) {
-                    "Vietnamese patch appears installed. Remove or restore is available."
+                    "Vietnamese patch appears installed. Safe, Balanced, Performance, Remove, or Restore is available."
                 } else {
                     "Vietnamese patch appears installed. Run Backup Game Configs before write actions."
                 },
@@ -73,7 +73,7 @@ object HomeActionStateResolver {
                 removePatchEnabled = installedState.hasTrustedBackup,
                 applySafeEnabled = false,
                 applyBalancedEnabled = false,
-                previewPerformanceEnabled = false,
+                applyPerformanceEnabled = false,
                 restoreEnabled = installedState.hasTrustedBackup,
                 backupEnabled = true,
                 downloadPatchEnabled = true,
@@ -89,7 +89,7 @@ object HomeActionStateResolver {
                 removePatchEnabled = false,
                 applySafeEnabled = false,
                 applyBalancedEnabled = false,
-                previewPerformanceEnabled = false,
+                applyPerformanceEnabled = false,
                 restoreEnabled = false,
                 backupEnabled = true,
                 downloadPatchEnabled = true,

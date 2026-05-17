@@ -12,6 +12,7 @@ enum class ConfigInstallState {
     ORIGINAL,
     SAFE_DEFAULT,
     BALANCED,
+    PERFORMANCE,
     CUSTOM,
     UNKNOWN,
 }

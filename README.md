@@ -2,7 +2,7 @@
 
 Ứng dụng hỗ trợ cài bản Việt hoá cho Wuthering Waves trên Android.
 
-> Trạng thái hiện tại: bản `v3.3.8` là Wuthering Waves Global 3.3 Performance preview release. App hỗ trợ smart-state detection, diagnostics snapshot, backup, restore, PAK-only install, Remove Vietnamese Patch, Safe / Default config write, Balanced config preset write chỉ khi state là PATCHED, và Performance config preset dry-run only. Performance write và Max Graphics vẫn đang khóa.
+> Trạng thái hiện tại: bản `v3.3.9` là Wuthering Waves Global 3.3 Performance write release. App hỗ trợ smart-state detection, diagnostics snapshot, backup, restore, PAK-only install, Remove Vietnamese Patch, Safe / Default config write, Balanced config preset write, và Performance config preset write chỉ khi state là PATCHED. Max Graphics vẫn đang khóa.
 
 ## Tính Năng
 
@@ -22,8 +22,10 @@
 - Balanced config preset write: xem dry-run, xác nhận hai lần, rồi ghi đúng 3 file config bằng template bundled
 - Balanced chỉ được apply khi Vietnamese patch đã cài xong và state là PATCHED
 - Balanced vẫn chặn FPS unlock, Vulkan override, resolution override, và high-risk graphics tokens
-- Performance config preset dry-run only: xem trước file và CVar sẽ thay đổi, không ghi vào game
-- Chuẩn bị cấu hình đồ hoạ theo lộ trình: Performance write và Max Graphics vẫn khóa
+- Performance config preset write: xem dry-run, xác nhận hai lần, rồi ghi đúng 3 file config bằng template bundled
+- Performance chỉ được apply khi Vietnamese patch đã cài xong và state là PATCHED
+- Performance vẫn chặn FPS unlock, Vulkan override, resolution override, và high-risk graphics tokens
+- Chuẩn bị cấu hình đồ hoạ theo lộ trình: Max Graphics vẫn khóa
 - Header UI dùng artwork bundled trong APK, không tải ảnh từ mạng
 - Icon app dùng artwork bundled trong APK
 - Tải PAK vào app storage và kiểm tra SHA-256 trước khi cho phép bước tiếp theo
@@ -40,7 +42,7 @@
 
 ## Apply State Matrix
 
-| State | Install Vietnamese Patch | Apply Safe / Default | Apply Balanced | Preview Performance | Remove Patch | Restore Original |
+| State | Install Vietnamese Patch | Apply Safe / Default | Apply Balanced | Apply Performance | Remove Patch | Restore Original |
 |---|---|---|---|---|---|---|
 | ORIGINAL | Enabled if trusted backup exists | Enabled if trusted backup exists | Blocked: install patch first | Disabled | Disabled | Enabled if trusted backup exists |
 | PATCHED | Disabled | Enabled if trusted backup exists | Enabled if trusted backup exists | Enabled if trusted backup exists | Enabled if trusted backup exists | Enabled if trusted backup exists |
@@ -53,7 +55,7 @@ Nút **Copy State Snapshot** copy thông tin ngắn gọn để debug issue repo
 
 ```text
 WUWA VN State Snapshot
-App version: 3.3.8 (42)
+App version: 3.3.9 (43)
 Game package: com.kurogame.wutheringwaves.global
 Game version: 3.3.x
 Launcher compatibility: WUWA Global 3.3
@@ -72,7 +74,7 @@ Actions:
 Install Patch: false
 Apply Safe: true
 Apply Balanced: true
-Preview Performance: true
+Apply Performance: true
 Remove Patch: true
 Restore Original: true
 Backup Configs: true
@@ -121,7 +123,7 @@ Không cài APK từ mirror lạ, link chat riêng, hoặc file không có SHA-2
 Ví dụ file phát hành hợp lệ:
 
 ```text
-WUWA-VN-v3.3.8-release.apk
+WUWA-VN-v3.3.9-release.apk
 ```
 
 Không phát hành file `app-debug.apk` cho người dùng phổ thông.
@@ -129,7 +131,7 @@ Không phát hành file `app-debug.apk` cho người dùng phổ thông.
 Trước khi phát hành, kiểm tra chữ ký:
 
 ```bash
-apksigner verify --print-certs WUWA-VN-v3.3.8-release.apk
+apksigner verify --print-certs WUWA-VN-v3.3.9-release.apk
 ```
 
 ## Cách Khôi Phục
@@ -156,13 +158,13 @@ Restore chỉ được mở khi backup thoả tất cả điều kiện:
 - Shizuku đang READY
 - Wuthering Waves Global được phát hiện
 
-Từ `v3.3.8`, app thêm Performance preview cho Wuthering Waves Global `3.3`. PAK-only patch write, Remove PAK write, Safe / Default config preset write, và Balanced config preset write được mở khóa, nhưng Balanced chỉ được ghi khi state là PATCHED. Performance write và Max Graphics đang khóa.
+Từ `v3.3.9`, app mở khóa Performance write cho Wuthering Waves Global `3.3`. PAK-only patch write, Remove PAK write, Safe / Default config preset write, Balanced config preset write, và Performance config preset write được mở khóa, nhưng Balanced/Performance chỉ được ghi khi state là PATCHED. Max Graphics đang khóa.
 
 ## Các Chế Độ Cấu Hình
 
 - **Safe / Default**: ít thay đổi nhất, ổn định nhất, không bật CVars đồ hoạ nặng.
 - **Balanced**: đã mở khóa write, chỉ dùng conservative CVars, không unlock FPS/Vulkan/resolution cực đoan. Từ `v3.3.6`, chỉ apply khi state là PATCHED.
-- **Performance**: dry-run only từ `v3.3.8`, chỉ preview file và CVar sẽ đổi, chưa ghi vào game.
+- **Performance**: đã mở khóa write ở `v3.3.9`, giảm một số quality CVars theo hướng conservative, không unlock FPS/Vulkan/resolution cực đoan. Chỉ apply khi state là PATCHED.
 - **Max Graphics**: đang khóa, cấu hình nặng, có thể gây nóng máy, hao pin, crash hoặc tụt FPS. Chỉ nên dùng với máy mạnh.
 
 Mặc định nên dùng **Safe / Default**.
@@ -191,7 +193,7 @@ Hiện tại app mở GitHub Releases để người dùng tự tải bản mớ
 - Game vẫn đang mở và file có thể bị khoá
 - Không đủ dung lượng để tạo backup
 - Android chặn cài APK từ nguồn không xác định
-- Performance write và Max Graphics vẫn khóa
+- Max Graphics vẫn khóa
 - Balanced bị block khi state là ORIGINAL, PARTIAL hoặc UNKNOWN
 - Remove Vietnamese Patch cần backup VERIFIED để restore `MountLang_en.txt` trước khi xoá PAK
 - Khi state là UNKNOWN, các action nguy hiểm sẽ bị tắt để tránh ghi/xoá sai trạng thái
@@ -201,10 +203,10 @@ Hiện tại app mở GitHub Releases để người dùng tự tải bản mớ
 - v3.3.6: Stability release, Balanced chỉ apply khi state là PATCHED.
 - v3.3.7: QA hardening release, thêm diagnostics snapshot, recovery guidance, và test checklist.
 - v3.3.8: Performance preview release, thêm Performance dry-run only và giữ Performance write khóa.
+- v3.3.9: Performance write release, chỉ apply khi state là PATCHED và có trusted backup.
 
 ## Roadmap
 
-- v3.3.9: Performance preset write sau khi dry-run được test ổn định
 - v3.3.10: WUWA Global 3.3 final polish / LTS
 - v3.4.0: WUWA Global 3.4 compatibility release
 
@@ -225,7 +227,7 @@ Script sẽ tự kiểm tra Android SDK build-tools `36.0.0`, download và verif
 Khi gặp lỗi, hãy bấm **Copy State Snapshot** hoặc **Send Issue Report** trước, rồi gửi kèm log trong app nếu có:
 
 ```text
-[22:31:10] App version: 3.3.8
+[22:31:10] App version: 3.3.9
 [22:31:10] Android version: 14
 [22:31:11] Shizuku: running
 [22:31:11] Permission: granted
@@ -260,19 +262,19 @@ Khi gặp lỗi, hãy bấm **Copy State Snapshot** hoặc **Send Issue Report**
 
 ## Test Checklist 3.3
 
-- [ ] ORIGINAL: Install enabled nếu có trusted backup, Safe enabled nếu có trusted backup, Balanced disabled, Performance Preview disabled, Remove disabled, Restore enabled nếu có trusted backup
-- [ ] PATCHED: Install disabled, Safe enabled nếu có trusted backup, Balanced enabled nếu có trusted backup, Performance Preview enabled nếu có trusted backup, Remove enabled nếu có trusted backup, Restore enabled nếu có trusted backup
-- [ ] PARTIAL: Install disabled, Safe disabled, Balanced disabled, Performance Preview disabled, Remove/Restore enabled nếu có trusted backup
-- [ ] UNKNOWN: dangerous actions disabled, Performance Preview disabled
+- [ ] ORIGINAL: Install enabled nếu có trusted backup, Safe enabled nếu có trusted backup, Balanced disabled, Performance disabled, Remove disabled, Restore enabled nếu có trusted backup
+- [ ] PATCHED: Install disabled, Safe enabled nếu có trusted backup, Balanced enabled nếu có trusted backup, Performance enabled nếu có trusted backup, Remove enabled nếu có trusted backup, Restore enabled nếu có trusted backup
+- [ ] PARTIAL: Install disabled, Safe disabled, Balanced disabled, Performance disabled, Remove/Restore enabled nếu có trusted backup
+- [ ] UNKNOWN: dangerous actions disabled, Performance disabled
 - [ ] Backup copy đúng `Engine.ini`, `DeviceProfiles.ini`, `MountLang_en.txt` và ghi metadata
 - [ ] Download verify PAK SHA-256 trước khi install
 - [ ] Install Vietnamese Patch chỉ ghi `WuWaVH_99_P.pak`
 - [ ] Safe / Default chỉ ghi 3 file config allowlisted
 - [ ] Balanced chỉ ghi 3 file config khi state là PATCHED
-- [ ] Performance Preview show đúng file/CVar và không ghi file game
+- [ ] Performance show dry-run/final confirmation và chỉ ghi 3 file config khi state là PATCHED
 - [ ] Remove Patch restore `MountLang_en.txt`, xoá PAK, rồi verify target deleted
 - [ ] Restore Original Files chỉ restore backup VERIFIED
-- [ ] Performance write và Max Graphics vẫn khóa
+- [ ] Max Graphics vẫn khóa
 - [ ] Manifest không thêm permission mới và `android:debuggable=false`
 
 ## Security Checklist

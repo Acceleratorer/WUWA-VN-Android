@@ -48,7 +48,7 @@ Each backup should include copied config files and metadata similar to:
 {
   "created_at": "2026-05-15T22:30:00+07:00",
   "game_package": "com.kurogame.wutheringwaves.global",
-  "app_version": "3.3.8",
+  "app_version": "3.3.9",
   "patch_version": "wuwa-3.3-vi-2026.05",
   "backup_type": "shizuku_read_only_config_backup",
   "game_write_enabled": false,
@@ -132,7 +132,7 @@ v3.3.5: Balanced config preset write after dry-run validation
 v3.3.6: Balanced write stability gate requiring PATCHED state
 v3.3.7: diagnostics snapshot, recovery guidance, and WUWA 3.3 QA checklist
 v3.3.8: Performance config preset dry-run only
-future milestone: Performance config preset write
+v3.3.9: Performance config preset write after dry-run validation
 future milestone: Max Graphics preset with strong warning
 ```
 
@@ -239,8 +239,8 @@ Safe config preset write must not:
 {
   "manifest_version": 3,
   "app": {
-    "version_name": "3.3.8",
-    "version_code": 42,
+    "version_name": "3.3.9",
+    "version_code": 43,
     "supported_game_version": "3.3",
     "minimum_game_version": "3.3"
   },
@@ -333,9 +333,9 @@ Balanced config preset write must not:
 - Create a state where `MountLang_en.txt` points to `WuWaVH_99_P.pak` while the PAK is missing
 - Enable Performance or Max Graphics
 
-## Performance config preset preview
+## Performance config preset write
 
-`v3.3.8` may preview only the bundled Performance templates for:
+`v3.3.9` may write only the bundled Performance templates for:
 
 ```text
 UE4Game/Client/Client/Saved/Config/Android/Engine.ini
@@ -343,21 +343,25 @@ UE4Game/Client/Client/Saved/Config/Android/DeviceProfiles.ini
 UE4Game/Client/Client/Saved/Config/Android/MountLang_en.txt
 ```
 
-Performance config preset preview must:
+Performance config preset write must:
 
-- Require Wuthering Waves Global for the enabled UI path
-- Require Shizuku state is `READY` for the enabled UI path
-- Require a trusted VERIFIED backup for the enabled UI path
-- Require current patch state is `PATCHED` for the enabled UI path
+- Require Wuthering Waves Global is detected
+- Require Shizuku state is `READY`
+- Require a trusted VERIFIED backup
+- Require preset availability is `WRITE_ENABLED`
+- Require current patch state is `PATCHED`
+- Require the template set contains exactly the three config files
 - Show exact files and planned CVars
-- Always report `writeEnabled=false`
+- Require dry-run and final confirmation before writing
+- Verify each template SHA-256 before writing
+- Re-read each target file and verify SHA-256 after writing
 
-Performance config preset preview must not:
+Performance config preset write must not:
 
-- Call `showFinalPresetConfirmation`
-- Call `ShizukuConfigPresetWriter`
 - Add a new Shizuku write method
-- Write PAK files or config files
+- Write PAK files
+- Continue when current patch state is `ORIGINAL`, `PARTIAL`, or `UNKNOWN`
+- Use FPS unlock, Vulkan override, resolution override, device override, or high-risk graphics tokens
 - Enable Max Graphics
 
 ## Installed state detection
@@ -416,4 +420,4 @@ State snapshots should include:
 - Safe and Balanced preset writes must write only the three allowlisted config files.
 - Balanced write must require `PATCHED` state.
 - Remove Patch must restore `MountLang_en.txt`, delete only `WuWaVH_99_P.pak`, and verify deletion.
-- Performance write and Max Graphics must remain locked.
+- Max Graphics must remain locked.

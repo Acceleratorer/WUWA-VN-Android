@@ -127,6 +127,7 @@ class ConfigPresetDiffPlanner {
 
     fun planPerformancePreview(): ConfigPresetDryRun {
         val preset = ConfigPresetRepository().performance()
+        val writeEnabled = preset.availability == PresetAvailability.WRITE_ENABLED
         return ConfigPresetDryRun(
             preset = preset,
             filesToWrite = preset.files,
@@ -174,8 +175,12 @@ class ConfigPresetDiffPlanner {
                     note = "Keep Vietnamese PAK mount path.",
                 ),
             ),
-            writeEnabled = false,
-            blockedReason = "Performance write is locked in v3.3.8. This is preview only.",
+            writeEnabled = writeEnabled,
+            blockedReason = if (writeEnabled) {
+                "Performance write is enabled in v3.3.9 only after PATCHED state, this dry-run, trusted backup check, and final confirmation."
+            } else {
+                "Performance write is locked. This is preview only."
+            },
         )
     }
 }

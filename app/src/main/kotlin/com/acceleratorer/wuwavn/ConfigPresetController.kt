@@ -83,15 +83,43 @@ class ConfigPresetController(
             return
         }
 
+        val precondition = preconditionChecker.check(
+            ConfigPresetId.PERFORMANCE,
+            activity,
+            gameState,
+            shizukuState,
+        )
         val dryRun = performancePresetDryRunPlanner.plan(
             context = activity,
             gameState = gameState,
             shizukuState = shizukuState,
             installedState = installedState,
         )
+        val visibleDryRun = if (precondition.isReady()) {
+            dryRun
+        } else {
+            dryRun.copy(
+                writeEnabled = false,
+                blockedReason = dryRun.blockedReason + "\n\nWrite preconditions:\n" +
+                    precondition.failures.joinToString("\n") { "- $it" },
+            )
+        }
 
-        dialogs.showMessage("Performance Preset Preview", dryRun.describe())
-        logger.add("Performance preview: shown")
+        if (!precondition.isReady() || !visibleDryRun.writeEnabled) {
+            dialogs.showMessage("Performance preset blocked", visibleDryRun.describe())
+            val reason = precondition.failures.ifEmpty { listOf("unsafe installed state or missing write precondition") }
+            logger.add("Performance preset: blocked - ${reason.joinToString("; ")}")
+            return
+        }
+
+        dialogs.showConfirmation(
+            title = "Performance preset dry run",
+            message = visibleDryRun.describe() + "\n\nContinue to apply Performance preset?",
+            positiveLabel = "Continue Performance",
+        ) {
+            showFinalPresetConfirmation(precondition.plan!!)
+        }
+        logger.add("Performance preset dry run: shown")
     }
 
     private fun showPresetDryRun(
@@ -164,6 +192,14 @@ class ConfigPresetController(
             logger.add("Balanced preset: blocked before write - unsafe patch state")
             return
         }
+        if (plan.preset.id == ConfigPresetId.PERFORMANCE && !performanceWriteStateAllowed(installedStateProvider())) {
+            dialogs.showMessage(
+                "Performance preset blocked",
+                "Performance requires the Vietnamese patch to be installed first. Install Vietnamese Patch, refresh state, then apply Performance.",
+            )
+            logger.add("Performance preset: blocked before write - unsafe patch state")
+            return
+        }
 
         configWriteRunning = true
         logger.add("${plan.preset.name} preset: started")
@@ -194,17 +230,27 @@ class ConfigPresetController(
             "- MountLang_en.txt\n\n" +
             warningBlock(plan.preset)
 
+        if (plan.preset.id == ConfigPresetId.PERFORMANCE) {
+            return base +
+                "Risk level: HIGH\n\n" +
+                "This may reduce visual quality and change graphics load. Use Safe / Default if you see crash, black screen, stutter, heat, or battery drain.\n\n" +
+                "FPS unlock, Vulkan override, resolution override, and high-risk graphics tokens remain blocked. Max Graphics remains locked. Continue only if you have a trusted backup."
+        }
+
         if (plan.preset.id != ConfigPresetId.BALANCED) {
-            return base + "Performance write and Max Graphics remain locked. Continue only if the trusted backup details look correct."
+            return base + "Max Graphics remains locked. Continue only if the trusted backup details look correct."
         }
 
         return base +
             "Risk level: MEDIUM\n\n" +
             "This may change graphics quality and performance. Use Safe / Default if you see heat, lag, stutter, battery drain, or crash.\n\n" +
-            "Performance write and Max Graphics remain locked. Continue only if you have a trusted backup."
+            "Max Graphics remains locked. Continue only if you have a trusted backup."
     }
 
     private fun balancedWriteStateAllowed(installedState: InstalledState?): Boolean =
+        installedState?.patchState == PatchInstallState.PATCHED
+
+    private fun performanceWriteStateAllowed(installedState: InstalledState?): Boolean =
         installedState?.patchState == PatchInstallState.PATCHED
 
     private fun presetDryRunSummary(precondition: ConfigPresetPrecondition): String = buildString {
@@ -245,7 +291,7 @@ class ConfigPresetController(
 
         append("\nPreset rules:\n")
             .append("- No arbitrary config paths\n")
-            .append("- No Performance write or Max Graphics CVars\n")
+            .append("- No Max Graphics CVars\n")
             .append("- Target files are re-read and SHA-256 verified after write\n")
 
         if (plan != null) {
@@ -283,7 +329,7 @@ class ConfigPresetController(
         }
         append("\nAll target files were re-read from the game folder and verified.")
         append("\n\nRisk level: ").append(preset.riskLevel.label)
-        append("\nPerformance write and Max Graphics remain locked.")
+        append("\nMax Graphics remains locked.")
     }
 
     private fun warningBlock(preset: ConfigPreset): String =

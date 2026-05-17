@@ -36,7 +36,7 @@ class StatusRenderer(
             stateText +
             "Patch: ${manifest.patchVersion}\n" +
             "Patch SHA-256: ${manifest.pakSha256.take(12)}...\n" +
-            "Mode: Safe / Default + Balanced\n" +
+            "Mode: Safe / Default + Balanced + Performance\n" +
             "Restore writing: ${if (shizukuFileSystem.isRestoreWriteEnabled(shizukuState)) "enabled" else "locked"}\n" +
             "Patch writing: ${shizukuFileSystem.patchWriteStatus(shizukuState)}\n" +
             "Config preset writing: ${shizukuFileSystem.configPresetWriteStatus(shizukuState)}"
@@ -46,6 +46,7 @@ class StatusRenderer(
         ConfigInstallState.ORIGINAL -> "ORIGINAL"
         ConfigInstallState.SAFE_DEFAULT -> "SAFE / DEFAULT"
         ConfigInstallState.BALANCED -> "BALANCED"
+        ConfigInstallState.PERFORMANCE -> "PERFORMANCE"
         ConfigInstallState.CUSTOM -> "CUSTOM"
         ConfigInstallState.UNKNOWN -> "UNKNOWN"
     }
@@ -73,7 +74,7 @@ class StatusRenderer(
                 "Recommended recovery:\n" +
                 "1. Use Remove Vietnamese Patch if PAK exists.\n" +
                 "2. Use Restore Original Files if config files look wrong.\n" +
-                "3. Do not apply Balanced until state becomes PATCHED.\n"
+                "3. Do not apply Balanced or Performance until state becomes PATCHED.\n"
         PatchInstallState.UNKNOWN ->
             "\nState unknown.\n" +
                 "Recommended:\n" +

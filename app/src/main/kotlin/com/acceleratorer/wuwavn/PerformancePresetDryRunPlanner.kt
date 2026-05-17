@@ -34,23 +34,23 @@ class PerformancePresetDryRunPlanner(
         if (failures.isNotEmpty()) {
             reasonParts.add("Preview preconditions:\n" + failures.joinToString("\n") { "- $it" })
         } else {
-            reasonParts.add("Preview preconditions passed. No game files will be modified in v3.3.8.")
+            reasonParts.add("Write preconditions passed. Performance can be applied after final confirmation.")
         }
 
         return dryRun.copy(
-            writeEnabled = false,
+            writeEnabled = failures.isEmpty(),
             blockedReason = reasonParts.joinToString("\n\n"),
         )
     }
 
     private fun stateBlockReason(installedState: InstalledState?): String = when (installedState?.patchState) {
         PatchInstallState.ORIGINAL ->
-            "Current patch state is ORIGINAL. Install Vietnamese Patch before previewing Performance."
+            "Current patch state is ORIGINAL. Install Vietnamese Patch before applying Performance."
         PatchInstallState.PARTIAL ->
             "Current patch state is PARTIAL. Use Remove Vietnamese Patch or Restore Original Files first."
         PatchInstallState.UNKNOWN, null ->
             "Current patch state is UNKNOWN. Refresh state and complete game/Shizuku setup first."
         PatchInstallState.PATCHED ->
-            "Performance preview is available for this state."
+            "Performance can be applied for this state."
     }
 }

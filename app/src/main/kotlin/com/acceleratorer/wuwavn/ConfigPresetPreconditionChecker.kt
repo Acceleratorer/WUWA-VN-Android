@@ -49,9 +49,12 @@ class ConfigPresetPreconditionChecker(
                 failures.add("${file.displayName} template hash mismatch.")
             }
         }
-        // Balanced write is allowed only after PATCHED state, and high-risk graphics/FPS tokens remain forbidden.
+        // Balanced/Performance state gates live in the controller; high-risk graphics/FPS tokens stay blocked here too.
         if (preset.id == ConfigPresetId.BALANCED && hasForbiddenBalancedLine(templateFiles)) {
             failures.add("Balanced preset contains a forbidden high-risk graphics or FPS setting.")
+        }
+        if (preset.id == ConfigPresetId.PERFORMANCE && hasForbiddenPerformanceLine(templateFiles)) {
+            failures.add("Performance preset contains a forbidden high-risk graphics, FPS, Vulkan, or resolution setting.")
         }
 
         val plan = if (failures.isEmpty() && trustedBackup != null) {
@@ -80,6 +83,13 @@ class ConfigPresetPreconditionChecker(
         }
     }
 
+    private fun hasForbiddenPerformanceLine(templateFiles: List<ConfigTemplateFile>): Boolean {
+        val content = templateFiles.joinToString("\n") { it.content.toString(Charsets.UTF_8) }
+        return FORBIDDEN_PERFORMANCE_TOKENS.any { token ->
+            content.contains(token, ignoreCase = true)
+        }
+    }
+
     private companion object {
         const val MAX_CONFIG_BYTES = 512 * 1024
         val FORBIDDEN_BALANCED_TOKENS = listOf(
@@ -92,6 +102,21 @@ class ConfigPresetPreconditionChecker(
             "dp.override",
             "Windows_ExtraHigh",
             "Android_VeryHigh",
+            "Nvidia_RTX",
+        )
+        val FORBIDDEN_PERFORMANCE_TOKENS = listOf(
+            "r.Android.DisableVulkanSupport",
+            "bSupportsVulkan",
+            "bEnableDynamicMaxFPS",
+            "r.MobileContentScaleFactor",
+            "r.ScreenPercentage",
+            "t.MaxFPS",
+            "rhi.SyncInterval",
+            "r.VSync",
+            "dp.override",
+            "Windows_ExtraHigh",
+            "Android_VeryHigh",
+            "Android_High",
             "Nvidia_RTX",
         )
     }

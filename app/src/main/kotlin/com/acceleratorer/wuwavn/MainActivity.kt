@@ -72,7 +72,7 @@ class MainActivity : Activity() {
     private lateinit var downloadPatchButton: Button
     private lateinit var applySafeButton: Button
     private lateinit var applyBalancedButton: Button
-    private lateinit var previewPerformanceButton: Button
+    private lateinit var applyPerformanceButton: Button
     private lateinit var removePatchButton: Button
     private lateinit var restoreButton: Button
     private var shizukuState = ShizukuState.NOT_INSTALLED
@@ -261,13 +261,14 @@ class MainActivity : Activity() {
             configPresetController.showBalancedDryRun(gameState, shizukuState, installedState)
         }
         root.addView(applyBalancedButton)
-        previewPerformanceButton = button("Preview Performance Preset") {
+        applyPerformanceButton = button("Apply Performance Preset") {
             refreshStatus()
-            if (blockIfDisabled(previewPerformanceButton, "Preview Performance Preset")) return@button
-            lastAction = "Preview Performance Preset"
+            if (blockIfDisabled(applyPerformanceButton, "Apply Performance Preset")) return@button
+            pendingConfigPresetName = "Performance"
+            lastAction = "Apply Performance Preset requested"
             configPresetController.showPerformanceDryRun(gameState, shizukuState, installedState)
         }
-        root.addView(previewPerformanceButton)
+        root.addView(applyPerformanceButton)
         root.addView(button("Update Vietnamese Patch") {
             openUrl(AppConstants.RELEASES_URL)
             lastAction = "Opened GitHub Releases"
@@ -366,7 +367,7 @@ class MainActivity : Activity() {
         removePatchButton.isEnabled = state.removePatchEnabled
         applySafeButton.isEnabled = state.applySafeEnabled
         applyBalancedButton.isEnabled = state.applyBalancedEnabled
-        previewPerformanceButton.isEnabled = state.previewPerformanceEnabled
+        applyPerformanceButton.isEnabled = state.applyPerformanceEnabled
         restoreButton.isEnabled = state.restoreEnabled
         backupButton.isEnabled = state.backupEnabled
         downloadPatchButton.isEnabled = state.downloadPatchEnabled
@@ -386,7 +387,7 @@ class MainActivity : Activity() {
             state.mountLangExists,
             state.mountLangPointsToPak,
             state.hasTrustedBackup,
-            actions.previewPerformanceEnabled,
+            actions.applyPerformanceEnabled,
             actions.primaryHint,
         ).joinToString("|")
         if (signature == lastStateSignature) {
@@ -521,7 +522,7 @@ class MainActivity : Activity() {
                 appendLine("Install Patch: ${actions.installPatchEnabled}")
                 appendLine("Apply Safe: ${actions.applySafeEnabled}")
                 appendLine("Apply Balanced: ${actions.applyBalancedEnabled}")
-                appendLine("Preview Performance: ${actions.previewPerformanceEnabled}")
+                appendLine("Apply Performance: ${actions.applyPerformanceEnabled}")
                 appendLine("Remove Patch: ${actions.removePatchEnabled}")
                 appendLine("Restore Original: ${actions.restoreEnabled}")
                 appendLine("Backup Configs: ${actions.backupEnabled}")

@@ -33,7 +33,7 @@ class ConfigPresetRepository {
         warnings = listOf(
             "Balanced preset may change visual quality and device performance.",
             "Use Safe / Default if you experience heat, lag, stutter, battery drain, or crashes.",
-            "Performance write and Max Graphics remain locked.",
+            "Max Graphics remains locked.",
         ),
     )
 
@@ -42,13 +42,13 @@ class ConfigPresetRepository {
         displayName = "Performance",
         riskLevel = PresetRiskLevel.HIGH,
         availability = ConfigPresetAvailabilityPolicy.availability(ConfigPresetId.PERFORMANCE),
-        description = "Performance preset preview for lower graphics load. Dry-run only in v3.3.8.",
+        description = "Performance preset with conservative lower graphics load. Write enabled in v3.3.9 after trusted backup and final confirmation.",
         files = PerformanceConfigTemplates.files(),
         warnings = listOf(
-            "Performance preset is preview-only in v3.3.8.",
-            "No game files will be modified.",
-            "This preset may reduce visual quality if enabled in a later release.",
-            "Performance write remains locked until testing is complete.",
+            "Performance preset may reduce visual quality.",
+            "Performance preset may change graphics load and device behavior.",
+            "Use Safe / Default if you see crash, black screen, stutter, heat, or battery drain.",
+            "FPS unlock, Vulkan override, resolution override, and high-risk graphics tokens remain blocked.",
             "Max Graphics remains locked.",
         ),
     )

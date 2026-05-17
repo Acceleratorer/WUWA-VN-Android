@@ -10,8 +10,8 @@ object PerformanceConfigTemplates {
     private fun engineIni(): ConfigTemplateFile {
         val content = """
             [/Script/Engine.RendererSettings]
-            ; Performance preset preview for WUWA VN Android.
-            ; Dry-run only in v3.3.8.
+            ; Performance preset for WUWA VN Android.
+            ; Write enabled in v3.3.9 after dry-run and final confirmation.
             ; No FPS unlock, no Vulkan override, no resolution override.
         """.trimIndent() + "\n"
 
@@ -25,7 +25,7 @@ object PerformanceConfigTemplates {
     private fun deviceProfilesIni(): ConfigTemplateFile {
         val content = """
             [Android DeviceProfile]
-            ; Performance preview only.
+            ; Performance preset.
             ; Conservative low-end friendly tuning.
             +CVars=sg.ViewDistanceQuality=0
             +CVars=sg.ShadowQuality=0

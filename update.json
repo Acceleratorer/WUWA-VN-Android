@@ -1,19 +1,20 @@
 {
   "manifest_version": 3,
   "app": {
-    "version_name": "3.3.8",
-    "version_code": 42,
+    "version_name": "3.3.9",
+    "version_code": 43,
     "supported_game_version": "3.3",
     "minimum_game_version": "3.3",
-    "apk_url": "https://github.com/Acceleratorer/WUWA-VN-Android/releases/download/v3.3.8/WUWA-VN-v3.3.8-release.apk",
-    "sha256": "6c3d80c6eb66eec3f7b2247d9e1330b596fbeb1da4cb6a800d185ca7953d6372",
+    "apk_url": "https://github.com/Acceleratorer/WUWA-VN-Android/releases/download/v3.3.9/WUWA-VN-v3.3.9-release.apk",
+    "sha256": "3b2ec9178987e8773fc0d895487728376628d6f08927ab142fcd7e23eaffb994",
     "changelog": [
-      "Add Performance config preset dry-run only",
-      "Show exact planned files and CVars for Performance preset",
-      "Add Preview Performance Preset button",
-      "Improve Copy State Snapshot with action state details",
-      "Keep Performance write locked",
-      "Keep Max Graphics locked"
+      "Unlock Performance config preset write after v3.3.8 dry-run",
+      "Require PATCHED state before Performance write",
+      "Require trusted VERIFIED backup before Performance write",
+      "Write only Engine.ini, DeviceProfiles.ini, and MountLang_en.txt for Performance preset",
+      "Verify Performance template SHA-256 before write and target SHA-256 after write",
+      "Keep Max Graphics locked",
+      "Keep FPS, Vulkan, resolution, and high-risk graphics overrides blocked"
     ],
     "force_update": false
   },

@@ -114,12 +114,15 @@ class ShizukuConfigPresetWriter {
         if (plan.preset.id == ConfigPresetId.BALANCED) {
             requireNoForbiddenBalancedTokens(plan.templateFiles)
         }
+        if (plan.preset.id == ConfigPresetId.PERFORMANCE) {
+            requireNoForbiddenPerformanceTokens(plan.templateFiles)
+        }
     }
 
     private fun isWriteEnabledPreset(id: ConfigPresetId): Boolean = when (id) {
         ConfigPresetId.SAFE_DEFAULT -> true
         ConfigPresetId.BALANCED -> true
-        ConfigPresetId.PERFORMANCE -> false
+        ConfigPresetId.PERFORMANCE -> true
         ConfigPresetId.MAX_GRAPHICS -> false
     }
 
@@ -129,9 +132,22 @@ class ShizukuConfigPresetWriter {
         }
     }
 
+    private fun requireNoForbiddenPerformanceTokens(templateFiles: List<ConfigTemplateFile>) {
+        if (hasForbiddenPerformanceLine(templateFiles)) {
+            throw IllegalStateException("Performance preset contains a forbidden high-risk graphics, FPS, Vulkan, or resolution setting.")
+        }
+    }
+
     private fun hasForbiddenBalancedLine(templateFiles: List<ConfigTemplateFile>): Boolean {
         val content = templateFiles.joinToString("\n") { it.content.toString(Charsets.UTF_8) }
         return FORBIDDEN_BALANCED_TOKENS.any { token ->
+            content.contains(token, ignoreCase = true)
+        }
+    }
+
+    private fun hasForbiddenPerformanceLine(templateFiles: List<ConfigTemplateFile>): Boolean {
+        val content = templateFiles.joinToString("\n") { it.content.toString(Charsets.UTF_8) }
+        return FORBIDDEN_PERFORMANCE_TOKENS.any { token ->
             content.contains(token, ignoreCase = true)
         }
     }
@@ -167,6 +183,21 @@ class ShizukuConfigPresetWriter {
             "dp.override",
             "Windows_ExtraHigh",
             "Android_VeryHigh",
+            "Nvidia_RTX",
+        )
+        val FORBIDDEN_PERFORMANCE_TOKENS = listOf(
+            "r.Android.DisableVulkanSupport",
+            "bSupportsVulkan",
+            "bEnableDynamicMaxFPS",
+            "r.MobileContentScaleFactor",
+            "r.ScreenPercentage",
+            "t.MaxFPS",
+            "rhi.SyncInterval",
+            "r.VSync",
+            "dp.override",
+            "Windows_ExtraHigh",
+            "Android_VeryHigh",
+            "Android_High",
             "Nvidia_RTX",
         )
     }
