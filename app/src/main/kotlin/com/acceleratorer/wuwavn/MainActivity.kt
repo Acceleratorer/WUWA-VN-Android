@@ -11,6 +11,7 @@ import android.graphics.Typeface
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.os.Looper
 import android.view.Gravity
 import android.view.View
 import android.widget.Button
@@ -83,22 +84,23 @@ class MainActivity : Activity() {
     private var lastStateSignature: String? = null
     private var lastAction: String = "App started"
     private var pendingConfigPresetName: String? = null
+    private var stateRefreshGeneration = 0
     @Volatile private var lastBackupPath: String? = null
 
     private val binderReceivedListener = Shizuku.OnBinderReceivedListener {
         logger.add("Shizuku: binder received")
-        refreshStatus()
+        refreshStatusFromShizukuCallback()
     }
 
     private val binderDeadListener = Shizuku.OnBinderDeadListener {
         logger.add("Shizuku: binder dead")
-        refreshStatus()
+        refreshStatusFromShizukuCallback()
     }
 
     private val permissionResultListener =
         Shizuku.OnRequestPermissionResultListener { _, grantResult ->
             logger.add("Shizuku permission result: $grantResult")
-            refreshStatus()
+            refreshStatusFromShizukuCallback()
         }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -351,15 +353,86 @@ class MainActivity : Activity() {
     }
 
     private fun refreshStatus() {
-        gameState = gamePackageDetector.detect(this)
-        gameInfo = gamePackageDetector.detectGlobalInfo(this)
-        shizukuState = shizukuStateChecker.check(this)
-        installedState = installedStateDetector.detect(this, gameInfo, gameState, shizukuState)
-        actionState = HomeActionStateResolver.resolve(installedState, gameState, shizukuState)
-        statusView?.text = statusRenderer.render(gameState, gameInfo, shizukuState, installedState)
-        applyHomeActionState(actionState)
-        logInstalledStateIfChanged(installedState, actionState)
+        val detectedGameState = gamePackageDetector.detect(this)
+        val detectedGameInfo = gamePackageDetector.detectGlobalInfo(this)
+        val detectedShizukuState = shizukuStateChecker.check(this)
+        val visibleInstalledState = installedState.takeIf {
+            detectedGameState == GamePackageDetector.State.GLOBAL_INSTALLED &&
+                detectedShizukuState == ShizukuState.READY
+        }
+
+        gameState = detectedGameState
+        gameInfo = detectedGameInfo
+        shizukuState = detectedShizukuState
+        installedState = visibleInstalledState
+        renderStatusSnapshot(visibleInstalledState)
+        refreshInstalledStateInBackground(detectedGameInfo, detectedGameState, detectedShizukuState)
     }
+
+    private fun refreshStatusFromShizukuCallback() {
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            refreshStatus()
+        } else {
+            runOnUiThread { refreshStatus() }
+        }
+    }
+
+    private fun renderStatusSnapshot(state: InstalledState?) {
+        val resolvedActionState = HomeActionStateResolver.resolve(state, gameState, shizukuState)
+        actionState = resolvedActionState
+        statusView?.text = statusRenderer.render(gameState, gameInfo, shizukuState, state)
+        applyHomeActionState(resolvedActionState)
+    }
+
+    private fun refreshInstalledStateInBackground(
+        gameInfoSnapshot: GamePackageDetector.GameInfo?,
+        gameStateSnapshot: GamePackageDetector.State,
+        shizukuStateSnapshot: ShizukuState,
+    ) {
+        val refreshId = ++stateRefreshGeneration
+        Thread {
+            val detectedState = try {
+                installedStateDetector.detect(applicationContext, gameInfoSnapshot, gameStateSnapshot, shizukuStateSnapshot)
+            } catch (throwable: Throwable) {
+                logger.add("State detection failed: ${throwable.message}")
+                unavailableInstalledState(gameInfoSnapshot, "State detection failed: ${throwable.message}")
+            }
+
+            runOnUiThread {
+                if (refreshId != stateRefreshGeneration || isFinishing || isDestroyed) {
+                    return@runOnUiThread
+                }
+
+                gameState = gameStateSnapshot
+                gameInfo = gameInfoSnapshot
+                shizukuState = shizukuStateSnapshot
+                installedState = detectedState
+                renderStatusSnapshot(detectedState)
+                logInstalledStateIfChanged(detectedState, actionState)
+            }
+        }.apply {
+            name = "WUWA-StateRefresh"
+            start()
+        }
+    }
+
+    private fun unavailableInstalledState(
+        gameInfoSnapshot: GamePackageDetector.GameInfo?,
+        diagnostic: String,
+    ): InstalledState = InstalledState(
+        patchState = PatchInstallState.UNKNOWN,
+        configState = ConfigInstallState.UNKNOWN,
+        pakExists = false,
+        mountLangExists = false,
+        mountLangPointsToPak = false,
+        engineIniReadable = false,
+        deviceProfilesReadable = false,
+        hasTrustedBackup = false,
+        trustedBackupPath = null,
+        gameVersionName = gameInfoSnapshot?.versionName,
+        supportedGameVersion = AppConstants.SUPPORTED_GAME_VERSION,
+        diagnostics = listOf(diagnostic),
+    )
 
     private fun applyHomeActionState(state: HomeActionState?) {
         if (state == null) {
