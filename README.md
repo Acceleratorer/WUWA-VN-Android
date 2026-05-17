@@ -2,7 +2,7 @@
 
 Ứng dụng hỗ trợ cài bản Việt hoá cho Wuthering Waves trên Android.
 
-> Trạng thái hiện tại: bản `v3.3.10` là Wuthering Waves Global 3.3 LTS release. App hỗ trợ smart-state detection, diagnostics snapshot, Recovery Guide, backup, restore, PAK-only install, Remove Vietnamese Patch, Safe / Default config write, Balanced config preset write, và Performance config preset write chỉ khi state là PATCHED. Max Graphics vẫn đang khóa.
+> Trạng thái hiện tại: bản `v3.3.11` là Wuthering Waves Global 3.3 Gradle migration release. App hỗ trợ smart-state detection, diagnostics snapshot, Recovery Guide, backup, restore, PAK-only install, Remove Vietnamese Patch, Safe / Default config write, Balanced config preset write, và Performance config preset write chỉ khi state là PATCHED. Bản này chỉ đổi build system sang Gradle, không đổi app behavior. Max Graphics vẫn đang khóa.
 
 ## Tính Năng
 
@@ -34,6 +34,7 @@
 - Copy debug log để gửi báo lỗi
 - Copy State Snapshot để gửi nhanh trạng thái app/game/Shizuku/backup khi báo lỗi
 - Recovery Guide hướng dẫn xử lý Original / Patched / Partial / Unknown state
+- Gradle build path từ `v3.3.11`; manual PowerShell pipeline vẫn giữ làm legacy fallback
 
 ## Screenshots
 
@@ -56,7 +57,7 @@ Nút **Copy State Snapshot** copy thông tin ngắn gọn để debug issue repo
 
 ```text
 WUWA VN State Snapshot
-App version: 3.3.10 (44)
+App version: 3.3.11 (45)
 Game package: com.kurogame.wutheringwaves.global
 Game version: 3.3.x
 Launcher compatibility: WUWA Global 3.3
@@ -134,7 +135,7 @@ Không cài APK từ mirror lạ, link chat riêng, hoặc file không có SHA-2
 Ví dụ file phát hành hợp lệ:
 
 ```text
-WUWA-VN-v3.3.10-release.apk
+WUWA-VN-v3.3.11-release.apk
 ```
 
 Không phát hành file `app-debug.apk` cho người dùng phổ thông.
@@ -142,7 +143,7 @@ Không phát hành file `app-debug.apk` cho người dùng phổ thông.
 Trước khi phát hành, kiểm tra chữ ký:
 
 ```bash
-apksigner verify --print-certs WUWA-VN-v3.3.10-release.apk
+apksigner verify --print-certs WUWA-VN-v3.3.11-release.apk
 ```
 
 ## Cách Khôi Phục
@@ -217,29 +218,45 @@ Hiện tại app mở GitHub Releases để người dùng tự tải bản mớ
 - v3.3.8: Performance preview release, thêm Performance dry-run only và giữ Performance write khóa.
 - v3.3.9: Performance write release, chỉ apply khi state là PATCHED và có trusted backup.
 - v3.3.10: WUWA Global 3.3 LTS release, thêm Recovery Guide, preset policy trong snapshot, và checklist test LTS.
+- v3.3.11: Gradle migration release, không đổi app behavior.
 
 ## Roadmap
 
+- v3.3.12: GitHub Actions release automation
 - v3.4.0: WUWA Global 3.4 compatibility release
 
-Source app hiện đã được migrate sang Kotlin. Build script vẫn là manual pipeline nhẹ, có download Kotlin compiler `2.0.21` từ JetBrains và verify SHA-256 trước khi compile.
+Source app hiện đã được migrate sang Kotlin. Từ `v3.3.11`, Gradle là build path chính và vẫn dùng `version.properties` làm source of truth cho app version.
 
 ## Build From Source
 
-Repo hiện chưa dùng Gradle. Build release bằng manual Android pipeline:
+Từ `v3.3.11`, repo hỗ trợ Gradle build.
+
+Debug build:
+
+```bash
+./gradlew :app:assembleDebug
+```
+
+Release build:
+
+```bash
+./gradlew :app:assembleRelease
+```
+
+Manual PowerShell pipeline vẫn được giữ tạm thời làm legacy fallback:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\tools\build-release.ps1
 ```
 
-Script sẽ tự kiểm tra Android SDK build-tools `36.0.0`, download và verify Shizuku AARs, download và verify Kotlin compiler `2.0.21`, compile AIDL/Java generated sources/Kotlin sources, chạy D8, zipalign, apksigner, rồi xuất APK vào `release/`.
+Gradle là build path chính từ `v3.3.11`. Legacy script vẫn tự kiểm tra Android SDK build-tools `36.0.0`, download và verify Shizuku AARs, download và verify Kotlin compiler `2.0.21`, compile AIDL/Java generated sources/Kotlin sources, chạy D8, zipalign, apksigner, rồi xuất APK vào `release/`.
 
 ## Báo Lỗi
 
 Khi gặp lỗi, hãy bấm **Copy State Snapshot** hoặc **Send Issue Report** trước, rồi gửi kèm log trong app nếu có:
 
 ```text
-[22:31:10] App version: 3.3.10
+[22:31:10] App version: 3.3.11
 [22:31:10] Android version: 14
 [22:31:11] Shizuku: running
 [22:31:11] Permission: granted

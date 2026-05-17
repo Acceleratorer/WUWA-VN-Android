@@ -305,7 +305,7 @@ class MainActivity : Activity() {
                 "- DeviceProfiles.ini\n" +
                 "- MountLang_en.txt\n" +
                 "- WuWaVH_99_P.pak\n\n" +
-                "Max Graphics remains locked in v3.3.10.\n\n" +
+                "Max Graphics remains locked in v3.3.11.\n\n" +
                 "Always backup first. Never use this app for cheating, anti-cheat bypass, or gameplay manipulation.",
             14,
             Color.rgb(198, 207, 220),
