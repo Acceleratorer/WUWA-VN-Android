@@ -4,12 +4,7 @@ class ConfigPresetRepository {
     fun get(id: ConfigPresetId): ConfigPreset = when (id) {
         ConfigPresetId.SAFE_DEFAULT -> safeDefault()
         ConfigPresetId.BALANCED -> balanced()
-        ConfigPresetId.PERFORMANCE -> locked(
-            id = ConfigPresetId.PERFORMANCE,
-            displayName = "Performance",
-            riskLevel = PresetRiskLevel.HIGH,
-            description = "Performance preset is locked until a later dry-run release.",
-        )
+        ConfigPresetId.PERFORMANCE -> performance()
         ConfigPresetId.MAX_GRAPHICS -> locked(
             id = ConfigPresetId.MAX_GRAPHICS,
             displayName = "Max Graphics",
@@ -38,7 +33,23 @@ class ConfigPresetRepository {
         warnings = listOf(
             "Balanced preset may change visual quality and device performance.",
             "Use Safe / Default if you experience heat, lag, stutter, battery drain, or crashes.",
-            "Performance and Max Graphics remain locked.",
+            "Performance write and Max Graphics remain locked.",
+        ),
+    )
+
+    fun performance(): ConfigPreset = ConfigPreset(
+        id = ConfigPresetId.PERFORMANCE,
+        displayName = "Performance",
+        riskLevel = PresetRiskLevel.HIGH,
+        availability = ConfigPresetAvailabilityPolicy.availability(ConfigPresetId.PERFORMANCE),
+        description = "Performance preset preview for lower graphics load. Dry-run only in v3.3.8.",
+        files = PerformanceConfigTemplates.files(),
+        warnings = listOf(
+            "Performance preset is preview-only in v3.3.8.",
+            "No game files will be modified.",
+            "This preset may reduce visual quality if enabled in a later release.",
+            "Performance write remains locked until testing is complete.",
+            "Max Graphics remains locked.",
         ),
     )
 

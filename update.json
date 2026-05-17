@@ -1,19 +1,19 @@
 {
   "manifest_version": 3,
   "app": {
-    "version_name": "3.3.7",
-    "version_code": 41,
+    "version_name": "3.3.8",
+    "version_code": 42,
     "supported_game_version": "3.3",
     "minimum_game_version": "3.3",
-    "apk_url": "https://github.com/Acceleratorer/WUWA-VN-Android/releases/download/v3.3.7/WUWA-VN-v3.3.7-release.apk",
-    "sha256": "d793c395e4f91b9a2d1456b34eaba38dee6f3f9458722959f62d1fc1f5471421",
+    "apk_url": "https://github.com/Acceleratorer/WUWA-VN-Android/releases/download/v3.3.8/WUWA-VN-v3.3.8-release.apk",
+    "sha256": "6c3d80c6eb66eec3f7b2247d9e1330b596fbeb1da4cb6a800d185ca7953d6372",
     "changelog": [
-      "Add Copy State Snapshot for issue reports",
-      "Detect Balanced config template state",
-      "Improve recovery guidance for Partial and Unknown states",
-      "Add WUWA Global 3.3 test checklist",
-      "Keep Balanced write restricted to PATCHED state",
-      "Keep Performance and Max Graphics locked"
+      "Add Performance config preset dry-run only",
+      "Show exact planned files and CVars for Performance preset",
+      "Add Preview Performance Preset button",
+      "Improve Copy State Snapshot with action state details",
+      "Keep Performance write locked",
+      "Keep Max Graphics locked"
     ],
     "force_update": false
   },

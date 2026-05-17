@@ -118,10 +118,64 @@ class ConfigPresetDiffPlanner {
             ),
             writeEnabled = writeEnabled,
             blockedReason = if (writeEnabled) {
-                "Balanced write is enabled in v3.3.7 only after PATCHED state, this dry-run, trusted backup check, and final confirmation."
+                "Balanced write is enabled only after PATCHED state, this dry-run, trusted backup check, and final confirmation."
             } else {
                 "Balanced write is locked. This is preview only."
             },
+        )
+    }
+
+    fun planPerformancePreview(): ConfigPresetDryRun {
+        val preset = ConfigPresetRepository().performance()
+        return ConfigPresetDryRun(
+            preset = preset,
+            filesToWrite = preset.files,
+            changes = listOf(
+                ConfigChange(
+                    fileName = "DeviceProfiles.ini",
+                    key = "sg.ViewDistanceQuality",
+                    oldValue = "default",
+                    newValue = "0",
+                    note = "Lower view distance for better performance.",
+                ),
+                ConfigChange(
+                    fileName = "DeviceProfiles.ini",
+                    key = "sg.ShadowQuality",
+                    oldValue = "default",
+                    newValue = "0",
+                    note = "Disable or reduce shadow quality.",
+                ),
+                ConfigChange(
+                    fileName = "DeviceProfiles.ini",
+                    key = "sg.EffectsQuality",
+                    oldValue = "default",
+                    newValue = "0",
+                    note = "Reduce effects load.",
+                ),
+                ConfigChange(
+                    fileName = "DeviceProfiles.ini",
+                    key = "sg.PostProcessQuality",
+                    oldValue = "default",
+                    newValue = "0",
+                    note = "Reduce post-processing cost.",
+                ),
+                ConfigChange(
+                    fileName = "DeviceProfiles.ini",
+                    key = "sg.TextureQuality",
+                    oldValue = "default",
+                    newValue = "1",
+                    note = "Use lower texture quality while avoiding extreme degradation.",
+                ),
+                ConfigChange(
+                    fileName = "MountLang_en.txt",
+                    key = "Vietnamese PAK mount",
+                    oldValue = "current",
+                    newValue = "../../../Client/Content/Paks/WuWaVH_99_P.pak",
+                    note = "Keep Vietnamese PAK mount path.",
+                ),
+            ),
+            writeEnabled = false,
+            blockedReason = "Performance write is locked in v3.3.8. This is preview only.",
         )
     }
 }

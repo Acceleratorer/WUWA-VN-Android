@@ -39,6 +39,10 @@ class MainActivity : Activity() {
         trustedBackupFinder,
         ConfigPresetDiffPlanner(),
     )
+    private val performancePresetDryRunPlanner = PerformancePresetDryRunPlanner(
+        trustedBackupFinder,
+        ConfigPresetDiffPlanner(),
+    )
     private val installedStateDetector = InstalledStateDetector(
         ShizukuInstalledStateReader(),
         trustedBackupFinder,
@@ -68,6 +72,7 @@ class MainActivity : Activity() {
     private lateinit var downloadPatchButton: Button
     private lateinit var applySafeButton: Button
     private lateinit var applyBalancedButton: Button
+    private lateinit var previewPerformanceButton: Button
     private lateinit var removePatchButton: Button
     private lateinit var restoreButton: Button
     private var shizukuState = ShizukuState.NOT_INSTALLED
@@ -158,6 +163,7 @@ class MainActivity : Activity() {
             logger = logger,
             preconditionChecker = configPresetPreconditionChecker,
             balancedPresetDryRunPlanner = balancedPresetDryRunPlanner,
+            performancePresetDryRunPlanner = performancePresetDryRunPlanner,
             configPresetWriter = configPresetWriter,
             gamePackageDetector = gamePackageDetector,
             shizukuStateChecker = shizukuStateChecker,
@@ -255,6 +261,13 @@ class MainActivity : Activity() {
             configPresetController.showBalancedDryRun(gameState, shizukuState, installedState)
         }
         root.addView(applyBalancedButton)
+        previewPerformanceButton = button("Preview Performance Preset") {
+            refreshStatus()
+            if (blockIfDisabled(previewPerformanceButton, "Preview Performance Preset")) return@button
+            lastAction = "Preview Performance Preset"
+            configPresetController.showPerformanceDryRun(gameState, shizukuState, installedState)
+        }
+        root.addView(previewPerformanceButton)
         root.addView(button("Update Vietnamese Patch") {
             openUrl(AppConstants.RELEASES_URL)
             lastAction = "Opened GitHub Releases"
@@ -353,6 +366,7 @@ class MainActivity : Activity() {
         removePatchButton.isEnabled = state.removePatchEnabled
         applySafeButton.isEnabled = state.applySafeEnabled
         applyBalancedButton.isEnabled = state.applyBalancedEnabled
+        previewPerformanceButton.isEnabled = state.previewPerformanceEnabled
         restoreButton.isEnabled = state.restoreEnabled
         backupButton.isEnabled = state.backupEnabled
         downloadPatchButton.isEnabled = state.downloadPatchEnabled
@@ -372,6 +386,7 @@ class MainActivity : Activity() {
             state.mountLangExists,
             state.mountLangPointsToPak,
             state.hasTrustedBackup,
+            actions.previewPerformanceEnabled,
             actions.primaryHint,
         ).joinToString("|")
         if (signature == lastStateSignature) {
@@ -475,18 +490,46 @@ class MainActivity : Activity() {
 
     private fun stateSnapshotText(): String {
         val state = installedState
-        return "App version: ${AppConstants.VERSION_NAME}\n" +
-            "Game package: ${gameInfo?.packageName ?: AppConstants.GLOBAL_GAME_PACKAGE}\n" +
-            "Game version: ${gameInfo?.versionName ?: "unknown"}\n" +
-            "Shizuku: ${shizukuState.label}\n" +
-            "Patch state: ${state?.patchState ?: "UNKNOWN"}\n" +
-            "Config state: ${state?.configState ?: "UNKNOWN"}\n" +
-            "Trusted backup: ${state?.hasTrustedBackup ?: false}\n" +
-            "PAK exists: ${state?.pakExists ?: false}\n" +
-            "MountLang points to PAK: ${state?.mountLangPointsToPak ?: false}\n" +
-            "Engine.ini readable: ${state?.engineIniReadable ?: false}\n" +
-            "DeviceProfiles.ini readable: ${state?.deviceProfilesReadable ?: false}\n" +
-            "Last action: $lastAction"
+        val actions = actionState
+        return buildString {
+            appendLine("WUWA VN State Snapshot")
+            appendLine("App version: ${AppConstants.VERSION_NAME} (${AppConstants.VERSION_CODE})")
+            appendLine("Game package: ${gameInfo?.packageName ?: AppConstants.GLOBAL_GAME_PACKAGE}")
+            appendLine("Game version: ${gameInfo?.versionName ?: "unknown"}")
+            appendLine("Launcher compatibility: WUWA Global ${AppConstants.SUPPORTED_GAME_VERSION}")
+            appendLine("Shizuku: ${shizukuState.label}")
+            appendLine()
+
+            if (state == null) {
+                appendLine("Installed state: unavailable")
+            } else {
+                appendLine("Patch state: ${state.patchState}")
+                appendLine("Config state: ${state.configState}")
+                appendLine("Trusted backup: ${state.hasTrustedBackup}")
+                appendLine("PAK exists: ${state.pakExists}")
+                appendLine("MountLang exists: ${state.mountLangExists}")
+                appendLine("MountLang points to PAK: ${state.mountLangPointsToPak}")
+                appendLine("Engine.ini readable: ${state.engineIniReadable}")
+                appendLine("DeviceProfiles.ini readable: ${state.deviceProfilesReadable}")
+            }
+
+            appendLine()
+            appendLine("Actions:")
+            if (actions == null) {
+                appendLine("Action state: unavailable")
+            } else {
+                appendLine("Install Patch: ${actions.installPatchEnabled}")
+                appendLine("Apply Safe: ${actions.applySafeEnabled}")
+                appendLine("Apply Balanced: ${actions.applyBalancedEnabled}")
+                appendLine("Preview Performance: ${actions.previewPerformanceEnabled}")
+                appendLine("Remove Patch: ${actions.removePatchEnabled}")
+                appendLine("Restore Original: ${actions.restoreEnabled}")
+                appendLine("Backup Configs: ${actions.backupEnabled}")
+                appendLine("Download Patch: ${actions.downloadPatchEnabled}")
+                appendLine("Hint: ${actions.primaryHint}")
+            }
+            appendLine("Last action: $lastAction")
+        }
     }
 
     private fun showMessage(title: String, message: String) {

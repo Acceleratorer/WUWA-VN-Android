@@ -1,6 +1,6 @@
 package com.acceleratorer.wuwavn
 
-object BalancedConfigTemplates {
+object PerformanceConfigTemplates {
     fun files(): List<ConfigTemplateFile> = listOf(
         engineIni(),
         deviceProfilesIni(),
@@ -10,8 +10,9 @@ object BalancedConfigTemplates {
     private fun engineIni(): ConfigTemplateFile {
         val content = """
             [/Script/Engine.RendererSettings]
-            ; Balanced preset for WUWA VN Android.
-            ; No extreme graphics override.
+            ; Performance preset preview for WUWA VN Android.
+            ; Dry-run only in v3.3.8.
+            ; No FPS unlock, no Vulkan override, no resolution override.
         """.trimIndent() + "\n"
 
         return templateFile(
@@ -24,12 +25,13 @@ object BalancedConfigTemplates {
     private fun deviceProfilesIni(): ConfigTemplateFile {
         val content = """
             [Android DeviceProfile]
-            ; Balanced preset.
-            ; Conservative visual tuning.
-            +CVars=sg.ViewDistanceQuality=1
-            +CVars=sg.ShadowQuality=1
-            +CVars=sg.TextureQuality=2
-            +CVars=sg.EffectsQuality=1
+            ; Performance preview only.
+            ; Conservative low-end friendly tuning.
+            +CVars=sg.ViewDistanceQuality=0
+            +CVars=sg.ShadowQuality=0
+            +CVars=sg.EffectsQuality=0
+            +CVars=sg.PostProcessQuality=0
+            +CVars=sg.TextureQuality=1
         """.trimIndent() + "\n"
 
         return templateFile(
@@ -54,8 +56,9 @@ object BalancedConfigTemplates {
         content: String,
     ): ConfigTemplateFile {
         if (!PatchDryRunPlanner.isAllowedTarget(relativePath)) {
-            throw SecurityException("Blocked unsafe config template path: $relativePath")
+            throw SecurityException("Blocked unsafe performance template path: $relativePath")
         }
+
         val bytes = content.toByteArray(Charsets.UTF_8)
         return ConfigTemplateFile(
             displayName = displayName,

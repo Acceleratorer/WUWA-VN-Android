@@ -8,6 +8,7 @@ class ConfigPresetController(
     private val logger: DebugLogger,
     private val preconditionChecker: ConfigPresetPreconditionChecker,
     private val balancedPresetDryRunPlanner: BalancedPresetDryRunPlanner,
+    private val performancePresetDryRunPlanner: PerformancePresetDryRunPlanner,
     private val configPresetWriter: ShizukuConfigPresetWriter,
     private val gamePackageDetector: GamePackageDetector,
     private val shizukuStateChecker: ShizukuStateChecker,
@@ -70,6 +71,27 @@ class ConfigPresetController(
             showFinalPresetConfirmation(precondition.plan!!)
         }
         logger.add("Balanced preset dry run: shown")
+    }
+
+    fun showPerformanceDryRun(
+        gameState: GamePackageDetector.State,
+        shizukuState: ShizukuState,
+        installedState: InstalledState?,
+    ) {
+        if (configWriteRunning) {
+            Toast.makeText(activity, "Config preset is already running.", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        val dryRun = performancePresetDryRunPlanner.plan(
+            context = activity,
+            gameState = gameState,
+            shizukuState = shizukuState,
+            installedState = installedState,
+        )
+
+        dialogs.showMessage("Performance Preset Preview", dryRun.describe())
+        logger.add("Performance preview: shown")
     }
 
     private fun showPresetDryRun(
@@ -173,13 +195,13 @@ class ConfigPresetController(
             warningBlock(plan.preset)
 
         if (plan.preset.id != ConfigPresetId.BALANCED) {
-            return base + "Performance and Max Graphics remain locked. Continue only if the trusted backup details look correct."
+            return base + "Performance write and Max Graphics remain locked. Continue only if the trusted backup details look correct."
         }
 
         return base +
             "Risk level: MEDIUM\n\n" +
             "This may change graphics quality and performance. Use Safe / Default if you see heat, lag, stutter, battery drain, or crash.\n\n" +
-            "Performance and Max Graphics remain locked. Continue only if you have a trusted backup."
+            "Performance write and Max Graphics remain locked. Continue only if you have a trusted backup."
     }
 
     private fun balancedWriteStateAllowed(installedState: InstalledState?): Boolean =
@@ -223,7 +245,7 @@ class ConfigPresetController(
 
         append("\nPreset rules:\n")
             .append("- No arbitrary config paths\n")
-            .append("- No Performance or Max Graphics CVars\n")
+            .append("- No Performance write or Max Graphics CVars\n")
             .append("- Target files are re-read and SHA-256 verified after write\n")
 
         if (plan != null) {
@@ -261,7 +283,7 @@ class ConfigPresetController(
         }
         append("\nAll target files were re-read from the game folder and verified.")
         append("\n\nRisk level: ").append(preset.riskLevel.label)
-        append("\nPerformance and Max Graphics remain locked.")
+        append("\nPerformance write and Max Graphics remain locked.")
     }
 
     private fun warningBlock(preset: ConfigPreset): String =
