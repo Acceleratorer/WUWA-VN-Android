@@ -6,7 +6,7 @@
     "supported_game_version": "3.3",
     "minimum_game_version": "3.3",
     "apk_url": "https://github.com/Acceleratorer/WUWA-VN-Android/releases/download/v3.3.13/WUWA-VN-v3.3.13-release.apk",
-    "sha256": "PUT_REAL_APK_SHA256_HERE",
+    "sha256": "2e4231a153828bc3b69d15ee1fc5ca2d36531b894806fa85519102a956a10515",
     "changelog": [
       "Add first-run setup guide",
       "Add setup checklist for game, Shizuku, backup, and patch state",
