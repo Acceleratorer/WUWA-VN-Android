@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-debug:
+    name: Build debug APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Set up Android SDK
+        uses: android-actions/setup-android@v3
+
+      - name: Install Android SDK packages
+        shell: bash
+        run: sdkmanager "platforms;android-36" "build-tools;36.0.0" "platform-tools"
+
+      - name: Check release safety policy
+        shell: bash
+        run: |
+          if grep -R "REQUEST_INSTALL_PACKAGES" app/src/main; then
+            echo "::error::REQUEST_INSTALL_PACKAGES must not be used."
+            exit 1
+          fi
+
+          if grep -R "ConfigPresetId.MAX_GRAPHICS -> PresetAvailability.WRITE_ENABLED" app/src/main/kotlin; then
+            echo "::error::Max Graphics must remain locked."
+            exit 1
+          fi
+
+      - name: Build debug
+        shell: bash
+        run: |
+          chmod +x ./gradlew
+          ./gradlew :app:assembleDebug

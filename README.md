@@ -2,7 +2,7 @@
 
 Ứng dụng hỗ trợ cài bản Việt hoá cho Wuthering Waves trên Android.
 
-> Trạng thái hiện tại: bản `v3.3.13` là WUWA Global 3.3 onboarding polish release. App thêm first-run setup guide, setup checklist, Shizuku help, Developer Options shortcut, và nhóm lại các action trên màn chính. Không đổi write logic. Max Graphics vẫn khóa.
+> Trạng thái hiện tại: bản `v3.3.14` là WUWA Global 3.3 release hardening / CI validation release. App thêm release APK verification cho SHA-256, version, package, debuggable, và permission. Không đổi runtime behavior. Max Graphics vẫn khóa.
 
 ## Tính Năng
 
@@ -141,7 +141,7 @@ Không cài APK từ mirror lạ, link chat riêng, hoặc file không có SHA-2
 Ví dụ file phát hành hợp lệ:
 
 ```text
-WUWA-VN-v3.3.13-release.apk
+WUWA-VN-v3.3.14-release.apk
 ```
 
 Không phát hành file `app-debug.apk` cho người dùng phổ thông.
@@ -149,7 +149,7 @@ Không phát hành file `app-debug.apk` cho người dùng phổ thông.
 Trước khi phát hành, kiểm tra chữ ký:
 
 ```bash
-apksigner verify --print-certs WUWA-VN-v3.3.13-release.apk
+apksigner verify --print-certs WUWA-VN-v3.3.14-release.apk
 ```
 
 ## Cách Khôi Phục
@@ -227,6 +227,7 @@ Hiện tại app mở GitHub Releases để người dùng tự tải bản mớ
 - v3.3.11: Gradle migration release, không đổi app behavior.
 - v3.3.12: GitHub Actions release automation, build/sign/upload APK tự động.
 - v3.3.13: Low-tech onboarding polish, thêm setup guide/checklist/Shizuku help, không đổi app behavior.
+- v3.3.14: Release hardening, CI verify APK SHA/version/package/permission/debuggable.
 
 ## Roadmap
 
@@ -257,7 +258,24 @@ Release artifact gồm:
 ```text
 WUWA-VN-vX.Y.Z-release.apk
 sha256.txt
+release-verification-report.txt
 ```
+
+## Release Verification
+
+Từ `v3.3.14`, release APK được verify bằng script:
+
+```bash
+python tools/verify-release-apk.py WUWA-VN-v3.3.14-release.apk
+```
+
+Script kiểm tra:
+
+- SHA-256 APK khớp `update.json`
+- `versionName` và `versionCode` khớp `version.properties`
+- package là `com.acceleratorer.wuwavn`
+- release APK không debuggable
+- APK không xin `REQUEST_INSTALL_PACKAGES`
 
 Manual PowerShell pipeline vẫn được giữ tạm thời làm legacy fallback:
 

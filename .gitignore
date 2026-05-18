@@ -19,8 +19,11 @@ release.keystore
 # Release artifacts should be uploaded to GitHub Releases, not committed.
 *.apk
 *.aab
+sha256.txt
+release-verification-report.txt
 release/
 
 # OS files
 .DS_Store
 Thumbs.db
+__pycache__/
