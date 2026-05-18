@@ -137,6 +137,21 @@ jobs:
           sha256sum "$OUT_APK" | tee sha256.txt
           echo "apk=$OUT_APK" >> "$GITHUB_OUTPUT"
 
+      - name: Validate APK SHA against update manifest
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          manifest = json.loads(Path("update.json").read_text(encoding="utf-8"))
+          expected = manifest["app"]["sha256"].lower().strip()
+          actual = Path("sha256.txt").read_text(encoding="utf-8").split()[0].lower().strip()
+
+          if expected != actual:
+              raise SystemExit(f"APK SHA mismatch: update.json={expected}, actual={actual}")
+          PY
+
       - name: Upload workflow artifact
         uses: actions/upload-artifact@v4
         with:
