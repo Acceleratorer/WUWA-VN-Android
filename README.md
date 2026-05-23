@@ -2,7 +2,7 @@
 
 Ứng dụng hỗ trợ cài bản Việt hoá cho Wuthering Waves trên Android.
 
-> Trạng thái hiện tại: bản `v3.3.14` là WUWA Global 3.3 release hardening / CI validation release. App thêm release APK verification cho SHA-256, version, package, debuggable, và permission. Không đổi runtime behavior. Max Graphics vẫn khóa.
+> Trạng thái hiện tại: bản `v3.3.15` là WUWA Global 3.3 Compose preview foundation release. App bật Jetpack Compose toolchain và thêm các màn preview-only cho Android Studio. Runtime UI/write logic vẫn giữ nguyên. Max Graphics vẫn khóa.
 
 ## Tính Năng
 
@@ -28,6 +28,7 @@
 - Chuẩn bị cấu hình đồ hoạ theo lộ trình: Max Graphics vẫn khóa
 - Header UI dùng artwork bundled trong APK, không tải ảnh từ mạng
 - Icon app dùng artwork bundled trong APK
+- Jetpack Compose preview foundation: có màn preview-only cho home/status/setup/preset policy, chưa thay runtime UI
 - Tải PAK vào app storage và kiểm tra SHA-256 trước khi cho phép bước tiếp theo
 - Ghi `metadata.json` với danh sách file backup thật, dung lượng và SHA-256
 - Copy đường dẫn backup để dễ gửi log hoặc tự kiểm tra
@@ -141,7 +142,7 @@ Không cài APK từ mirror lạ, link chat riêng, hoặc file không có SHA-2
 Ví dụ file phát hành hợp lệ:
 
 ```text
-WUWA-VN-v3.3.14-release.apk
+WUWA-VN-v3.3.15-release.apk
 ```
 
 Không phát hành file `app-debug.apk` cho người dùng phổ thông.
@@ -149,7 +150,7 @@ Không phát hành file `app-debug.apk` cho người dùng phổ thông.
 Trước khi phát hành, kiểm tra chữ ký:
 
 ```bash
-apksigner verify --print-certs WUWA-VN-v3.3.14-release.apk
+apksigner verify --print-certs WUWA-VN-v3.3.15-release.apk
 ```
 
 ## Cách Khôi Phục
@@ -228,12 +229,14 @@ Hiện tại app mở GitHub Releases để người dùng tự tải bản mớ
 - v3.3.12: GitHub Actions release automation, build/sign/upload APK tự động.
 - v3.3.13: Low-tech onboarding polish, thêm setup guide/checklist/Shizuku help, không đổi app behavior.
 - v3.3.14: Release hardening, CI verify APK SHA/version/package/permission/debuggable.
+- v3.3.15: Compose preview foundation, thêm preview-only Compose screens, không đổi runtime UI/write logic.
 
 ## Roadmap
 
 - v3.4.0: WUWA Global 3.4 compatibility release
 
 Source app hiện đã được migrate sang Kotlin. Từ `v3.3.11`, Gradle là build path chính và vẫn dùng `version.properties` làm source of truth cho app version. Từ `v3.3.12`, GitHub Actions có thể build release APK khi tạo GitHub Release tag mới.
+Từ `v3.3.15`, repo có Jetpack Compose preview foundation để chuẩn bị migrate UI dần mà không đổi runtime flow.
 
 ## Build From Source
 
@@ -251,6 +254,14 @@ Release build local:
 ./gradlew :app:assembleRelease
 ```
 
+Compose preview:
+
+```text
+app/src/main/kotlin/com/acceleratorer/wuwavn/ComposePreviewScreens.kt
+```
+
+Mở file này trong Android Studio để xem `@Preview` cho home/status/setup/preset policy. Các preview này chưa được gọi bởi runtime `MainActivity`.
+
 Từ `v3.3.12`, GitHub Actions có thể build release APK khi tạo GitHub Release tag mới.
 
 Release artifact gồm:
@@ -266,7 +277,7 @@ release-verification-report.txt
 Từ `v3.3.14`, release APK được verify bằng script:
 
 ```bash
-python tools/verify-release-apk.py WUWA-VN-v3.3.14-release.apk
+python tools/verify-release-apk.py WUWA-VN-v3.3.15-release.apk
 ```
 
 Script kiểm tra:

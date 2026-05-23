@@ -3,6 +3,7 @@ import java.util.Properties
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
+    id("org.jetbrains.kotlin.plugin.compose")
 }
 
 val versionProps = Properties().apply {
@@ -68,6 +69,7 @@ android {
 
     buildFeatures {
         aidl = true
+        compose = true
     }
 
     lint {
@@ -116,10 +118,16 @@ tasks.named("preBuild") {
 }
 
 dependencies {
+    implementation(platform("androidx.compose:compose-bom:2024.09.00"))
+    implementation("androidx.compose.foundation:foundation")
+    implementation("androidx.compose.material3:material3")
+    implementation("androidx.compose.ui:ui")
+    implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("dev.rikka.shizuku:api:13.1.5") {
         exclude(group = "androidx.annotation", module = "annotation")
     }
     implementation("dev.rikka.shizuku:provider:13.1.5") {
         exclude(group = "androidx.annotation", module = "annotation")
     }
+    debugImplementation("androidx.compose.ui:ui-tooling")
 }

@@ -51,17 +51,15 @@ The fixed zip still has the same prototype caveats listed below, so it should re
 
 ## Suggested Migration Path
 
-1. Add Compose dependencies and a minimal Compose shell behind existing runtime logic.
+1. Add Compose dependencies and preview-only surfaces behind existing runtime logic. Completed in `v3.3.15`.
 2. Recreate current home actions as Compose screens without changing controllers/writers.
-3. Add Android Studio `@Preview` composables for onboarding, status, setup checklist, and blocked states.
-4. Add screenshot tests for the main screens.
-5. Keep release verification and safety CI unchanged.
-6. Only after UI parity is verified, remove the legacy programmatic View UI.
+3. Add screenshot tests for the main screens.
+4. Keep release verification and safety CI unchanged.
+5. Only after UI parity is verified, remove the legacy programmatic View UI.
 
 ## Release Direction
 
 For the next release, prefer a narrow milestone:
 
-- `v3.3.15`: Compose preview foundation, no runtime behavior changes.
 - `v3.3.16`: Compose home screen parity, still no writer changes.
 - `v3.3.17`: Non-tech install/onboarding polish.
