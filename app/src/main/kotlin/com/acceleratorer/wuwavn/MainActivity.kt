@@ -21,6 +21,7 @@ class MainActivity : ComponentActivity() {
     private val logger = DebugLogger()
     private val gamePackageDetector = GamePackageDetector()
     private val shizukuStateChecker = ShizukuStateChecker(gamePackageDetector)
+    private val rootAccessChecker = RootAccessChecker()
     private val backupManager = BackupManager()
     private val dryRunPlanner = PatchDryRunPlanner(backupManager)
     private val manifestRepository = PatchManifestRepository()
@@ -64,6 +65,7 @@ class MainActivity : ComponentActivity() {
     private var shizukuState = ShizukuState.NOT_INSTALLED
     private var gameState = GamePackageDetector.State.NOT_INSTALLED
     private var gameInfo: GamePackageDetector.GameInfo? = null
+    private var rootAccessState = RootAccessState.NOT_CHECKED
     private var installedState: InstalledState? = null
     private var actionState: HomeActionState? = null
     private var lastStateSignature: String? = null
@@ -190,6 +192,8 @@ class MainActivity : ComponentActivity() {
         onShizukuSetupHelp = { showShizukuHelp() },
         onOpenShizuku = { openOrRequestShizuku() },
         onOpenDeveloperOptions = { openDeveloperOptions() },
+        onRootPreviewHelp = { showRootPreviewHelp() },
+        onCheckRootAccess = { checkRootAccessPreview() },
         onCheckGameFolder = { checkGameFolder() },
         onShowPatchPlan = { showPatchPlan() },
         onBackupGameConfigs = { backupGameConfigs() },
@@ -206,7 +210,57 @@ class MainActivity : ComponentActivity() {
         onCopyStateSnapshot = { copyStateSnapshot() },
         onRecoveryGuide = { showRecoveryGuide() },
         onSendIssueReport = { shareLog() },
+        onMoreTools = { showMoreTools() },
     )
+
+    private fun showMoreTools() {
+        refreshStatus()
+        val labels = arrayOf(
+            "Install Help",
+            "Shizuku Setup Help",
+            "Open Developer Options",
+            "Check Game Folder",
+            "Show Patch Plan",
+            "Copy Backup Path",
+            "Update Vietnamese Patch",
+            "Remove Vietnamese Patch",
+            "Restore Original Files",
+            "Apply Safe Config Preset",
+            "Apply Balanced Preset",
+            "Apply Performance Preset",
+            "Recovery Guide",
+            "Root Preview Help",
+            "Check Root Access",
+            "Copy State Snapshot",
+            "Send Issue Report",
+            "Copy Debug Log",
+        )
+
+        dialogs.showSelection("More Tools", labels) { which ->
+            when (labels[which]) {
+                "Install Help" -> showInstallHelp()
+                "Shizuku Setup Help" -> showShizukuHelp()
+                "Open Developer Options" -> openDeveloperOptions()
+                "Check Game Folder" -> checkGameFolder()
+                "Show Patch Plan" -> showPatchPlan()
+                "Copy Backup Path" -> copyBackupPath()
+                "Update Vietnamese Patch" -> openUpdatePage()
+                "Remove Vietnamese Patch" -> removeVietnamesePatch()
+                "Restore Original Files" -> restoreOriginalFiles()
+                "Apply Safe Config Preset" -> applySafePreset()
+                "Apply Balanced Preset" -> applyBalancedPreset()
+                "Apply Performance Preset" -> applyPerformancePreset()
+                "Recovery Guide" -> showRecoveryGuide()
+                "Root Preview Help" -> showRootPreviewHelp()
+                "Check Root Access" -> checkRootAccessPreview()
+                "Copy State Snapshot" -> copyStateSnapshot()
+                "Send Issue Report" -> shareLog()
+                "Copy Debug Log" -> copyLog()
+            }
+        }
+        lastAction = "Opened More Tools"
+        logger.add("More tools: shown")
+    }
 
     private fun showInstallHelp() {
         dialogs.showMessage(
@@ -340,6 +394,7 @@ class MainActivity : ComponentActivity() {
         composeHomeUiState.value = composeHomeUiState.value.copy(
             statusText = statusRenderer.render(gameState, gameInfo, shizukuState, state),
             setupChecklistText = setupChecklistText(),
+            rootPreviewText = RootPreviewRenderer.render(rootAccessState),
             diagnosticsSummaryText = diagnosticsSummaryText(state, resolvedActionState),
             snapshotPreviewText = snapshotPreviewText(resolvedActionState),
             debugLogText = logger.text(),
@@ -475,6 +530,51 @@ class MainActivity : ComponentActivity() {
         logger.add("Shizuku help: shown")
     }
 
+    private fun showRootPreviewHelp() {
+        dialogs.showMessage("Root Backend Preview", RootPreviewRenderer.help(rootAccessState))
+        lastAction = "Opened Root Preview Help"
+        logger.add("Root preview help: shown")
+    }
+
+    private fun checkRootAccessPreview() {
+        if (rootAccessState == RootAccessState.CHECKING) {
+            Toast.makeText(this, "Root check is already running.", Toast.LENGTH_SHORT).show()
+            return
+        }
+
+        dialogs.showConfirmation(
+            title = "Check Root Access",
+            message = "This preview may show a root manager popup.\n\nNo files will be changed. Root writes are disabled in v3.3.19.\n\nFor normal users, Shizuku is still recommended.",
+            positiveLabel = "Check Root",
+        ) {
+            startRootAccessPreviewCheck()
+        }
+    }
+
+    private fun startRootAccessPreviewCheck() {
+        rootAccessState = RootAccessState.CHECKING
+        lastAction = "Root access preview requested"
+        logger.add("Root preview: checking")
+        renderStatusSnapshot(installedState)
+
+        Thread {
+            val result = rootAccessChecker.check()
+            runOnUiThread {
+                if (isFinishing || isDestroyed) {
+                    return@runOnUiThread
+                }
+                rootAccessState = result
+                lastAction = "Root preview: ${result.label}"
+                renderStatusSnapshot(installedState)
+                dialogs.showMessage("Root Backend Preview", RootPreviewRenderer.result(result))
+                logger.add("Root preview: ${result.label}")
+            }
+        }.apply {
+            name = "WUWA-RootPreview"
+            start()
+        }
+    }
+
     private fun openDeveloperOptions() {
         try {
             startActivity(Intent(Settings.ACTION_APPLICATION_DEVELOPMENT_SETTINGS))
@@ -491,6 +591,7 @@ class MainActivity : ComponentActivity() {
         appendLine("Setup Checklist")
         appendLine("Game installed: ${if (gameState == GamePackageDetector.State.GLOBAL_INSTALLED) "OK" else "Missing"}")
         appendLine("Shizuku ready: ${if (shizukuState == ShizukuState.READY) "OK" else "Not ready"}")
+        appendLine("Root preview: ${rootAccessState.label}")
         appendLine("Trusted backup: ${if (installedState?.hasTrustedBackup == true) "OK" else "Missing"}")
         appendLine("Patch state: ${installedState?.patchState ?: "UNKNOWN"}")
         appendLine("Ready to install patch: ${isReadyToInstallPatchLabel()}")
@@ -527,6 +628,7 @@ class MainActivity : ComponentActivity() {
         appendLine("Game version: ${gameInfo?.versionName ?: "unknown"}")
         appendLine("Supported game version: ${AppConstants.SUPPORTED_GAME_VERSION}")
         appendLine("Shizuku: ${shizukuState.label}")
+        appendLine("Root preview: ${rootAccessState.label}")
         appendLine("Patch state: ${state?.patchState ?: PatchInstallState.UNKNOWN}")
         appendLine("Config state: ${state?.configState ?: ConfigInstallState.UNKNOWN}")
         appendLine("Trusted backup: ${state?.hasTrustedBackup ?: false}")
@@ -539,6 +641,9 @@ class MainActivity : ComponentActivity() {
         appendLine("Balanced: ${ConfigPresetAvailabilityPolicy.availability(ConfigPresetId.BALANCED)}")
         appendLine("Performance: ${ConfigPresetAvailabilityPolicy.availability(ConfigPresetId.PERFORMANCE)}")
         appendLine("Max Graphics: ${ConfigPresetAvailabilityPolicy.availability(ConfigPresetId.MAX_GRAPHICS)}")
+        appendLine()
+        appendLine("Root backend preview: ${rootAccessState.label}")
+        appendLine("Root write enabled: false")
         appendLine()
         appendLine("Actions:")
         appendLine("Install Patch: ${actions.installPatchEnabled}")
@@ -641,6 +746,9 @@ class MainActivity : ComponentActivity() {
             appendLine("Balanced: ${ConfigPresetAvailabilityPolicy.availability(ConfigPresetId.BALANCED)}")
             appendLine("Performance: ${ConfigPresetAvailabilityPolicy.availability(ConfigPresetId.PERFORMANCE)}")
             appendLine("Max Graphics: ${ConfigPresetAvailabilityPolicy.availability(ConfigPresetId.MAX_GRAPHICS)}")
+            appendLine()
+            appendLine("Root backend preview: ${rootAccessState.label}")
+            appendLine("Root write enabled: false")
             appendLine()
             appendLine("Shizuku: ${shizukuState.label}")
             appendLine()

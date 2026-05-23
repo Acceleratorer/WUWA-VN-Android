@@ -7,13 +7,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -40,6 +37,7 @@ import androidx.compose.ui.unit.sp
 data class ComposeHomeUiState(
     val statusText: String,
     val setupChecklistText: String,
+    val rootPreviewText: String,
     val diagnosticsSummaryText: String,
     val snapshotPreviewText: String,
     val debugLogText: String,
@@ -49,6 +47,7 @@ data class ComposeHomeUiState(
         fun initial(): ComposeHomeUiState = ComposeHomeUiState(
             statusText = "Loading status...",
             setupChecklistText = "Setup Checklist\nRefreshing...",
+            rootPreviewText = RootPreviewRenderer.render(RootAccessState.NOT_CHECKED),
             diagnosticsSummaryText = "Diagnostics\nRefreshing...",
             snapshotPreviewText = "State Snapshot Preview\nRefreshing...",
             debugLogText = "",
@@ -63,6 +62,8 @@ data class ComposeHomeCallbacks(
     val onShizukuSetupHelp: () -> Unit,
     val onOpenShizuku: () -> Unit,
     val onOpenDeveloperOptions: () -> Unit,
+    val onRootPreviewHelp: () -> Unit,
+    val onCheckRootAccess: () -> Unit,
     val onCheckGameFolder: () -> Unit,
     val onShowPatchPlan: () -> Unit,
     val onBackupGameConfigs: () -> Unit,
@@ -79,6 +80,7 @@ data class ComposeHomeCallbacks(
     val onCopyStateSnapshot: () -> Unit,
     val onRecoveryGuide: () -> Unit,
     val onSendIssueReport: () -> Unit,
+    val onMoreTools: () -> Unit,
 )
 
 @Composable
@@ -113,17 +115,10 @@ fun ComposeHomeScreen(
         ) {
             HeaderBlock()
             HeroBlock()
-            InstallHelpBlock(callbacks)
             TextPanel(title = "Current State", body = uiState.statusText)
             TextPanel(title = "Setup Checklist", body = uiState.setupChecklistText)
-            TextPanel(title = "Diagnostics Summary", body = uiState.diagnosticsSummaryText)
-            TextPanel(title = "State Snapshot Preview", body = uiState.snapshotPreviewText, monospace = true)
-            SetupSection(callbacks)
-            PatchSection(uiState.actionState, callbacks)
-            ConfigPresetSection(uiState.actionState, callbacks)
+            PrimaryActionsSection(uiState.actionState, callbacks)
             SafetyBlock()
-            TextPanel(title = "Debug Log", body = uiState.debugLogText.ifBlank { "No log entries yet." }, monospace = true)
-            DiagnosticsSection(callbacks)
         }
     }
 }
@@ -157,32 +152,6 @@ private fun HeroBlock() {
     )
 }
 
-@Composable
-private fun InstallHelpBlock(callbacks: ComposeHomeCallbacks) {
-    Card(
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFEFF6FF)),
-        border = BorderStroke(1.dp, Color(0xFFBFDBFE)),
-        shape = RoundedCornerShape(8.dp),
-        modifier = Modifier.fillMaxWidth(),
-    ) {
-        Column(
-            modifier = Modifier.padding(14.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Text("Easy Install", color = Color(0xFF1E3A8A), fontWeight = FontWeight.Bold, fontSize = 17.sp)
-            Text(
-                text = "Use the release APK, Android 11+, then start Shizuku before patch operations.",
-                color = Color(0xFF334155),
-                fontSize = 13.sp,
-            )
-            OutlinedButton(onClick = callbacks.onInstallHelp) {
-                Text("Install Help")
-            }
-        }
-    }
-}
-
-@Composable
 private fun TextPanel(
     title: String,
     body: String,
@@ -211,64 +180,19 @@ private fun TextPanel(
 }
 
 @Composable
-private fun SetupSection(callbacks: ComposeHomeCallbacks) {
-    ActionSection(
-        title = "Setup",
-        actions = listOf(
-            HomeAction("Show Setup Guide", true, callbacks.onShowSetupGuide),
-            HomeAction("Install Help", true, callbacks.onInstallHelp),
-            HomeAction("Shizuku Setup Help", true, callbacks.onShizukuSetupHelp),
-            HomeAction("Open Shizuku", true, callbacks.onOpenShizuku),
-            HomeAction("Open Developer Options", true, callbacks.onOpenDeveloperOptions),
-            HomeAction("Check Game Folder", true, callbacks.onCheckGameFolder),
-        ),
-    )
-}
-
-@Composable
-private fun PatchSection(
+private fun PrimaryActionsSection(
     actionState: HomeActionState?,
     callbacks: ComposeHomeCallbacks,
 ) {
     ActionSection(
-        title = "Patch",
+        title = "Quick Actions",
         actions = listOf(
-            HomeAction("Show Patch Plan", true, callbacks.onShowPatchPlan),
+            HomeAction("Start Setup", true, callbacks.onShowSetupGuide),
+            HomeAction("Open Shizuku", true, callbacks.onOpenShizuku),
             HomeAction("Backup Game Configs", actionState?.backupEnabled == true, callbacks.onBackupGameConfigs),
-            HomeAction("Copy Backup Path", true, callbacks.onCopyBackupPath),
             HomeAction("Download & Verify Patch", actionState?.downloadPatchEnabled != false, callbacks.onDownloadPatch),
             HomeAction("Install Vietnamese Patch", actionState?.installPatchEnabled == true, callbacks.onInstallPatch, primary = true),
-            HomeAction("Update Vietnamese Patch", true, callbacks.onUpdatePatch),
-            HomeAction("Remove Vietnamese Patch", actionState?.removePatchEnabled == true, callbacks.onRemovePatch),
-            HomeAction("Restore Original Files", actionState?.restoreEnabled == true, callbacks.onRestoreOriginal),
-        ),
-    )
-}
-
-@Composable
-private fun ConfigPresetSection(
-    actionState: HomeActionState?,
-    callbacks: ComposeHomeCallbacks,
-) {
-    ActionSection(
-        title = "Config Presets",
-        actions = listOf(
-            HomeAction("Apply Safe Config Preset", actionState?.applySafeEnabled == true, callbacks.onApplySafe),
-            HomeAction("Apply Balanced Preset", actionState?.applyBalancedEnabled == true, callbacks.onApplyBalanced),
-            HomeAction("Apply Performance Preset", actionState?.applyPerformanceEnabled == true, callbacks.onApplyPerformance),
-        ),
-    )
-}
-
-@Composable
-private fun DiagnosticsSection(callbacks: ComposeHomeCallbacks) {
-    ActionSection(
-        title = "Diagnostics",
-        actions = listOf(
-            HomeAction("Copy Debug Log", true, callbacks.onCopyDebugLog),
-            HomeAction("Copy State Snapshot", true, callbacks.onCopyStateSnapshot),
-            HomeAction("Recovery Guide", true, callbacks.onRecoveryGuide),
-            HomeAction("Send Issue Report", true, callbacks.onSendIssueReport),
+            HomeAction("More Tools", true, callbacks.onMoreTools),
         ),
     )
 }
@@ -282,7 +206,7 @@ private fun SafetyBlock() {
             "- DeviceProfiles.ini\n" +
             "- MountLang_en.txt\n" +
             "- WuWaVH_99_P.pak\n\n" +
-            "Max Graphics remains locked in v3.3.18.\n\n" +
+            "Max Graphics remains locked in v3.3.19.\n\n" +
             "Always backup first. Never use this app for cheating, anti-cheat bypass, or gameplay manipulation.",
     )
 }
@@ -343,13 +267,16 @@ private fun WuwaPatchedPreview() {
                     "Config state: PERFORMANCE",
                 setupChecklistText = "Game installed: OK\n" +
                     "Shizuku ready: OK\n" +
+                    "Root preview: Root access detected\n" +
                     "Trusted backup: OK\n" +
                     "Patch state: PATCHED\n" +
                     "Ready to install patch: NO\n" +
                     "Ready to apply presets: YES",
-                diagnosticsSummaryText = "App version: 3.3.18 (52)\n" +
+                rootPreviewText = RootPreviewRenderer.render(RootAccessState.AVAILABLE),
+                diagnosticsSummaryText = "App version: 3.3.19 (53)\n" +
                     "Supported game version: 3.3\n" +
                     "Shizuku: Ready\n" +
+                    "Root preview: Root access detected\n" +
                     "Patch state: PATCHED\n" +
                     "Trusted backup: true\n" +
                     "Hint: Vietnamese patch appears installed. Safe, Balanced, Performance, Remove, or Restore is available.",
@@ -358,6 +285,8 @@ private fun WuwaPatchedPreview() {
                     "Balanced: WRITE_ENABLED\n" +
                     "Performance: WRITE_ENABLED\n" +
                     "Max Graphics: LOCKED\n\n" +
+                    "Root backend preview: Root access detected\n" +
+                    "Root write enabled: false\n\n" +
                     "Actions:\n" +
                     "Install Patch: false\n" +
                     "Apply Safe: true\n" +
@@ -387,13 +316,16 @@ private fun WuwaSetupBlockedPreview() {
                     "Config state: UNKNOWN",
                 setupChecklistText = "Game installed: OK\n" +
                     "Shizuku ready: Not ready\n" +
+                    "Root preview: Root preview not checked\n" +
                     "Trusted backup: Missing\n" +
                     "Patch state: UNKNOWN\n" +
                     "Ready to install patch: NO\n" +
                     "Ready to apply presets: NO",
-                diagnosticsSummaryText = "App version: 3.3.18 (52)\n" +
+                rootPreviewText = RootPreviewRenderer.render(RootAccessState.NOT_CHECKED),
+                diagnosticsSummaryText = "App version: 3.3.19 (53)\n" +
                     "Supported game version: 3.3\n" +
                     "Shizuku: Shizuku installed but not running\n" +
+                    "Root preview: Root preview not checked\n" +
                     "Patch state: UNKNOWN\n" +
                     "Trusted backup: false\n" +
                     "Hint: Complete game/Shizuku setup before file operations.",
@@ -402,6 +334,8 @@ private fun WuwaSetupBlockedPreview() {
                     "Balanced: WRITE_ENABLED\n" +
                     "Performance: WRITE_ENABLED\n" +
                     "Max Graphics: LOCKED\n\n" +
+                    "Root backend preview: Root preview not checked\n" +
+                    "Root write enabled: false\n\n" +
                     "Actions:\n" +
                     "Install Patch: false\n" +
                     "Apply Safe: false\n" +
@@ -440,6 +374,8 @@ private fun previewCallbacks(): ComposeHomeCallbacks = ComposeHomeCallbacks(
     onShizukuSetupHelp = {},
     onOpenShizuku = {},
     onOpenDeveloperOptions = {},
+    onRootPreviewHelp = {},
+    onCheckRootAccess = {},
     onCheckGameFolder = {},
     onShowPatchPlan = {},
     onBackupGameConfigs = {},
@@ -456,4 +392,5 @@ private fun previewCallbacks(): ComposeHomeCallbacks = ComposeHomeCallbacks(
     onCopyStateSnapshot = {},
     onRecoveryGuide = {},
     onSendIssueReport = {},
+    onMoreTools = {},
 )
