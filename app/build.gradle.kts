@@ -72,6 +72,10 @@ android {
         compose = true
     }
 
+    vcsInfo {
+        include = false
+    }
+
     lint {
         disable += "HardcodedDebugMode"
     }
