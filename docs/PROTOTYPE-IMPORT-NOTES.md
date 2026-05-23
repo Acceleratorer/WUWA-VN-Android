@@ -1,8 +1,22 @@
 # WUWA VN Patcher Prototype Import Notes
 
-Source artifact: `wuwa-vn-patcher.zip`
+Source artifacts:
+
+- `wuwa-vn-patcher.zip`
+- `wuwa-vn-patcher(fixed).zip`
 
 This zip is a separate Android prototype, not production-ready code for the current app. Keep the zip untracked and use it as reference material only.
+
+## Fixed Zip Check
+
+`wuwa-vn-patcher(fixed).zip` was compared against the first zip. The only file content change found was `app/src/main/AndroidManifest.xml`.
+
+The fixed manifest adds:
+
+- `android.permission.INTERNET`
+- `android.permission.ACCESS_NETWORK_STATE`
+
+The fixed zip still has the same prototype caveats listed below, so it should remain reference-only.
 
 ## Useful Ideas To Reuse
 
@@ -51,4 +65,3 @@ For the next release, prefer a narrow milestone:
 - `v3.3.15`: Compose preview foundation, no runtime behavior changes.
 - `v3.3.16`: Compose home screen parity, still no writer changes.
 - `v3.3.17`: Non-tech install/onboarding polish.
-
