@@ -2,7 +2,7 @@
 
 Ứng dụng hỗ trợ cài bản Việt hoá cho Wuthering Waves trên Android.
 
-> Trạng thái hiện tại: bản `v3.3.19` là WUWA Global 3.3 non-tech home + optional Root Backend Preview release. Màn chính chỉ giữ 6 Quick Actions cho user phổ thông, các tool nâng cao nằm trong More Tools. Root write vẫn khóa, Shizuku vẫn là backend khuyến nghị, và Max Graphics vẫn khóa.
+> Trạng thái hiện tại: bản `v3.3.19` là WUWA Global 3.3 non-tech home + optional Root Backend Preview release. Màn chính chỉ giữ What To Do Now, Setup Checklist, và 6 Quick Actions cho user phổ thông; các tool nâng cao nằm trong More Tools. Root write vẫn khóa, Shizuku vẫn là backend khuyến nghị, và Max Graphics vẫn khóa.
 
 ## Tính Năng
 
@@ -30,7 +30,7 @@
 - Icon app dùng artwork bundled trong APK
 - Jetpack Compose home screen: màn chính runtime dùng Compose nhưng vẫn gọi controller/write flow cũ
 - Compose diagnostics polish: state snapshot và issue report vẫn có app/game/Shizuku/patch/backup/hint summary, preset policy, và action state
-- Non-tech home screen: chỉ giữ 6 Quick Actions chính, gồm Start Setup, Open Shizuku, Backup, Download, Install, và More Tools
+- Non-tech home screen: chỉ giữ What To Do Now, Setup Checklist, và 6 Quick Actions chính gồm Start Setup, Open Shizuku, Backup, Download, Install, và More Tools
 - Install Help cho user không rành kỹ thuật: tải đúng APK release, Android 11+, BlueStacks Android 11 64-bit, unknown-source prompt, và Shizuku setup
 - Tải PAK vào app storage và kiểm tra SHA-256 trước khi cho phép bước tiếp theo
 - Ghi `metadata.json` với danh sách file backup thật, dung lượng và SHA-256
@@ -253,7 +253,7 @@ Hiện tại app mở GitHub Releases để người dùng tự tải bản mớ
 - v3.3.16: Compose home screen parity, màn chính runtime dùng Compose nhưng giữ controller/write flow cũ.
 - v3.3.17: Non-tech install polish, thêm Install Help và hướng dẫn APK/Android 11+/BlueStacks/unknown-source rõ hơn.
 - v3.3.18: Compose diagnostics/snapshot polish, hiển thị summary và snapshot preview rõ hơn trên màn chính.
-- v3.3.19: Non-tech home simplification + Optional Root Backend Preview, màn chính còn 6 Quick Actions và root write vẫn khóa.
+- v3.3.19: Non-tech home simplification + Optional Root Backend Preview, màn chính chỉ hiện phần cần thiết và root write vẫn khóa.
 
 ## Roadmap
 
@@ -379,7 +379,7 @@ Xem checklist test LTS tại [`docs/WUWA-3.3-LTS-TEST-CHECKLIST.md`](docs/WUWA-3
 - [ ] PARTIAL: Install disabled, Safe disabled, Balanced disabled, Performance disabled, Remove/Restore enabled nếu có trusted backup
 - [ ] UNKNOWN: dangerous actions disabled, Performance disabled
 - [ ] First install shows setup guide, **Got it** hides it next launch
-- [ ] **Show Setup Guide** opens onboarding again
+- [ ] **Start Setup** opens onboarding again
 - [ ] Setup Checklist shows correct YES/NO for install and presets
 - [ ] Shizuku Setup Help explains the current Shizuku state
 - [ ] Root Preview Help explains root without enabling root writes

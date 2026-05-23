@@ -115,10 +115,12 @@ fun ComposeHomeScreen(
         ) {
             HeaderBlock()
             HeroBlock()
-            TextPanel(title = "Current State", body = uiState.statusText)
+            TextPanel(
+                title = "What To Do Now",
+                body = uiState.actionState?.primaryHint ?: "Checking your setup...",
+            )
             TextPanel(title = "Setup Checklist", body = uiState.setupChecklistText)
             PrimaryActionsSection(uiState.actionState, callbacks)
-            SafetyBlock()
         }
     }
 }
@@ -194,20 +196,6 @@ private fun PrimaryActionsSection(
             HomeAction("Install Vietnamese Patch", actionState?.installPatchEnabled == true, callbacks.onInstallPatch, primary = true),
             HomeAction("More Tools", true, callbacks.onMoreTools),
         ),
-    )
-}
-
-@Composable
-private fun SafetyBlock() {
-    TextPanel(
-        title = "Safety Rules",
-        body = "Only allowlisted WUWA targets can be planned:\n" +
-            "- Engine.ini\n" +
-            "- DeviceProfiles.ini\n" +
-            "- MountLang_en.txt\n" +
-            "- WuWaVH_99_P.pak\n\n" +
-            "Max Graphics remains locked in v3.3.19.\n\n" +
-            "Always backup first. Never use this app for cheating, anti-cheat bypass, or gameplay manipulation.",
     )
 }
 

@@ -8,7 +8,7 @@
     "apk_url": "https://github.com/Acceleratorer/WUWA-VN-Android/releases/download/v3.3.19/WUWA-VN-v3.3.19-release.apk",
     "sha256": "PUT_REAL_APK_SHA256_HERE",
     "changelog": [
-      "Simplify the main screen to 6 Quick Actions for non-technical users",
+      "Simplify the main screen to What To Do Now, Setup Checklist, and 6 Quick Actions",
       "Move advanced presets, recovery, diagnostics, and root preview actions into More Tools",
       "Add optional Root Backend Preview for already-rooted devices",
       "Add Root Preview Help for non-technical users",

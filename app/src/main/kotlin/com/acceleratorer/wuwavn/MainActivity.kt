@@ -217,6 +217,7 @@ class MainActivity : ComponentActivity() {
         refreshStatus()
         val labels = arrayOf(
             "Install Help",
+            "Current State",
             "Shizuku Setup Help",
             "Open Developer Options",
             "Check Game Folder",
@@ -239,6 +240,7 @@ class MainActivity : ComponentActivity() {
         dialogs.showSelection("More Tools", labels) { which ->
             when (labels[which]) {
                 "Install Help" -> showInstallHelp()
+                "Current State" -> showCurrentState()
                 "Shizuku Setup Help" -> showShizukuHelp()
                 "Open Developer Options" -> openDeveloperOptions()
                 "Check Game Folder" -> checkGameFolder()
@@ -262,6 +264,13 @@ class MainActivity : ComponentActivity() {
         logger.add("More tools: shown")
     }
 
+    private fun showCurrentState() {
+        refreshStatus()
+        dialogs.showMessage("Current State", composeHomeUiState.value.statusText)
+        lastAction = "Opened Current State"
+        logger.add("Current state: shown")
+    }
+
     private fun showInstallHelp() {
         dialogs.showMessage(
             "Install Help",
@@ -271,7 +280,7 @@ class MainActivity : ComponentActivity() {
                 "3. Android 11 or newer is required. On BlueStacks, use Android 11 64-bit.\n" +
                 "4. If Android asks, allow Install unknown apps for your browser or file manager.\n" +
                 "5. If install fails, uninstall the old WUWA VN app first, then install again.\n" +
-                "6. Open WUWA VN, install/start Shizuku, then follow Show Setup Guide.",
+                "6. Open WUWA VN, install/start Shizuku, then follow Start Setup.",
         )
         lastAction = "Opened Install Help"
         logger.add("Install help: shown")
