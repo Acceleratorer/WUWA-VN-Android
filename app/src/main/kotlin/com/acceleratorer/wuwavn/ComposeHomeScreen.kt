@@ -154,6 +154,7 @@ private fun HeroBlock() {
     )
 }
 
+@Composable
 private fun TextPanel(
     title: String,
     body: String,
