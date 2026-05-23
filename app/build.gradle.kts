@@ -72,10 +72,6 @@ android {
         compose = true
     }
 
-    vcsInfo {
-        include = false
-    }
-
     lint {
         disable += "HardcodedDebugMode"
     }
@@ -101,6 +97,7 @@ android {
         release {
             isDebuggable = false
             isMinifyEnabled = false
+            vcsInfo.include = false
             if (hasReleaseSigning) {
                 signingConfig = signingConfigs.getByName("release")
             }
