@@ -40,6 +40,8 @@ import androidx.compose.ui.unit.sp
 data class ComposeHomeUiState(
     val statusText: String,
     val setupChecklistText: String,
+    val diagnosticsSummaryText: String,
+    val snapshotPreviewText: String,
     val debugLogText: String,
     val actionState: HomeActionState?,
 ) {
@@ -47,6 +49,8 @@ data class ComposeHomeUiState(
         fun initial(): ComposeHomeUiState = ComposeHomeUiState(
             statusText = "Loading status...",
             setupChecklistText = "Setup Checklist\nRefreshing...",
+            diagnosticsSummaryText = "Diagnostics\nRefreshing...",
+            snapshotPreviewText = "State Snapshot Preview\nRefreshing...",
             debugLogText = "",
             actionState = null,
         )
@@ -112,6 +116,8 @@ fun ComposeHomeScreen(
             InstallHelpBlock(callbacks)
             TextPanel(title = "Current State", body = uiState.statusText)
             TextPanel(title = "Setup Checklist", body = uiState.setupChecklistText)
+            TextPanel(title = "Diagnostics Summary", body = uiState.diagnosticsSummaryText)
+            TextPanel(title = "State Snapshot Preview", body = uiState.snapshotPreviewText, monospace = true)
             SetupSection(callbacks)
             PatchSection(uiState.actionState, callbacks)
             ConfigPresetSection(uiState.actionState, callbacks)
@@ -276,7 +282,7 @@ private fun SafetyBlock() {
             "- DeviceProfiles.ini\n" +
             "- MountLang_en.txt\n" +
             "- WuWaVH_99_P.pak\n\n" +
-            "Max Graphics remains locked in v3.3.17.\n\n" +
+            "Max Graphics remains locked in v3.3.18.\n\n" +
             "Always backup first. Never use this app for cheating, anti-cheat bypass, or gameplay manipulation.",
     )
 }
@@ -341,6 +347,25 @@ private fun WuwaPatchedPreview() {
                     "Patch state: PATCHED\n" +
                     "Ready to install patch: NO\n" +
                     "Ready to apply presets: YES",
+                diagnosticsSummaryText = "App version: 3.3.18 (52)\n" +
+                    "Supported game version: 3.3\n" +
+                    "Shizuku: Ready\n" +
+                    "Patch state: PATCHED\n" +
+                    "Trusted backup: true\n" +
+                    "Hint: Vietnamese patch appears installed. Safe, Balanced, Performance, Remove, or Restore is available.",
+                snapshotPreviewText = "Preset write policy:\n" +
+                    "Safe: WRITE_ENABLED\n" +
+                    "Balanced: WRITE_ENABLED\n" +
+                    "Performance: WRITE_ENABLED\n" +
+                    "Max Graphics: LOCKED\n\n" +
+                    "Actions:\n" +
+                    "Install Patch: false\n" +
+                    "Apply Safe: true\n" +
+                    "Apply Balanced: true\n" +
+                    "Apply Performance: true\n" +
+                    "Remove Patch: true\n" +
+                    "Restore Original: true\n" +
+                    "Last action: App started",
                 debugLogText = "[12:00:00] Smart UI: Safe, Balanced, Performance, Remove, or Restore is available.",
                 actionState = previewActionState(patched = true),
             ),
@@ -366,6 +391,25 @@ private fun WuwaSetupBlockedPreview() {
                     "Patch state: UNKNOWN\n" +
                     "Ready to install patch: NO\n" +
                     "Ready to apply presets: NO",
+                diagnosticsSummaryText = "App version: 3.3.18 (52)\n" +
+                    "Supported game version: 3.3\n" +
+                    "Shizuku: Shizuku installed but not running\n" +
+                    "Patch state: UNKNOWN\n" +
+                    "Trusted backup: false\n" +
+                    "Hint: Complete game/Shizuku setup before file operations.",
+                snapshotPreviewText = "Preset write policy:\n" +
+                    "Safe: WRITE_ENABLED\n" +
+                    "Balanced: WRITE_ENABLED\n" +
+                    "Performance: WRITE_ENABLED\n" +
+                    "Max Graphics: LOCKED\n\n" +
+                    "Actions:\n" +
+                    "Install Patch: false\n" +
+                    "Apply Safe: false\n" +
+                    "Apply Balanced: false\n" +
+                    "Apply Performance: false\n" +
+                    "Remove Patch: false\n" +
+                    "Restore Original: false\n" +
+                    "Last action: App started",
                 debugLogText = "[12:00:00] Smart UI: Complete game/Shizuku setup before file operations.",
                 actionState = previewActionState(patched = false),
             ),

@@ -2,7 +2,7 @@
 
 Ứng dụng hỗ trợ cài bản Việt hoá cho Wuthering Waves trên Android.
 
-> Trạng thái hiện tại: bản `v3.3.17` là WUWA Global 3.3 non-tech install polish release. App đã chuyển màn chính sang Jetpack Compose, thêm Install Help cho APK release / Android 11+ / BlueStacks / unknown-source prompt, và vẫn giữ nguyên Shizuku/write logic. Max Graphics vẫn khóa.
+> Trạng thái hiện tại: bản `v3.3.18` là WUWA Global 3.3 Compose diagnostics/snapshot polish release. App hiển thị Diagnostics Summary và State Snapshot Preview ngay trên màn Compose, trong khi vẫn giữ nguyên Shizuku/write logic. Max Graphics vẫn khóa.
 
 ## Tính Năng
 
@@ -29,6 +29,7 @@
 - Header UI dùng artwork bundled trong APK, không tải ảnh từ mạng
 - Icon app dùng artwork bundled trong APK
 - Jetpack Compose home screen: màn chính runtime dùng Compose nhưng vẫn gọi controller/write flow cũ
+- Compose diagnostics polish: hiển thị app/game/Shizuku/patch/backup/hint summary và preset policy/action state preview trên màn chính
 - Install Help cho user không rành kỹ thuật: tải đúng APK release, Android 11+, BlueStacks Android 11 64-bit, unknown-source prompt, và Shizuku setup
 - Tải PAK vào app storage và kiểm tra SHA-256 trước khi cho phép bước tiếp theo
 - Ghi `metadata.json` với danh sách file backup thật, dung lượng và SHA-256
@@ -65,7 +66,7 @@ Nút **Copy State Snapshot** copy thông tin ngắn gọn để debug issue repo
 
 ```text
 WUWA VN State Snapshot
-App version: 3.3.17 (51)
+App version: 3.3.18 (52)
 Game package: com.kurogame.wutheringwaves.global
 Game version: 3.3.x
 Launcher compatibility: WUWA Global 3.3
@@ -146,7 +147,7 @@ Không cài APK từ mirror lạ, link chat riêng, hoặc file không có SHA-2
 Ví dụ file phát hành hợp lệ:
 
 ```text
-WUWA-VN-v3.3.17-release.apk
+WUWA-VN-v3.3.18-release.apk
 ```
 
 Không phát hành file `app-debug.apk` cho người dùng phổ thông.
@@ -154,7 +155,7 @@ Không phát hành file `app-debug.apk` cho người dùng phổ thông.
 Trước khi phát hành, kiểm tra chữ ký:
 
 ```bash
-apksigner verify --print-certs WUWA-VN-v3.3.17-release.apk
+apksigner verify --print-certs WUWA-VN-v3.3.18-release.apk
 ```
 
 ## Cách Khôi Phục
@@ -236,13 +237,14 @@ Hiện tại app mở GitHub Releases để người dùng tự tải bản mớ
 - v3.3.15: Compose preview foundation, thêm preview-only Compose screens, không đổi runtime UI/write logic.
 - v3.3.16: Compose home screen parity, màn chính runtime dùng Compose nhưng giữ controller/write flow cũ.
 - v3.3.17: Non-tech install polish, thêm Install Help và hướng dẫn APK/Android 11+/BlueStacks/unknown-source rõ hơn.
+- v3.3.18: Compose diagnostics/snapshot polish, hiển thị summary và snapshot preview rõ hơn trên màn chính.
 
 ## Roadmap
 
 - v3.4.0: WUWA Global 3.4 compatibility release
 
 Source app hiện đã được migrate sang Kotlin. Từ `v3.3.11`, Gradle là build path chính và vẫn dùng `version.properties` làm source of truth cho app version. Từ `v3.3.12`, GitHub Actions có thể build release APK khi tạo GitHub Release tag mới.
-Từ `v3.3.17`, màn chính runtime dùng Jetpack Compose nhưng vẫn giữ các controller, Shizuku flow, và write logic hiện có.
+Từ `v3.3.17`, màn chính runtime dùng Jetpack Compose nhưng vẫn giữ các controller, Shizuku flow, và write logic hiện có. Từ `v3.3.18`, màn chính Compose hiển thị thêm Diagnostics Summary và State Snapshot Preview.
 
 ## Build From Source
 
@@ -266,7 +268,7 @@ Compose home screen:
 app/src/main/kotlin/com/acceleratorer/wuwavn/ComposeHomeScreen.kt
 ```
 
-Mở file này trong Android Studio để xem `@Preview` cho home/status/setup/preset policy. Runtime `MainActivity` cũng dùng Compose screen này từ `v3.3.17`.
+Mở file này trong Android Studio để xem `@Preview` cho home/status/setup/diagnostics/snapshot/preset policy. Runtime `MainActivity` cũng dùng Compose screen này từ `v3.3.17`.
 
 Từ `v3.3.12`, GitHub Actions có thể build release APK khi tạo GitHub Release tag mới.
 
@@ -283,7 +285,7 @@ release-verification-report.txt
 Từ `v3.3.14`, release APK được verify bằng script:
 
 ```bash
-python tools/verify-release-apk.py WUWA-VN-v3.3.17-release.apk
+python tools/verify-release-apk.py WUWA-VN-v3.3.18-release.apk
 ```
 
 Script kiểm tra:

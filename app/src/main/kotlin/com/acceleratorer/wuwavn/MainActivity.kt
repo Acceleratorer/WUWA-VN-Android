@@ -340,6 +340,8 @@ class MainActivity : ComponentActivity() {
         composeHomeUiState.value = composeHomeUiState.value.copy(
             statusText = statusRenderer.render(gameState, gameInfo, shizukuState, state),
             setupChecklistText = setupChecklistText(),
+            diagnosticsSummaryText = diagnosticsSummaryText(state, resolvedActionState),
+            snapshotPreviewText = snapshotPreviewText(resolvedActionState),
             debugLogText = logger.text(),
             actionState = resolvedActionState,
         )
@@ -518,6 +520,37 @@ class MainActivity : ComponentActivity() {
         } else {
             "NO"
         }
+
+    private fun diagnosticsSummaryText(state: InstalledState?, actions: HomeActionState): String = buildString {
+        appendLine("App version: ${AppConstants.VERSION_NAME} (${AppConstants.VERSION_CODE})")
+        appendLine("Game package: ${gameInfo?.packageName ?: AppConstants.GLOBAL_GAME_PACKAGE}")
+        appendLine("Game version: ${gameInfo?.versionName ?: "unknown"}")
+        appendLine("Supported game version: ${AppConstants.SUPPORTED_GAME_VERSION}")
+        appendLine("Shizuku: ${shizukuState.label}")
+        appendLine("Patch state: ${state?.patchState ?: PatchInstallState.UNKNOWN}")
+        appendLine("Config state: ${state?.configState ?: ConfigInstallState.UNKNOWN}")
+        appendLine("Trusted backup: ${state?.hasTrustedBackup ?: false}")
+        appendLine("Hint: ${actions.primaryHint}")
+    }
+
+    private fun snapshotPreviewText(actions: HomeActionState): String = buildString {
+        appendLine("Preset write policy:")
+        appendLine("Safe: ${ConfigPresetAvailabilityPolicy.availability(ConfigPresetId.SAFE_DEFAULT)}")
+        appendLine("Balanced: ${ConfigPresetAvailabilityPolicy.availability(ConfigPresetId.BALANCED)}")
+        appendLine("Performance: ${ConfigPresetAvailabilityPolicy.availability(ConfigPresetId.PERFORMANCE)}")
+        appendLine("Max Graphics: ${ConfigPresetAvailabilityPolicy.availability(ConfigPresetId.MAX_GRAPHICS)}")
+        appendLine()
+        appendLine("Actions:")
+        appendLine("Install Patch: ${actions.installPatchEnabled}")
+        appendLine("Apply Safe: ${actions.applySafeEnabled}")
+        appendLine("Apply Balanced: ${actions.applyBalancedEnabled}")
+        appendLine("Apply Performance: ${actions.applyPerformanceEnabled}")
+        appendLine("Remove Patch: ${actions.removePatchEnabled}")
+        appendLine("Restore Original: ${actions.restoreEnabled}")
+        appendLine("Backup Configs: ${actions.backupEnabled}")
+        appendLine("Download Patch: ${actions.downloadPatchEnabled}")
+        appendLine("Last action: $lastAction")
+    }
 
     private fun openOrRequestShizuku() {
         lastAction = "Open Shizuku"
