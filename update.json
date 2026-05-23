@@ -6,7 +6,7 @@
     "supported_game_version": "3.3",
     "minimum_game_version": "3.3",
     "apk_url": "https://github.com/Acceleratorer/WUWA-VN-Android/releases/download/v3.3.18/WUWA-VN-v3.3.18-release.apk",
-    "sha256": "PUT_REAL_APK_SHA256_HERE",
+    "sha256": "eab87ec192582d5f28ec63fd7d3dd538d7de69ce89b7e1aa097a4a5fe908eff0",
     "changelog": [
       "Polish Compose diagnostics and state snapshot surfaces",
       "Show app, game, Shizuku, patch, backup, and hint details on the Compose home screen",
