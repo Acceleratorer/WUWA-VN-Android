@@ -19,6 +19,7 @@ release.keystore
 # Release artifacts should be uploaded to GitHub Releases, not committed.
 *.apk
 *.aab
+*.zip
 sha256.txt
 release-verification-report.txt
 release/
