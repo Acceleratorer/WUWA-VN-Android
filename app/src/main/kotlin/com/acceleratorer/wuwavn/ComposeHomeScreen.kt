@@ -7,13 +7,10 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
@@ -83,6 +80,7 @@ data class ComposeHomeCallbacks(
     val onCopyStateSnapshot: () -> Unit,
     val onRecoveryGuide: () -> Unit,
     val onSendIssueReport: () -> Unit,
+    val onMoreTools: () -> Unit,
 )
 
 @Composable
@@ -117,18 +115,10 @@ fun ComposeHomeScreen(
         ) {
             HeaderBlock()
             HeroBlock()
-            InstallHelpBlock(callbacks)
             TextPanel(title = "Current State", body = uiState.statusText)
             TextPanel(title = "Setup Checklist", body = uiState.setupChecklistText)
-            TextPanel(title = "Root Backend Preview", body = uiState.rootPreviewText)
-            TextPanel(title = "Diagnostics Summary", body = uiState.diagnosticsSummaryText)
-            TextPanel(title = "State Snapshot Preview", body = uiState.snapshotPreviewText, monospace = true)
-            SetupSection(callbacks)
-            PatchSection(uiState.actionState, callbacks)
-            ConfigPresetSection(uiState.actionState, callbacks)
+            PrimaryActionsSection(uiState.actionState, callbacks)
             SafetyBlock()
-            TextPanel(title = "Debug Log", body = uiState.debugLogText.ifBlank { "No log entries yet." }, monospace = true)
-            DiagnosticsSection(callbacks)
         }
     }
 }
@@ -162,32 +152,6 @@ private fun HeroBlock() {
     )
 }
 
-@Composable
-private fun InstallHelpBlock(callbacks: ComposeHomeCallbacks) {
-    Card(
-        colors = CardDefaults.cardColors(containerColor = Color(0xFFEFF6FF)),
-        border = BorderStroke(1.dp, Color(0xFFBFDBFE)),
-        shape = RoundedCornerShape(8.dp),
-        modifier = Modifier.fillMaxWidth(),
-    ) {
-        Column(
-            modifier = Modifier.padding(14.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            Text("Easy Install", color = Color(0xFF1E3A8A), fontWeight = FontWeight.Bold, fontSize = 17.sp)
-            Text(
-                text = "Use the release APK, Android 11+, then start Shizuku before patch operations.",
-                color = Color(0xFF334155),
-                fontSize = 13.sp,
-            )
-            OutlinedButton(onClick = callbacks.onInstallHelp) {
-                Text("Install Help")
-            }
-        }
-    }
-}
-
-@Composable
 private fun TextPanel(
     title: String,
     body: String,
@@ -216,66 +180,19 @@ private fun TextPanel(
 }
 
 @Composable
-private fun SetupSection(callbacks: ComposeHomeCallbacks) {
-    ActionSection(
-        title = "Setup",
-        actions = listOf(
-            HomeAction("Show Setup Guide", true, callbacks.onShowSetupGuide),
-            HomeAction("Install Help", true, callbacks.onInstallHelp),
-            HomeAction("Shizuku Setup Help", true, callbacks.onShizukuSetupHelp),
-            HomeAction("Open Shizuku", true, callbacks.onOpenShizuku),
-            HomeAction("Open Developer Options", true, callbacks.onOpenDeveloperOptions),
-            HomeAction("Root Preview Help", true, callbacks.onRootPreviewHelp),
-            HomeAction("Check Root Access", true, callbacks.onCheckRootAccess),
-            HomeAction("Check Game Folder", true, callbacks.onCheckGameFolder),
-        ),
-    )
-}
-
-@Composable
-private fun PatchSection(
+private fun PrimaryActionsSection(
     actionState: HomeActionState?,
     callbacks: ComposeHomeCallbacks,
 ) {
     ActionSection(
-        title = "Patch",
+        title = "Quick Actions",
         actions = listOf(
-            HomeAction("Show Patch Plan", true, callbacks.onShowPatchPlan),
+            HomeAction("Start Setup", true, callbacks.onShowSetupGuide),
+            HomeAction("Open Shizuku", true, callbacks.onOpenShizuku),
             HomeAction("Backup Game Configs", actionState?.backupEnabled == true, callbacks.onBackupGameConfigs),
-            HomeAction("Copy Backup Path", true, callbacks.onCopyBackupPath),
             HomeAction("Download & Verify Patch", actionState?.downloadPatchEnabled != false, callbacks.onDownloadPatch),
             HomeAction("Install Vietnamese Patch", actionState?.installPatchEnabled == true, callbacks.onInstallPatch, primary = true),
-            HomeAction("Update Vietnamese Patch", true, callbacks.onUpdatePatch),
-            HomeAction("Remove Vietnamese Patch", actionState?.removePatchEnabled == true, callbacks.onRemovePatch),
-            HomeAction("Restore Original Files", actionState?.restoreEnabled == true, callbacks.onRestoreOriginal),
-        ),
-    )
-}
-
-@Composable
-private fun ConfigPresetSection(
-    actionState: HomeActionState?,
-    callbacks: ComposeHomeCallbacks,
-) {
-    ActionSection(
-        title = "Config Presets",
-        actions = listOf(
-            HomeAction("Apply Safe Config Preset", actionState?.applySafeEnabled == true, callbacks.onApplySafe),
-            HomeAction("Apply Balanced Preset", actionState?.applyBalancedEnabled == true, callbacks.onApplyBalanced),
-            HomeAction("Apply Performance Preset", actionState?.applyPerformanceEnabled == true, callbacks.onApplyPerformance),
-        ),
-    )
-}
-
-@Composable
-private fun DiagnosticsSection(callbacks: ComposeHomeCallbacks) {
-    ActionSection(
-        title = "Diagnostics",
-        actions = listOf(
-            HomeAction("Copy Debug Log", true, callbacks.onCopyDebugLog),
-            HomeAction("Copy State Snapshot", true, callbacks.onCopyStateSnapshot),
-            HomeAction("Recovery Guide", true, callbacks.onRecoveryGuide),
-            HomeAction("Send Issue Report", true, callbacks.onSendIssueReport),
+            HomeAction("More Tools", true, callbacks.onMoreTools),
         ),
     )
 }
@@ -475,4 +392,5 @@ private fun previewCallbacks(): ComposeHomeCallbacks = ComposeHomeCallbacks(
     onCopyStateSnapshot = {},
     onRecoveryGuide = {},
     onSendIssueReport = {},
+    onMoreTools = {},
 )

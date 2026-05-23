@@ -2,7 +2,7 @@
 
 Ứng dụng hỗ trợ cài bản Việt hoá cho Wuthering Waves trên Android.
 
-> Trạng thái hiện tại: bản `v3.3.19` là WUWA Global 3.3 optional Root Backend Preview release. App thêm Root Preview Help và manual Check Root Access cho máy đã root, nhưng root write vẫn khóa. Shizuku vẫn là backend khuyến nghị cho user phổ thông. Max Graphics vẫn khóa.
+> Trạng thái hiện tại: bản `v3.3.19` là WUWA Global 3.3 non-tech home + optional Root Backend Preview release. Màn chính chỉ giữ 6 Quick Actions cho user phổ thông, các tool nâng cao nằm trong More Tools. Root write vẫn khóa, Shizuku vẫn là backend khuyến nghị, và Max Graphics vẫn khóa.
 
 ## Tính Năng
 
@@ -29,7 +29,8 @@
 - Header UI dùng artwork bundled trong APK, không tải ảnh từ mạng
 - Icon app dùng artwork bundled trong APK
 - Jetpack Compose home screen: màn chính runtime dùng Compose nhưng vẫn gọi controller/write flow cũ
-- Compose diagnostics polish: hiển thị app/game/Shizuku/patch/backup/hint summary và preset policy/action state preview trên màn chính
+- Compose diagnostics polish: state snapshot và issue report vẫn có app/game/Shizuku/patch/backup/hint summary, preset policy, và action state
+- Non-tech home screen: chỉ giữ 6 Quick Actions chính, gồm Start Setup, Open Shizuku, Backup, Download, Install, và More Tools
 - Install Help cho user không rành kỹ thuật: tải đúng APK release, Android 11+, BlueStacks Android 11 64-bit, unknown-source prompt, và Shizuku setup
 - Tải PAK vào app storage và kiểm tra SHA-256 trước khi cho phép bước tiếp theo
 - Ghi `metadata.json` với danh sách file backup thật, dung lượng và SHA-256
@@ -45,7 +46,7 @@
 - Optional Root Backend Preview cho máy đã root: chỉ check root thủ công, không ghi file bằng root
 - Root Preview Help giải thích root bằng ngôn ngữ dễ hiểu cho user không rành kỹ thuật
 - Shortcut mở Developer Options, fallback sang Shizuku setup guide nếu ROM không hỗ trợ
-- Màn chính được nhóm thành Setup, Patch, Config Presets, và Diagnostics
+- More Tools gom các flow nâng cao: patch plan, presets, remove/restore, recovery, diagnostics, root preview, và install help
 
 ## Screenshots
 
@@ -131,19 +132,13 @@ Last action: Balanced preset applied
 5. Nếu cài đặt fail, gỡ bản WUWA VN cũ rồi cài lại APK release.
 6. Mở Shizuku và bật dịch vụ bằng Wireless Debugging.
 7. Cấp quyền Shizuku cho WUWA VN.
-8. Mở WUWA VN và bấm **Install Help** hoặc **Show Setup Guide** nếu cần hướng dẫn từng bước.
-9. Nếu máy đã root và muốn kiểm tra thử, bấm **Root Preview Help** trước, rồi mới bấm **Check Root Access**. Bước này không ghi file.
-10. Bấm **Show Patch Plan**.
-11. Kiểm tra danh sách file sẽ thay đổi.
-12. Bấm **Backup Game Configs** để copy read-only `Engine.ini`, `DeviceProfiles.ini`, `MountLang_en.txt` vào backup.
-13. Bấm **Download & Verify Patch** để tải PAK và kiểm tra SHA-256.
-14. Bấm **Install Vietnamese Patch** để xem patch write dry-run, xác nhận hai lần, rồi cài `WuWaVH_99_P.pak`.
-15. Bấm **Apply Safe Config Preset** để xem config dry-run, xác nhận hai lần, rồi ghi `Engine.ini`, `DeviceProfiles.ini`, `MountLang_en.txt` bằng template bundled.
-16. Bấm **Apply Balanced Preset** sau khi state là PATCHED nếu muốn xem Balanced dry-run, xác nhận hai lần, rồi ghi `Engine.ini`, `DeviceProfiles.ini`, `MountLang_en.txt` bằng template bundled.
-17. Bấm **Apply Performance Preset** sau khi state là PATCHED nếu muốn xem Performance dry-run, xác nhận hai lần, rồi ghi `Engine.ini`, `DeviceProfiles.ini`, `MountLang_en.txt` bằng template bundled.
-18. Bấm **Remove Vietnamese Patch** nếu muốn rollback PAK: app sẽ restore `MountLang_en.txt` từ backup VERIFIED, xác nhận hai lần, xoá đúng `WuWaVH_99_P.pak`, rồi verify PAK không còn tồn tại.
-19. Bấm **Restore Original Files** nếu cần khôi phục file gốc từ backup VERIFIED.
-20. Bấm **Recovery Guide** nếu state là PARTIAL hoặc UNKNOWN để xem hướng dẫn khôi phục an toàn.
+8. Mở WUWA VN và bấm **Start Setup** nếu cần hướng dẫn từng bước.
+9. Bấm **Open Shizuku** nếu Shizuku chưa chạy hoặc chưa cấp quyền.
+10. Bấm **Backup Game Configs** để copy read-only `Engine.ini`, `DeviceProfiles.ini`, `MountLang_en.txt` vào backup.
+11. Bấm **Download & Verify Patch** để tải PAK và kiểm tra SHA-256.
+12. Bấm **Install Vietnamese Patch** để xem patch write dry-run, xác nhận hai lần, rồi cài `WuWaVH_99_P.pak`.
+13. Bấm **More Tools** nếu cần thao tác nâng cao như Install Help, Show Patch Plan, Apply Safe/Balanced/Performance, Remove Patch, Restore Original Files, Recovery Guide, Copy State Snapshot, hoặc Root Preview.
+14. Nếu máy đã root và muốn kiểm tra thử, mở **More Tools** rồi bấm **Root Preview Help** trước, sau đó mới bấm **Check Root Access**. Bước này không ghi file.
 
 ## Verify APK
 
@@ -258,14 +253,14 @@ Hiện tại app mở GitHub Releases để người dùng tự tải bản mớ
 - v3.3.16: Compose home screen parity, màn chính runtime dùng Compose nhưng giữ controller/write flow cũ.
 - v3.3.17: Non-tech install polish, thêm Install Help và hướng dẫn APK/Android 11+/BlueStacks/unknown-source rõ hơn.
 - v3.3.18: Compose diagnostics/snapshot polish, hiển thị summary và snapshot preview rõ hơn trên màn chính.
-- v3.3.19: Optional Root Backend Preview, thêm Root Preview Help và manual Check Root Access, root write vẫn khóa.
+- v3.3.19: Non-tech home simplification + Optional Root Backend Preview, màn chính còn 6 Quick Actions và root write vẫn khóa.
 
 ## Roadmap
 
 - v3.4.0: WUWA Global 3.4 compatibility release
 
 Source app hiện đã được migrate sang Kotlin. Từ `v3.3.11`, Gradle là build path chính và vẫn dùng `version.properties` làm source of truth cho app version. Từ `v3.3.12`, GitHub Actions có thể build release APK khi tạo GitHub Release tag mới.
-Từ `v3.3.17`, màn chính runtime dùng Jetpack Compose nhưng vẫn giữ các controller, Shizuku flow, và write logic hiện có. Từ `v3.3.18`, màn chính Compose hiển thị thêm Diagnostics Summary và State Snapshot Preview. Từ `v3.3.19`, Root Backend Preview chỉ detect root thủ công và không mở root write.
+Từ `v3.3.17`, màn chính runtime dùng Jetpack Compose nhưng vẫn giữ các controller, Shizuku flow, và write logic hiện có. Từ `v3.3.18`, màn chính Compose có Diagnostics Summary và State Snapshot Preview. Từ `v3.3.19`, màn chính ưu tiên user phổ thông với 6 Quick Actions, tool nâng cao nằm trong More Tools, và Root Backend Preview chỉ detect root thủ công chứ không mở root write.
 
 ## Build From Source
 
@@ -391,7 +386,8 @@ Xem checklist test LTS tại [`docs/WUWA-3.3-LTS-TEST-CHECKLIST.md`](docs/WUWA-3
 - [ ] Check Root Access asks for confirmation before calling root
 - [ ] Root preview status appears in Setup Checklist and State Snapshot
 - [ ] Open Developer Options works or opens Shizuku setup guide fallback
-- [ ] Home actions are grouped into Setup, Patch, Config Presets, and Diagnostics
+- [ ] Home screen shows 6 Quick Actions for non-tech users
+- [ ] More Tools contains advanced actions: presets, remove/restore, recovery, diagnostics, root preview, and install help
 - [ ] Backup copy đúng `Engine.ini`, `DeviceProfiles.ini`, `MountLang_en.txt` và ghi metadata
 - [ ] Download verify PAK SHA-256 trước khi install
 - [ ] Install Vietnamese Patch chỉ ghi `WuWaVH_99_P.pak`

@@ -210,7 +210,57 @@ class MainActivity : ComponentActivity() {
         onCopyStateSnapshot = { copyStateSnapshot() },
         onRecoveryGuide = { showRecoveryGuide() },
         onSendIssueReport = { shareLog() },
+        onMoreTools = { showMoreTools() },
     )
+
+    private fun showMoreTools() {
+        refreshStatus()
+        val labels = arrayOf(
+            "Install Help",
+            "Shizuku Setup Help",
+            "Open Developer Options",
+            "Check Game Folder",
+            "Show Patch Plan",
+            "Copy Backup Path",
+            "Update Vietnamese Patch",
+            "Remove Vietnamese Patch",
+            "Restore Original Files",
+            "Apply Safe Config Preset",
+            "Apply Balanced Preset",
+            "Apply Performance Preset",
+            "Recovery Guide",
+            "Root Preview Help",
+            "Check Root Access",
+            "Copy State Snapshot",
+            "Send Issue Report",
+            "Copy Debug Log",
+        )
+
+        dialogs.showSelection("More Tools", labels) { which ->
+            when (labels[which]) {
+                "Install Help" -> showInstallHelp()
+                "Shizuku Setup Help" -> showShizukuHelp()
+                "Open Developer Options" -> openDeveloperOptions()
+                "Check Game Folder" -> checkGameFolder()
+                "Show Patch Plan" -> showPatchPlan()
+                "Copy Backup Path" -> copyBackupPath()
+                "Update Vietnamese Patch" -> openUpdatePage()
+                "Remove Vietnamese Patch" -> removeVietnamesePatch()
+                "Restore Original Files" -> restoreOriginalFiles()
+                "Apply Safe Config Preset" -> applySafePreset()
+                "Apply Balanced Preset" -> applyBalancedPreset()
+                "Apply Performance Preset" -> applyPerformancePreset()
+                "Recovery Guide" -> showRecoveryGuide()
+                "Root Preview Help" -> showRootPreviewHelp()
+                "Check Root Access" -> checkRootAccessPreview()
+                "Copy State Snapshot" -> copyStateSnapshot()
+                "Send Issue Report" -> shareLog()
+                "Copy Debug Log" -> copyLog()
+            }
+        }
+        lastAction = "Opened More Tools"
+        logger.add("More tools: shown")
+    }
 
     private fun showInstallHelp() {
         dialogs.showMessage(
