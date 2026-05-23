@@ -2,7 +2,7 @@
 
 Ứng dụng hỗ trợ cài bản Việt hoá cho Wuthering Waves trên Android.
 
-> Trạng thái hiện tại: bản `v3.3.15` là WUWA Global 3.3 Compose preview foundation release. App bật Jetpack Compose toolchain và thêm các màn preview-only cho Android Studio. Runtime UI/write logic vẫn giữ nguyên. Max Graphics vẫn khóa.
+> Trạng thái hiện tại: bản `v3.3.17` là WUWA Global 3.3 non-tech install polish release. App đã chuyển màn chính sang Jetpack Compose, thêm Install Help cho APK release / Android 11+ / BlueStacks / unknown-source prompt, và vẫn giữ nguyên Shizuku/write logic. Max Graphics vẫn khóa.
 
 ## Tính Năng
 
@@ -28,7 +28,8 @@
 - Chuẩn bị cấu hình đồ hoạ theo lộ trình: Max Graphics vẫn khóa
 - Header UI dùng artwork bundled trong APK, không tải ảnh từ mạng
 - Icon app dùng artwork bundled trong APK
-- Jetpack Compose preview foundation: có màn preview-only cho home/status/setup/preset policy, chưa thay runtime UI
+- Jetpack Compose home screen: màn chính runtime dùng Compose nhưng vẫn gọi controller/write flow cũ
+- Install Help cho user không rành kỹ thuật: tải đúng APK release, Android 11+, BlueStacks Android 11 64-bit, unknown-source prompt, và Shizuku setup
 - Tải PAK vào app storage và kiểm tra SHA-256 trước khi cho phép bước tiếp theo
 - Ghi `metadata.json` với danh sách file backup thật, dung lượng và SHA-256
 - Copy đường dẫn backup để dễ gửi log hoặc tự kiểm tra
@@ -64,7 +65,7 @@ Nút **Copy State Snapshot** copy thông tin ngắn gọn để debug issue repo
 
 ```text
 WUWA VN State Snapshot
-App version: 3.3.13 (47)
+App version: 3.3.17 (51)
 Game package: com.kurogame.wutheringwaves.global
 Game version: 3.3.x
 Launcher compatibility: WUWA Global 3.3
@@ -117,21 +118,24 @@ Last action: Balanced preset applied
 ## Cách Cài
 
 1. Tải file APK release từ [GitHub Releases](https://github.com/Acceleratorer/WUWA-VN-Android/releases).
-2. Cài đặt ứng dụng trên điện thoại.
-3. Mở Shizuku và bật dịch vụ bằng Wireless Debugging.
-4. Cấp quyền Shizuku cho WUWA VN.
-5. Mở WUWA VN.
-6. Bấm **Show Patch Plan**.
-7. Kiểm tra danh sách file sẽ thay đổi.
-8. Bấm **Backup Game Configs** để copy read-only `Engine.ini`, `DeviceProfiles.ini`, `MountLang_en.txt` vào backup.
-9. Bấm **Download & Verify Patch** để tải PAK và kiểm tra SHA-256.
-10. Bấm **Install Vietnamese Patch** để xem patch write dry-run, xác nhận hai lần, rồi cài `WuWaVH_99_P.pak`.
-11. Bấm **Apply Safe Config Preset** để xem config dry-run, xác nhận hai lần, rồi ghi `Engine.ini`, `DeviceProfiles.ini`, `MountLang_en.txt` bằng template bundled.
-12. Bấm **Apply Balanced Preset** sau khi state là PATCHED nếu muốn xem Balanced dry-run, xác nhận hai lần, rồi ghi `Engine.ini`, `DeviceProfiles.ini`, `MountLang_en.txt` bằng template bundled.
-13. Bấm **Apply Performance Preset** sau khi state là PATCHED nếu muốn xem Performance dry-run, xác nhận hai lần, rồi ghi `Engine.ini`, `DeviceProfiles.ini`, `MountLang_en.txt` bằng template bundled.
-14. Bấm **Remove Vietnamese Patch** nếu muốn rollback PAK: app sẽ restore `MountLang_en.txt` từ backup VERIFIED, xác nhận hai lần, xoá đúng `WuWaVH_99_P.pak`, rồi verify PAK không còn tồn tại.
-15. Bấm **Restore Original Files** nếu cần khôi phục file gốc từ backup VERIFIED.
-16. Bấm **Recovery Guide** nếu state là PARTIAL hoặc UNKNOWN để xem hướng dẫn khôi phục an toàn.
+2. Chỉ cài file `WUWA-VN-vX.Y.Z-release.apk`, không cài Source code zip/tar.gz.
+3. Dùng Android 11 trở lên. Nếu test bằng BlueStacks, tạo instance Android 11 64-bit.
+4. Nếu Android hỏi, cho phép Install unknown apps cho browser hoặc file manager đang dùng để mở APK.
+5. Nếu cài đặt fail, gỡ bản WUWA VN cũ rồi cài lại APK release.
+6. Mở Shizuku và bật dịch vụ bằng Wireless Debugging.
+7. Cấp quyền Shizuku cho WUWA VN.
+8. Mở WUWA VN và bấm **Install Help** hoặc **Show Setup Guide** nếu cần hướng dẫn từng bước.
+9. Bấm **Show Patch Plan**.
+10. Kiểm tra danh sách file sẽ thay đổi.
+11. Bấm **Backup Game Configs** để copy read-only `Engine.ini`, `DeviceProfiles.ini`, `MountLang_en.txt` vào backup.
+12. Bấm **Download & Verify Patch** để tải PAK và kiểm tra SHA-256.
+13. Bấm **Install Vietnamese Patch** để xem patch write dry-run, xác nhận hai lần, rồi cài `WuWaVH_99_P.pak`.
+14. Bấm **Apply Safe Config Preset** để xem config dry-run, xác nhận hai lần, rồi ghi `Engine.ini`, `DeviceProfiles.ini`, `MountLang_en.txt` bằng template bundled.
+15. Bấm **Apply Balanced Preset** sau khi state là PATCHED nếu muốn xem Balanced dry-run, xác nhận hai lần, rồi ghi `Engine.ini`, `DeviceProfiles.ini`, `MountLang_en.txt` bằng template bundled.
+16. Bấm **Apply Performance Preset** sau khi state là PATCHED nếu muốn xem Performance dry-run, xác nhận hai lần, rồi ghi `Engine.ini`, `DeviceProfiles.ini`, `MountLang_en.txt` bằng template bundled.
+17. Bấm **Remove Vietnamese Patch** nếu muốn rollback PAK: app sẽ restore `MountLang_en.txt` từ backup VERIFIED, xác nhận hai lần, xoá đúng `WuWaVH_99_P.pak`, rồi verify PAK không còn tồn tại.
+18. Bấm **Restore Original Files** nếu cần khôi phục file gốc từ backup VERIFIED.
+19. Bấm **Recovery Guide** nếu state là PARTIAL hoặc UNKNOWN để xem hướng dẫn khôi phục an toàn.
 
 ## Verify APK
 
@@ -142,7 +146,7 @@ Không cài APK từ mirror lạ, link chat riêng, hoặc file không có SHA-2
 Ví dụ file phát hành hợp lệ:
 
 ```text
-WUWA-VN-v3.3.15-release.apk
+WUWA-VN-v3.3.17-release.apk
 ```
 
 Không phát hành file `app-debug.apk` cho người dùng phổ thông.
@@ -150,7 +154,7 @@ Không phát hành file `app-debug.apk` cho người dùng phổ thông.
 Trước khi phát hành, kiểm tra chữ ký:
 
 ```bash
-apksigner verify --print-certs WUWA-VN-v3.3.15-release.apk
+apksigner verify --print-certs WUWA-VN-v3.3.17-release.apk
 ```
 
 ## Cách Khôi Phục
@@ -230,13 +234,15 @@ Hiện tại app mở GitHub Releases để người dùng tự tải bản mớ
 - v3.3.13: Low-tech onboarding polish, thêm setup guide/checklist/Shizuku help, không đổi app behavior.
 - v3.3.14: Release hardening, CI verify APK SHA/version/package/permission/debuggable.
 - v3.3.15: Compose preview foundation, thêm preview-only Compose screens, không đổi runtime UI/write logic.
+- v3.3.16: Compose home screen parity, màn chính runtime dùng Compose nhưng giữ controller/write flow cũ.
+- v3.3.17: Non-tech install polish, thêm Install Help và hướng dẫn APK/Android 11+/BlueStacks/unknown-source rõ hơn.
 
 ## Roadmap
 
 - v3.4.0: WUWA Global 3.4 compatibility release
 
 Source app hiện đã được migrate sang Kotlin. Từ `v3.3.11`, Gradle là build path chính và vẫn dùng `version.properties` làm source of truth cho app version. Từ `v3.3.12`, GitHub Actions có thể build release APK khi tạo GitHub Release tag mới.
-Từ `v3.3.15`, repo có Jetpack Compose preview foundation để chuẩn bị migrate UI dần mà không đổi runtime flow.
+Từ `v3.3.17`, màn chính runtime dùng Jetpack Compose nhưng vẫn giữ các controller, Shizuku flow, và write logic hiện có.
 
 ## Build From Source
 
@@ -254,13 +260,13 @@ Release build local:
 ./gradlew :app:assembleRelease
 ```
 
-Compose preview:
+Compose home screen:
 
 ```text
-app/src/main/kotlin/com/acceleratorer/wuwavn/ComposePreviewScreens.kt
+app/src/main/kotlin/com/acceleratorer/wuwavn/ComposeHomeScreen.kt
 ```
 
-Mở file này trong Android Studio để xem `@Preview` cho home/status/setup/preset policy. Các preview này chưa được gọi bởi runtime `MainActivity`.
+Mở file này trong Android Studio để xem `@Preview` cho home/status/setup/preset policy. Runtime `MainActivity` cũng dùng Compose screen này từ `v3.3.17`.
 
 Từ `v3.3.12`, GitHub Actions có thể build release APK khi tạo GitHub Release tag mới.
 
@@ -277,7 +283,7 @@ release-verification-report.txt
 Từ `v3.3.14`, release APK được verify bằng script:
 
 ```bash
-python tools/verify-release-apk.py WUWA-VN-v3.3.15-release.apk
+python tools/verify-release-apk.py WUWA-VN-v3.3.17-release.apk
 ```
 
 Script kiểm tra:

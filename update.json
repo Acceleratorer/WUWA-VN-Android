@@ -1,19 +1,18 @@
 {
   "manifest_version": 3,
   "app": {
-    "version_name": "3.3.15",
-    "version_code": 49,
+    "version_name": "3.3.17",
+    "version_code": 51,
     "supported_game_version": "3.3",
     "minimum_game_version": "3.3",
-    "apk_url": "https://github.com/Acceleratorer/WUWA-VN-Android/releases/download/v3.3.15/WUWA-VN-v3.3.15-release.apk",
+    "apk_url": "https://github.com/Acceleratorer/WUWA-VN-Android/releases/download/v3.3.17/WUWA-VN-v3.3.17-release.apk",
     "sha256": "PUT_REAL_APK_SHA256_HERE",
     "changelog": [
-      "Add Jetpack Compose preview foundation",
-      "Add preview-only home, setup, status, and preset policy surfaces",
-      "Enable Android Studio Compose Preview support",
-      "Keep runtime Android Views flow unchanged",
-      "Keep Shizuku and write logic unchanged",
-      "No app behavior changes",
+      "Move the home screen runtime UI to Jetpack Compose",
+      "Keep existing controllers, Shizuku flow, and write logic unchanged",
+      "Add Install Help for release APK, Android version, BlueStacks, and unknown-source install prompts",
+      "Improve non-technical setup guidance from the home screen",
+      "No write behavior changes",
       "Keep Max Graphics locked"
     ],
     "force_update": false

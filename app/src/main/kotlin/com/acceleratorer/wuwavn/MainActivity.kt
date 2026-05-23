@@ -1,30 +1,23 @@
 package com.acceleratorer.wuwavn
 
-import android.app.Activity
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.setContent
 import android.content.ActivityNotFoundException
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
 import android.graphics.Color
-import android.graphics.Typeface
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
 import android.os.Looper
 import android.provider.Settings
-import android.view.Gravity
-import android.view.View
-import android.widget.Button
-import android.widget.FrameLayout
-import android.widget.ImageView
-import android.widget.LinearLayout
-import android.widget.ScrollView
-import android.widget.TextView
 import android.widget.Toast
+import androidx.compose.runtime.mutableStateOf
 import rikka.shizuku.Shizuku
 
-class MainActivity : Activity() {
+class MainActivity : ComponentActivity() {
     private val logger = DebugLogger()
     private val gamePackageDetector = GamePackageDetector()
     private val shizukuStateChecker = ShizukuStateChecker(gamePackageDetector)
@@ -67,17 +60,7 @@ class MainActivity : Activity() {
     private lateinit var restoreFlowController: RestoreFlowController
     private lateinit var configPresetController: ConfigPresetController
 
-    private var statusView: TextView? = null
-    private var setupChecklistView: TextView? = null
-    private var logView: TextView? = null
-    private lateinit var installPatchButton: Button
-    private lateinit var backupButton: Button
-    private lateinit var downloadPatchButton: Button
-    private lateinit var applySafeButton: Button
-    private lateinit var applyBalancedButton: Button
-    private lateinit var applyPerformanceButton: Button
-    private lateinit var removePatchButton: Button
-    private lateinit var restoreButton: Button
+    private val composeHomeUiState = mutableStateOf(ComposeHomeUiState.initial())
     private var shizukuState = ShizukuState.NOT_INSTALLED
     private var gameState = GamePackageDetector.State.NOT_INSTALLED
     private var gameInfo: GamePackageDetector.GameInfo? = null
@@ -111,10 +94,17 @@ class MainActivity : Activity() {
         window.navigationBarColor = Color.rgb(11, 17, 29)
 
         initializeControllers()
-        setContentView(createContentView())
+        setContent {
+            WuwaComposeTheme {
+                ComposeHomeScreen(
+                    uiState = composeHomeUiState.value,
+                    callbacks = composeHomeCallbacks(),
+                )
+            }
+        }
         logger.setListener { text ->
             runOnUiThread {
-                logView?.text = text
+                composeHomeUiState.value = composeHomeUiState.value.copy(debugLogText = text)
             }
         }
 
@@ -194,176 +184,119 @@ class MainActivity : Activity() {
         }
     }
 
-    private fun createContentView(): View {
-        val scroll = ScrollView(this)
-        scroll.isFillViewport = true
-        scroll.setBackgroundColor(Color.rgb(11, 17, 29))
+    private fun composeHomeCallbacks(): ComposeHomeCallbacks = ComposeHomeCallbacks(
+        onShowSetupGuide = { showOnboarding() },
+        onInstallHelp = { showInstallHelp() },
+        onShizukuSetupHelp = { showShizukuHelp() },
+        onOpenShizuku = { openOrRequestShizuku() },
+        onOpenDeveloperOptions = { openDeveloperOptions() },
+        onCheckGameFolder = { checkGameFolder() },
+        onShowPatchPlan = { showPatchPlan() },
+        onBackupGameConfigs = { backupGameConfigs() },
+        onCopyBackupPath = { copyBackupPath() },
+        onDownloadPatch = { downloadPatch() },
+        onInstallPatch = { installVietnamesePatch() },
+        onUpdatePatch = { openUpdatePage() },
+        onRemovePatch = { removeVietnamesePatch() },
+        onRestoreOriginal = { restoreOriginalFiles() },
+        onApplySafe = { applySafePreset() },
+        onApplyBalanced = { applyBalancedPreset() },
+        onApplyPerformance = { applyPerformancePreset() },
+        onCopyDebugLog = { copyLog() },
+        onCopyStateSnapshot = { copyStateSnapshot() },
+        onRecoveryGuide = { showRecoveryGuide() },
+        onSendIssueReport = { shareLog() },
+    )
 
-        val root = LinearLayout(this)
-        root.orientation = LinearLayout.VERTICAL
-        root.setPadding(dp(20), dp(24), dp(20), dp(24))
-        scroll.addView(
-            root,
-            FrameLayout.LayoutParams(
-                FrameLayout.LayoutParams.MATCH_PARENT,
-                FrameLayout.LayoutParams.WRAP_CONTENT,
-            ),
+    private fun showInstallHelp() {
+        dialogs.showMessage(
+            "Install Help",
+            "For normal users:\n\n" +
+                "1. Download only WUWA-VN-v${AppConstants.VERSION_NAME}-release.apk from GitHub Releases.\n" +
+                "2. Do not install Source code zip/tar.gz files.\n" +
+                "3. Android 11 or newer is required. On BlueStacks, use Android 11 64-bit.\n" +
+                "4. If Android asks, allow Install unknown apps for your browser or file manager.\n" +
+                "5. If install fails, uninstall the old WUWA VN app first, then install again.\n" +
+                "6. Open WUWA VN, install/start Shizuku, then follow Show Setup Guide.",
         )
-
-        val title = text("WUWA VN Android", 26, Color.WHITE, true)
-        root.addView(title)
-
-        val subtitle = text("Safe patch manager for Vietnamese Wuthering Waves players.", 14, Color.rgb(182, 193, 211), false)
-        subtitle.setPadding(0, dp(8), 0, dp(16))
-        root.addView(subtitle)
-
-        root.addView(heroImage())
-
-        statusView = text("", 15, Color.WHITE, false).also {
-            it.setPadding(dp(14), dp(14), dp(14), dp(14))
-            it.setBackgroundColor(Color.rgb(22, 32, 49))
-            root.addView(it, matchWrap())
-        }
-
-        root.addView(space(12))
-        setupChecklistView = text("", 14, Color.WHITE, false).also {
-            it.setPadding(dp(14), dp(14), dp(14), dp(14))
-            it.setBackgroundColor(Color.rgb(18, 39, 36))
-            root.addView(it, matchWrap())
-        }
-
-        root.addView(space(14))
-        root.addView(sectionTitle("Setup"))
-        root.addView(button("Show Setup Guide") { showOnboarding() })
-        root.addView(button("Shizuku Setup Help") { showShizukuHelp() })
-        root.addView(button("Open Shizuku") { openOrRequestShizuku() })
-        root.addView(button("Open Developer Options") { openDeveloperOptions() })
-        root.addView(button("Check Game Folder") {
-            refreshStatus()
-            lastAction = "Check Game Folder"
-            logger.add("Game folder: checked package state")
-        })
-
-        root.addView(space(18))
-        root.addView(sectionTitle("Patch"))
-        root.addView(button("Show Patch Plan") {
-            refreshStatus()
-            lastAction = "Show Patch Plan"
-            patchPreparationController.showPatchDryRun(gameState, shizukuState)
-        })
-        backupButton = button("Backup Game Configs") {
-            refreshStatus()
-            if (blockIfDisabled(backupButton, "Backup Game Configs")) return@button
-            lastAction = "Backup Game Configs requested"
-            backupFlowController.backupGameConfigs(gameState, shizukuState)
-        }
-        root.addView(backupButton)
-        root.addView(button("Copy Backup Path") { copyBackupPath() })
-        downloadPatchButton = button("Download & Verify Patch") {
-            if (blockIfDisabled(downloadPatchButton, "Download & Verify Patch")) return@button
-            lastAction = "Download & Verify Patch requested"
-            patchPreparationController.preparePatchSafely()
-        }
-        root.addView(downloadPatchButton)
-        installPatchButton = primaryButton("Install Vietnamese Patch") {
-            refreshStatus()
-            if (blockIfDisabled(installPatchButton, "Install Vietnamese Patch")) return@primaryButton
-            lastAction = "Install Vietnamese Patch requested"
-            patchPreparationController.showPatchWriteDryRun(gameState, shizukuState)
-        }
-        root.addView(installPatchButton)
-        root.addView(button("Update Vietnamese Patch") {
-            openUrl(AppConstants.RELEASES_URL)
-            lastAction = "Opened GitHub Releases"
-            logger.add("Update check: opened GitHub Releases")
-        })
-        removePatchButton = button("Remove Vietnamese Patch") {
-            refreshStatus()
-            if (blockIfDisabled(removePatchButton, "Remove Vietnamese Patch")) return@button
-            lastAction = "Remove Vietnamese Patch requested"
-            patchPreparationController.showRemovePatchDryRun(gameState, shizukuState)
-        }
-        root.addView(removePatchButton)
-        restoreButton = button("Restore Original Files") {
-            refreshStatus()
-            if (blockIfDisabled(restoreButton, "Restore Original Files")) return@button
-            lastAction = "Restore Original Files opened"
-            restoreFlowController.showRestoreSessions()
-        }
-        root.addView(restoreButton)
-
-        root.addView(space(18))
-        root.addView(sectionTitle("Config Presets"))
-        applySafeButton = button("Apply Safe Config Preset") {
-            refreshStatus()
-            if (blockIfDisabled(applySafeButton, "Apply Safe Config Preset")) return@button
-            pendingConfigPresetName = "Safe / Default"
-            lastAction = "Apply Safe Config Preset requested"
-            configPresetController.showSafeDefaultDryRun(gameState, shizukuState)
-        }
-        root.addView(applySafeButton)
-        applyBalancedButton = button("Apply Balanced Preset") {
-            refreshStatus()
-            if (blockIfDisabled(applyBalancedButton, "Apply Balanced Preset")) return@button
-            pendingConfigPresetName = "Balanced"
-            lastAction = "Apply Balanced Preset requested"
-            configPresetController.showBalancedDryRun(gameState, shizukuState, installedState)
-        }
-        root.addView(applyBalancedButton)
-        applyPerformanceButton = button("Apply Performance Preset") {
-            refreshStatus()
-            if (blockIfDisabled(applyPerformanceButton, "Apply Performance Preset")) return@button
-            pendingConfigPresetName = "Performance"
-            lastAction = "Apply Performance Preset requested"
-            configPresetController.showPerformanceDryRun(gameState, shizukuState, installedState)
-        }
-        root.addView(applyPerformanceButton)
-
-        root.addView(space(18))
-        root.addView(text("Safety rules", 18, Color.WHITE, true))
-        val safety = text(
-            "Only allowlisted WUWA targets can be planned:\n" +
-                "- Engine.ini\n" +
-                "- DeviceProfiles.ini\n" +
-                "- MountLang_en.txt\n" +
-                "- WuWaVH_99_P.pak\n\n" +
-                "Max Graphics remains locked in v3.3.13.\n\n" +
-                "Always backup first. Never use this app for cheating, anti-cheat bypass, or gameplay manipulation.",
-            14,
-            Color.rgb(198, 207, 220),
-            false,
-        )
-        safety.setPadding(0, dp(8), 0, dp(12))
-        root.addView(safety)
-
-        root.addView(text("Debug log", 18, Color.WHITE, true))
-        logView = text("", 12, Color.rgb(209, 218, 230), false).also {
-            it.typeface = Typeface.MONOSPACE
-            it.setPadding(dp(12), dp(12), dp(12), dp(12))
-            it.setBackgroundColor(Color.rgb(7, 12, 21))
-            root.addView(it, matchWrap())
-        }
-
-        root.addView(space(10))
-        root.addView(sectionTitle("Diagnostics"))
-        root.addView(button("Copy Debug Log") { copyLog() })
-        root.addView(button("Copy State Snapshot") { copyStateSnapshot() })
-        root.addView(button("Recovery Guide") { showRecoveryGuide() })
-        root.addView(button("Send Issue Report") { shareLog() })
-
-        return scroll
+        lastAction = "Opened Install Help"
+        logger.add("Install help: shown")
     }
 
-    private fun heroImage(): ImageView {
-        val image = ImageView(this)
-        image.setImageResource(R.drawable.phrolova_header)
-        image.scaleType = ImageView.ScaleType.CENTER_CROP
-        image.contentDescription = "WUWA VN header artwork"
-        val params = matchWrap()
-        params.height = dp(132)
-        params.setMargins(0, 0, 0, dp(16))
-        image.layoutParams = params
-        return image
+    private fun checkGameFolder() {
+        refreshStatus()
+        lastAction = "Check Game Folder"
+        logger.add("Game folder: checked package state")
+    }
+
+    private fun showPatchPlan() {
+        refreshStatus()
+        lastAction = "Show Patch Plan"
+        patchPreparationController.showPatchDryRun(gameState, shizukuState)
+    }
+
+    private fun backupGameConfigs() {
+        refreshStatus()
+        if (blockIfActionDisabled(actionState?.backupEnabled == true, "Backup Game Configs")) return
+        lastAction = "Backup Game Configs requested"
+        backupFlowController.backupGameConfigs(gameState, shizukuState)
+    }
+
+    private fun downloadPatch() {
+        if (blockIfActionDisabled(actionState?.downloadPatchEnabled == true, "Download & Verify Patch")) return
+        lastAction = "Download & Verify Patch requested"
+        patchPreparationController.preparePatchSafely()
+    }
+
+    private fun installVietnamesePatch() {
+        refreshStatus()
+        if (blockIfActionDisabled(actionState?.installPatchEnabled == true, "Install Vietnamese Patch")) return
+        lastAction = "Install Vietnamese Patch requested"
+        patchPreparationController.showPatchWriteDryRun(gameState, shizukuState)
+    }
+
+    private fun openUpdatePage() {
+        openUrl(AppConstants.RELEASES_URL)
+        lastAction = "Opened GitHub Releases"
+        logger.add("Update check: opened GitHub Releases")
+    }
+
+    private fun removeVietnamesePatch() {
+        refreshStatus()
+        if (blockIfActionDisabled(actionState?.removePatchEnabled == true, "Remove Vietnamese Patch")) return
+        lastAction = "Remove Vietnamese Patch requested"
+        patchPreparationController.showRemovePatchDryRun(gameState, shizukuState)
+    }
+
+    private fun restoreOriginalFiles() {
+        refreshStatus()
+        if (blockIfActionDisabled(actionState?.restoreEnabled == true, "Restore Original Files")) return
+        lastAction = "Restore Original Files opened"
+        restoreFlowController.showRestoreSessions()
+    }
+
+    private fun applySafePreset() {
+        refreshStatus()
+        if (blockIfActionDisabled(actionState?.applySafeEnabled == true, "Apply Safe Config Preset")) return
+        pendingConfigPresetName = "Safe / Default"
+        lastAction = "Apply Safe Config Preset requested"
+        configPresetController.showSafeDefaultDryRun(gameState, shizukuState)
+    }
+
+    private fun applyBalancedPreset() {
+        refreshStatus()
+        if (blockIfActionDisabled(actionState?.applyBalancedEnabled == true, "Apply Balanced Preset")) return
+        pendingConfigPresetName = "Balanced"
+        lastAction = "Apply Balanced Preset requested"
+        configPresetController.showBalancedDryRun(gameState, shizukuState, installedState)
+    }
+
+    private fun applyPerformancePreset() {
+        refreshStatus()
+        if (blockIfActionDisabled(actionState?.applyPerformanceEnabled == true, "Apply Performance Preset")) return
+        pendingConfigPresetName = "Performance"
+        lastAction = "Apply Performance Preset requested"
+        configPresetController.showPerformanceDryRun(gameState, shizukuState, installedState)
     }
 
     private fun registerShizukuListeners() {
@@ -404,9 +337,12 @@ class MainActivity : Activity() {
     private fun renderStatusSnapshot(state: InstalledState?) {
         val resolvedActionState = HomeActionStateResolver.resolve(state, gameState, shizukuState)
         actionState = resolvedActionState
-        statusView?.text = statusRenderer.render(gameState, gameInfo, shizukuState, state)
-        setupChecklistView?.text = setupChecklistText()
-        applyHomeActionState(resolvedActionState)
+        composeHomeUiState.value = composeHomeUiState.value.copy(
+            statusText = statusRenderer.render(gameState, gameInfo, shizukuState, state),
+            setupChecklistText = setupChecklistText(),
+            debugLogText = logger.text(),
+            actionState = resolvedActionState,
+        )
     }
 
     private fun refreshInstalledStateInBackground(
@@ -459,20 +395,6 @@ class MainActivity : Activity() {
         diagnostics = listOf(diagnostic),
     )
 
-    private fun applyHomeActionState(state: HomeActionState?) {
-        if (state == null) {
-            return
-        }
-        installPatchButton.isEnabled = state.installPatchEnabled
-        removePatchButton.isEnabled = state.removePatchEnabled
-        applySafeButton.isEnabled = state.applySafeEnabled
-        applyBalancedButton.isEnabled = state.applyBalancedEnabled
-        applyPerformanceButton.isEnabled = state.applyPerformanceEnabled
-        restoreButton.isEnabled = state.restoreEnabled
-        backupButton.isEnabled = state.backupEnabled
-        downloadPatchButton.isEnabled = state.downloadPatchEnabled
-    }
-
     private fun logInstalledStateIfChanged(
         state: InstalledState?,
         actions: HomeActionState?,
@@ -510,8 +432,8 @@ class MainActivity : Activity() {
         return installedStateDetector.detect(this, currentGameInfo, currentGameState, currentShizukuState)
     }
 
-    private fun blockIfDisabled(button: Button, actionName: String): Boolean {
-        if (button.isEnabled) {
+    private fun blockIfActionDisabled(enabled: Boolean, actionName: String): Boolean {
+        if (enabled) {
             return false
         }
         val hint = actionState?.primaryHint ?: "Refresh status and complete setup first."
@@ -767,57 +689,4 @@ class MainActivity : Activity() {
     private fun showMessage(title: String, message: String) {
         dialogs.showMessage(title, message)
     }
-
-    private fun text(value: String, sp: Int, color: Int, bold: Boolean): TextView {
-        val textView = TextView(this)
-        textView.text = value
-        textView.textSize = sp.toFloat()
-        textView.setTextColor(color)
-        textView.setLineSpacing(dp(2).toFloat(), 1.0f)
-        if (bold) {
-            textView.setTypeface(Typeface.DEFAULT, Typeface.BOLD)
-        }
-        return textView
-    }
-
-    private fun primaryButton(label: String, listener: View.OnClickListener): Button {
-        val button = button(label, listener)
-        button.setTextColor(Color.WHITE)
-        button.setBackgroundColor(Color.rgb(25, 118, 210))
-        return button
-    }
-
-    private fun sectionTitle(label: String): TextView =
-        text(label, 18, Color.WHITE, true).also {
-            it.setPadding(0, dp(4), 0, dp(2))
-        }
-
-    private fun button(label: String, listener: View.OnClickListener): Button {
-        val button = Button(this)
-        button.text = label
-        button.setTextColor(Color.WHITE)
-        button.isAllCaps = false
-        button.gravity = Gravity.CENTER
-        button.setBackgroundColor(Color.rgb(35, 48, 68))
-        button.setOnClickListener(listener)
-        val params = matchWrap()
-        params.setMargins(0, dp(8), 0, 0)
-        button.layoutParams = params
-        return button
-    }
-
-    private fun space(heightDp: Int): View {
-        val view = View(this)
-        view.layoutParams = LinearLayout.LayoutParams(1, dp(heightDp))
-        return view
-    }
-
-    private fun matchWrap(): LinearLayout.LayoutParams =
-        LinearLayout.LayoutParams(
-            LinearLayout.LayoutParams.MATCH_PARENT,
-            LinearLayout.LayoutParams.WRAP_CONTENT,
-        )
-
-    private fun dp(value: Int): Int =
-        Math.round(value * resources.displayMetrics.density)
 }
