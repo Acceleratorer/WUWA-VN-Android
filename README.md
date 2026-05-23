@@ -277,6 +277,7 @@ Release artifact gồm:
 ```text
 WUWA-VN-vX.Y.Z-release.apk
 sha256.txt
+update.json
 release-verification-report.txt
 ```
 
@@ -313,7 +314,7 @@ WUWA_RELEASE_KEY_ALIAS
 WUWA_RELEASE_KEY_PASSWORD
 ```
 
-Sau khi CI tạo `sha256.txt`, cập nhật `update.json` bằng SHA-256 thật của APK release.
+Release workflow sẽ ghi SHA-256 của APK vừa build vào `update.json` artifact, rồi verify APK bằng `release-verification-report.txt`.
 
 ## Báo Lỗi
 

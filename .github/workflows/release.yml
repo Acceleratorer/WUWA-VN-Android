@@ -137,6 +137,21 @@ jobs:
           sha256sum "$OUT_APK" | tee sha256.txt
           echo "apk=$OUT_APK" >> "$GITHUB_OUTPUT"
 
+      - name: Update manifest SHA for built APK
+        shell: bash
+        run: |
+          APK_SHA=$(cut -d' ' -f1 sha256.txt)
+          python - "$APK_SHA" <<'PY'
+          import json
+          import sys
+          from pathlib import Path
+
+          path = Path("update.json")
+          manifest = json.loads(path.read_text(encoding="utf-8"))
+          manifest["app"]["sha256"] = sys.argv[1]
+          path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+          PY
+
       - name: Verify release APK
         shell: bash
         run: |
@@ -151,6 +166,7 @@ jobs:
           path: |
             ${{ steps.artifact.outputs.apk }}
             sha256.txt
+            update.json
             release-verification-report.txt
 
       - name: Upload assets to GitHub Release
@@ -161,4 +177,5 @@ jobs:
           files: |
             ${{ steps.artifact.outputs.apk }}
             sha256.txt
+            update.json
             release-verification-report.txt

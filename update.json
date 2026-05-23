@@ -12,6 +12,7 @@
       "Show app, game, Shizuku, patch, backup, and hint details on the Compose home screen",
       "Show preset write policy and action state in the Compose snapshot preview",
       "Exclude VCS metadata from release APKs so SHA validation stays stable",
+      "Generate release update manifest SHA from the APK built in CI",
       "Keep Copy State Snapshot and Send Issue Report behavior unchanged",
       "No write behavior changes",
       "Keep Max Graphics locked"
