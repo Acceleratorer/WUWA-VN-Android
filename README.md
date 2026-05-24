@@ -2,7 +2,7 @@
 
 Ứng dụng hỗ trợ cài bản Việt hoá cho Wuthering Waves trên Android.
 
-> Trạng thái hiện tại: bản `v3.3.19` là WUWA Global 3.3 non-tech home + optional Root Backend Preview release. Màn chính chỉ giữ What To Do Now, Setup Checklist, và 6 Quick Actions cho user phổ thông; các tool nâng cao nằm trong More Tools. Root write vẫn khóa, Shizuku vẫn là backend khuyến nghị, và Max Graphics vẫn khóa.
+> Trạng thái hiện tại: bản `v3.3.20` là WUWA Global 3.3 Android 3.3.2 path diagnostic release. App thêm Game Path Diagnostic read-only trong More Tools để tester copy layout Engine.ini, DeviceProfiles.ini, MountLang_en.txt, Resources và PAK folders. Không đổi write logic, root write vẫn khóa, Shizuku vẫn là backend khuyến nghị, và Max Graphics vẫn khóa.
 
 ## Tính Năng
 
@@ -47,6 +47,7 @@
 - Root Preview Help giải thích root bằng ngôn ngữ dễ hiểu cho user không rành kỹ thuật
 - Shortcut mở Developer Options, fallback sang Shizuku setup guide nếu ROM không hỗ trợ
 - More Tools gom các flow nâng cao: patch plan, presets, remove/restore, recovery, diagnostics, root preview, và install help
+- Game Path Diagnostic read-only trong More Tools để xác nhận layout WUWA Android 3.3.2, bao gồm `Saved/Resources/3.3.0/MountLang_en.txt`
 
 ## Screenshots
 
@@ -69,7 +70,7 @@ Nút **Copy State Snapshot** copy thông tin ngắn gọn để debug issue repo
 
 ```text
 WUWA VN State Snapshot
-App version: 3.3.19 (53)
+App version: 3.3.20 (54)
 Game package: com.kurogame.wutheringwaves.global
 Game version: 3.3.x
 Launcher compatibility: WUWA Global 3.3
@@ -137,7 +138,7 @@ Last action: Balanced preset applied
 10. Bấm **Backup Game Configs** để copy read-only `Engine.ini`, `DeviceProfiles.ini`, `MountLang_en.txt` vào backup.
 11. Bấm **Download & Verify Patch** để tải PAK và kiểm tra SHA-256.
 12. Bấm **Install Vietnamese Patch** để xem patch write dry-run, xác nhận hai lần, rồi cài `WuWaVH_99_P.pak`.
-13. Bấm **More Tools** nếu cần thao tác nâng cao như Install Help, Show Patch Plan, Apply Safe/Balanced/Performance, Remove Patch, Restore Original Files, Recovery Guide, Copy State Snapshot, hoặc Root Preview.
+13. Bấm **More Tools** nếu cần thao tác nâng cao như Install Help, Game Path Diagnostic, Show Patch Plan, Apply Safe/Balanced/Performance, Remove Patch, Restore Original Files, Recovery Guide, Copy State Snapshot, hoặc Root Preview.
 14. Nếu máy đã root và muốn kiểm tra thử, mở **More Tools** rồi bấm **Root Preview Help** trước, sau đó mới bấm **Check Root Access**. Bước này không ghi file.
 
 ## Verify APK
@@ -149,7 +150,7 @@ Không cài APK từ mirror lạ, link chat riêng, hoặc file không có SHA-2
 Ví dụ file phát hành hợp lệ:
 
 ```text
-WUWA-VN-v3.3.19-release.apk
+WUWA-VN-v3.3.20-release.apk
 ```
 
 Không phát hành file `app-debug.apk` cho người dùng phổ thông.
@@ -157,7 +158,7 @@ Không phát hành file `app-debug.apk` cho người dùng phổ thông.
 Trước khi phát hành, kiểm tra chữ ký:
 
 ```bash
-apksigner verify --print-certs WUWA-VN-v3.3.19-release.apk
+apksigner verify --print-certs WUWA-VN-v3.3.20-release.apk
 ```
 
 ## Cách Khôi Phục
@@ -254,13 +255,14 @@ Hiện tại app mở GitHub Releases để người dùng tự tải bản mớ
 - v3.3.17: Non-tech install polish, thêm Install Help và hướng dẫn APK/Android 11+/BlueStacks/unknown-source rõ hơn.
 - v3.3.18: Compose diagnostics/snapshot polish, hiển thị summary và snapshot preview rõ hơn trên màn chính.
 - v3.3.19: Non-tech home simplification + Optional Root Backend Preview, màn chính chỉ hiện phần cần thiết và root write vẫn khóa.
+- v3.3.20: Android 3.3.2 path diagnostic, thêm Game Path Diagnostic read-only và không đổi write behavior.
 
 ## Roadmap
 
 - v3.4.0: WUWA Global 3.4 compatibility release
 
 Source app hiện đã được migrate sang Kotlin. Từ `v3.3.11`, Gradle là build path chính và vẫn dùng `version.properties` làm source of truth cho app version. Từ `v3.3.12`, GitHub Actions có thể build release APK khi tạo GitHub Release tag mới.
-Từ `v3.3.17`, màn chính runtime dùng Jetpack Compose nhưng vẫn giữ các controller, Shizuku flow, và write logic hiện có. Từ `v3.3.18`, màn chính Compose có Diagnostics Summary và State Snapshot Preview. Từ `v3.3.19`, màn chính ưu tiên user phổ thông với 6 Quick Actions, tool nâng cao nằm trong More Tools, và Root Backend Preview chỉ detect root thủ công chứ không mở root write.
+Từ `v3.3.17`, màn chính runtime dùng Jetpack Compose nhưng vẫn giữ các controller, Shizuku flow, và write logic hiện có. Từ `v3.3.18`, màn chính Compose có Diagnostics Summary và State Snapshot Preview. Từ `v3.3.19`, màn chính ưu tiên user phổ thông với 6 Quick Actions, tool nâng cao nằm trong More Tools, và Root Backend Preview chỉ detect root thủ công chứ không mở root write. Từ `v3.3.20`, More Tools có Game Path Diagnostic read-only để kiểm tra layout Android 3.3.2 trước khi đổi write target.
 
 ## Build From Source
 
@@ -302,7 +304,7 @@ release-verification-report.txt
 Từ `v3.3.14`, release APK được verify bằng script:
 
 ```bash
-python tools/verify-release-apk.py WUWA-VN-v3.3.19-release.apk
+python tools/verify-release-apk.py WUWA-VN-v3.3.20-release.apk
 ```
 
 Script kiểm tra:
@@ -388,6 +390,7 @@ Xem checklist test LTS tại [`docs/WUWA-3.3-LTS-TEST-CHECKLIST.md`](docs/WUWA-3
 - [ ] Open Developer Options works or opens Shizuku setup guide fallback
 - [ ] Home screen shows 6 Quick Actions for non-tech users
 - [ ] More Tools contains advanced actions: presets, remove/restore, recovery, diagnostics, root preview, and install help
+- [ ] Game Path Diagnostic is read-only and reports candidate MountLang/Resources/PAK paths
 - [ ] Backup copy đúng `Engine.ini`, `DeviceProfiles.ini`, `MountLang_en.txt` và ghi metadata
 - [ ] Download verify PAK SHA-256 trước khi install
 - [ ] Install Vietnamese Patch chỉ ghi `WuWaVH_99_P.pak`
@@ -398,7 +401,7 @@ Xem checklist test LTS tại [`docs/WUWA-3.3-LTS-TEST-CHECKLIST.md`](docs/WUWA-3
 - [ ] Restore Original Files chỉ restore backup VERIFIED
 - [ ] Max Graphics vẫn khóa
 - [ ] Manifest không thêm permission mới và `android:debuggable=false`
-- [ ] Root write remains disabled in v3.3.19
+- [ ] Root write remains disabled in v3.3.20
 
 ## Security Checklist
 

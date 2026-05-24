@@ -27,6 +27,7 @@ class MainActivity : ComponentActivity() {
     private val manifestRepository = PatchManifestRepository()
     private val shizukuFileSystem = ShizukuFileSystem()
     private val backupReader = ShizukuBackupReader(backupManager)
+    private val gamePathDiagnosticReader = ShizukuGamePathDiagnosticReader()
     private val restoreDryRunPlanner = RestoreDryRunPlanner(backupManager)
     private val restoreWriter = ShizukuRestoreWriter()
     private val downloadClient = DownloadClient()
@@ -221,6 +222,7 @@ class MainActivity : ComponentActivity() {
             "Shizuku Setup Help",
             "Open Developer Options",
             "Check Game Folder",
+            "Game Path Diagnostic",
             "Show Patch Plan",
             "Copy Backup Path",
             "Update Vietnamese Patch",
@@ -244,6 +246,7 @@ class MainActivity : ComponentActivity() {
                 "Shizuku Setup Help" -> showShizukuHelp()
                 "Open Developer Options" -> openDeveloperOptions()
                 "Check Game Folder" -> checkGameFolder()
+                "Game Path Diagnostic" -> showGamePathDiagnostic()
                 "Show Patch Plan" -> showPatchPlan()
                 "Copy Backup Path" -> copyBackupPath()
                 "Update Vietnamese Patch" -> openUpdatePage()
@@ -290,6 +293,51 @@ class MainActivity : ComponentActivity() {
         refreshStatus()
         lastAction = "Check Game Folder"
         logger.add("Game folder: checked package state")
+    }
+
+    private fun showGamePathDiagnostic() {
+        refreshStatus()
+        if (gameState != GamePackageDetector.State.GLOBAL_INSTALLED) {
+            dialogs.showMessage(
+                "Game Path Diagnostic blocked",
+                "Wuthering Waves Global is not detected. Install or open the Global version first.",
+            )
+            logger.add("Game path diagnostic: blocked - game missing")
+            return
+        }
+        if (shizukuState != ShizukuState.READY) {
+            dialogs.showMessage("Game Path Diagnostic blocked", shizukuFileSystem.disabledReason(shizukuState))
+            logger.add("Game path diagnostic: blocked - Shizuku not ready")
+            return
+        }
+
+        val gameInfoSnapshot = gameInfo
+        val shizukuStateSnapshot = shizukuState
+        lastAction = "Game Path Diagnostic requested"
+        logger.add("Game path diagnostic: started")
+        Toast.makeText(this, "Reading game paths...", Toast.LENGTH_SHORT).show()
+
+        Thread {
+            val report = gamePathDiagnosticReader.read(applicationContext)
+            val text = GamePathDiagnosticRenderer.render(report, gameInfoSnapshot, shizukuStateSnapshot)
+
+            runOnUiThread {
+                if (isFinishing || isDestroyed) {
+                    return@runOnUiThread
+                }
+                dialogs.showConfirmation(
+                    title = "Game Path Diagnostic",
+                    message = text,
+                    positiveLabel = "Copy Report",
+                ) {
+                    copyGamePathDiagnostic(text)
+                }
+                logger.add("Game path diagnostic: shown")
+            }
+        }.apply {
+            name = "WUWA-PathDiagnostic"
+            start()
+        }
     }
 
     private fun showPatchPlan() {
@@ -553,7 +601,7 @@ class MainActivity : ComponentActivity() {
 
         dialogs.showConfirmation(
             title = "Check Root Access",
-            message = "This preview may show a root manager popup.\n\nNo files will be changed. Root writes are disabled in v3.3.19.\n\nFor normal users, Shizuku is still recommended.",
+            message = "This preview may show a root manager popup.\n\nNo files will be changed. Root writes are disabled in this version.\n\nFor normal users, Shizuku is still recommended.",
             positiveLabel = "Check Root",
         ) {
             startRootAccessPreviewCheck()
@@ -712,6 +760,16 @@ class MainActivity : ComponentActivity() {
             clipboard.setPrimaryClip(ClipData.newPlainText("WUWA VN backup path", backupPath))
             Toast.makeText(this, "Backup path copied.", Toast.LENGTH_SHORT).show()
             logger.add("Backup path: copied")
+        }
+    }
+
+    private fun copyGamePathDiagnostic(text: String) {
+        val clipboard = getSystemService(Context.CLIPBOARD_SERVICE) as? ClipboardManager
+        if (clipboard != null) {
+            clipboard.setPrimaryClip(ClipData.newPlainText("WUWA VN game path diagnostic", text))
+            Toast.makeText(this, "Game path diagnostic copied.", Toast.LENGTH_SHORT).show()
+            lastAction = "Copied Game Path Diagnostic"
+            logger.add("Game path diagnostic: copied")
         }
     }
 

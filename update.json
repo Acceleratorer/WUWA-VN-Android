@@ -1,19 +1,17 @@
 {
   "manifest_version": 3,
   "app": {
-    "version_name": "3.3.19",
-    "version_code": 53,
+    "version_name": "3.3.20",
+    "version_code": 54,
     "supported_game_version": "3.3",
     "minimum_game_version": "3.3",
-    "apk_url": "https://github.com/Acceleratorer/WUWA-VN-Android/releases/download/v3.3.19/WUWA-VN-v3.3.19-release.apk",
+    "apk_url": "https://github.com/Acceleratorer/WUWA-VN-Android/releases/download/v3.3.20/WUWA-VN-v3.3.20-release.apk",
     "sha256": "PUT_REAL_APK_SHA256_HERE",
     "changelog": [
-      "Simplify the main screen to What To Do Now, Setup Checklist, and 6 Quick Actions",
-      "Move advanced presets, recovery, diagnostics, and root preview actions into More Tools",
-      "Add optional Root Backend Preview for already-rooted devices",
-      "Add Root Preview Help for non-technical users",
-      "Add manual Check Root Access with final confirmation",
-      "Keep root write actions disabled in v3.3.19",
+      "Add read-only Game Path Diagnostic for Android 3.3.2 layout checks",
+      "Detect candidate Engine.ini, DeviceProfiles.ini, MountLang_en.txt, Resources, and PAK folders",
+      "Help testers confirm MountLang_en.txt under Saved/Resources/3.3.0",
+      "Do not change patch, backup, restore, preset, Shizuku, or root write behavior",
       "No write behavior changes",
       "Keep Max Graphics locked"
     ],

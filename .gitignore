@@ -1,5 +1,6 @@
 # Android/Gradle
 .gradle/
+.kotlin/
 .android-sdk/
 build/
 app/build/

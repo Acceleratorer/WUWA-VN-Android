@@ -262,7 +262,7 @@ private fun WuwaPatchedPreview() {
                     "Ready to install patch: NO\n" +
                     "Ready to apply presets: YES",
                 rootPreviewText = RootPreviewRenderer.render(RootAccessState.AVAILABLE),
-                diagnosticsSummaryText = "App version: 3.3.19 (53)\n" +
+                diagnosticsSummaryText = "App version: 3.3.20 (54)\n" +
                     "Supported game version: 3.3\n" +
                     "Shizuku: Ready\n" +
                     "Root preview: Root access detected\n" +
@@ -311,7 +311,7 @@ private fun WuwaSetupBlockedPreview() {
                     "Ready to install patch: NO\n" +
                     "Ready to apply presets: NO",
                 rootPreviewText = RootPreviewRenderer.render(RootAccessState.NOT_CHECKED),
-                diagnosticsSummaryText = "App version: 3.3.19 (53)\n" +
+                diagnosticsSummaryText = "App version: 3.3.20 (54)\n" +
                     "Supported game version: 3.3\n" +
                     "Shizuku: Shizuku installed but not running\n" +
                     "Root preview: Root preview not checked\n" +
