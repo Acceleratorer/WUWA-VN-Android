@@ -116,18 +116,35 @@ class ShizukuGamePathDiagnosticReader {
 
     private fun runShizukuShell(script: String): String {
         val process = startShizukuProcess(arrayOf("/system/bin/sh", "-c", script))
-        if (!process.waitFor(SHELL_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
+        val completed = waitForShizukuProcess(process)
+        if (!completed) {
             process.destroy()
             throw IllegalStateException("Timed out while running Shizuku shell diagnostic.")
         }
 
         val stdout = process.inputStream.readBytes().toString(Charsets.UTF_8)
         val stderr = process.errorStream.readBytes().toString(Charsets.UTF_8).trim()
-        val exitCode = process.exitValue()
-        if (exitCode != 0 && stdout.isBlank()) {
+        if (stdout.contains("__WUWA_DIAG_BEGIN__") && stdout.contains("__WUWA_DIAG_END__")) {
+            return stdout
+        }
+
+        val exitCode = runCatching { process.exitValue() }.getOrNull()
+        if (exitCode != null && exitCode != 0 && stdout.isBlank()) {
             throw IllegalStateException("Shizuku shell diagnostic failed with exit code $exitCode: $stderr")
         }
         return stdout
+    }
+
+    private fun waitForShizukuProcess(process: Process): Boolean {
+        val method = runCatching {
+            process.javaClass.getMethod("waitForTimeout", java.lang.Long.TYPE, TimeUnit::class.java)
+        }.getOrNull()
+
+        if (method != null) {
+            return method.invoke(process, SHELL_TIMEOUT_SECONDS, TimeUnit.SECONDS) as Boolean
+        }
+
+        return process.waitFor(SHELL_TIMEOUT_SECONDS, TimeUnit.SECONDS)
     }
 
     private fun startShizukuProcess(command: Array<String>): Process {
