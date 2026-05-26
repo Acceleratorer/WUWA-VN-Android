@@ -11,6 +11,8 @@ data class GamePathFileResult(
     val isFile: Boolean,
     val sizeBytes: Long?,
     val error: String? = null,
+    val sha256: String? = null,
+    val previewLines: List<String> = emptyList(),
 )
 
 data class GamePathDirectoryResult(
@@ -184,6 +186,9 @@ object GamePathDiagnosticRenderer {
         appendLine("Shizuku: ${shizukuState.label}")
         appendLine("Mode: read-only diagnostic, no files changed")
         appendLine("Source: ${report.source}")
+        if (report.error == null) {
+            appendLine("Layout confirmation: ${layoutConfirmation(report)}")
+        }
         appendLine()
 
         if (report.error != null) {
@@ -196,6 +201,15 @@ object GamePathDiagnosticRenderer {
         for (file in report.files) {
             appendLine("- ${file.candidate.label}: ${fileStatus(file)}")
             appendLine("  ${file.candidate.relativePath}")
+            if (file.sha256 != null) {
+                appendLine("  SHA-256: ${file.sha256}")
+            }
+            if (file.previewLines.isNotEmpty()) {
+                appendLine("  Preview:")
+                for (previewLine in file.previewLines) {
+                    appendLine("    $previewLine")
+                }
+            }
             if (file.error != null) {
                 appendLine("  Error: ${file.error}")
             }
@@ -235,6 +249,13 @@ object GamePathDiagnosticRenderer {
         else -> "missing"
     }
 
+    private fun layoutConfirmation(report: GamePathDiagnosticReport): String =
+        if (android332ResourcesLayoutConfirmed(report)) {
+            "Android 3.3.2 Resources layout confirmed"
+        } else {
+            "Not confirmed yet"
+        }
+
     private fun notes(report: GamePathDiagnosticReport): List<String> {
         val notes = mutableListOf<String>()
         if (report.error != null) {
@@ -263,6 +284,10 @@ object GamePathDiagnosticRenderer {
             it.candidate.label.startsWith("Legacy Content/Paks") && it.exists && it.isDirectory
         }
 
+        if (android332ResourcesLayoutConfirmed(report)) {
+            notes.add("Android 3.3.2 Resources layout is confirmed for this device.")
+            notes.add("Install writer remains locked for this new layout until MountLang write format is confirmed.")
+        }
         if ((resourceMountLangFound || mountFolderMountLangFound) && !legacyMountLangFound) {
             notes.add("Detected MountLang_en.txt under Saved/Resources/3.3.0, not the legacy Config/Android path.")
         }
@@ -277,5 +302,21 @@ object GamePathDiagnosticRenderer {
         }
         notes.add("Send this report before changing write paths for Android 3.3.2 layouts.")
         return notes
+    }
+
+    private fun android332ResourcesLayoutConfirmed(report: GamePathDiagnosticReport): Boolean {
+        val mountFolderMountLangFound = report.files.any {
+            it.candidate.label == "MountLang resources Mount folder" && it.exists && it.isFile
+        }
+        val langPakFound = report.files.any {
+            it.candidate.label.startsWith("Lang_en") && it.candidate.label.endsWith("PAK") && it.exists && it.isFile
+        }
+        val langSigFound = report.files.any {
+            it.candidate.label.startsWith("Lang_en") && it.candidate.label.endsWith("SIG") && it.exists && it.isFile
+        }
+        val legacyPakFolderFound = report.directories.any {
+            it.candidate.label.startsWith("Legacy Content/Paks") && it.exists && it.isDirectory
+        }
+        return mountFolderMountLangFound && langPakFound && langSigFound && !legacyPakFolderFound
     }
 }

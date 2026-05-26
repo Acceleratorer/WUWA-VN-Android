@@ -104,6 +104,10 @@ class ShizukuGamePathDiagnosticReader {
             appendLine("p=${shellQuote(gameAbsolutePath(candidate.relativePath))}")
             appendLine("if [ -e \"\$p\" ]; then echo exists=1; else echo exists=0; fi")
             appendLine("if [ -f \"\$p\" ]; then echo file=1; size=\$(wc -c < \"\$p\" 2>/dev/null | tr -d '[:space:]'); echo size=\$size; else echo file=0; fi")
+            if (shouldHashAndPreview(candidate)) {
+                appendLine("if [ -f \"\$p\" ]; then sha=\$(sha256sum \"\$p\" 2>/dev/null | awk '{print \$1}'); if [ -n \"\$sha\" ]; then echo sha256=\$sha; else echo sha256=unavailable; fi; fi")
+                appendLine("if [ -f \"\$p\" ]; then head -n $MAX_PREVIEW_LINES \"\$p\" 2>/dev/null | sed 's/\\r//g' | sed 's/^/preview=/'; fi")
+            }
         }
         GamePathDiagnosticPaths.directoryCandidates.forEachIndexed { index, candidate ->
             appendLine("echo __WUWA_DIR__$index")
@@ -203,7 +207,13 @@ class ShizukuGamePathDiagnosticReader {
         val exists = shellValue(lines, "exists") == "1"
         val isFile = shellValue(lines, "file") == "1"
         val sizeBytes = if (isFile) shellValue(lines, "size")?.toLongOrNull() else null
-        return GamePathFileResult(candidate, exists, isFile, sizeBytes)
+        val sha256 = shellValue(lines, "sha256")
+            ?.takeIf { SHA_256_REGEX.matches(it) }
+            ?.lowercase()
+        val previewLines = lines.filter { it.startsWith("preview=") }
+            .map { it.removePrefix("preview=") }
+            .take(MAX_PREVIEW_LINES)
+        return GamePathFileResult(candidate, exists, isFile, sizeBytes, sha256 = sha256, previewLines = previewLines)
     }
 
     private fun parseShellDirectoryCandidate(
@@ -228,6 +238,9 @@ class ShizukuGamePathDiagnosticReader {
 
     private fun shellValue(lines: List<String>, key: String): String? =
         lines.firstOrNull { it.startsWith("$key=") }?.substringAfter("=")
+
+    private fun shouldHashAndPreview(candidate: GamePathCandidate): Boolean =
+        candidate.label.startsWith("MountLang")
 
     private fun shellQuote(value: String): String = "'" + value.replace("'", "'\"'\"'") + "'"
 
@@ -281,6 +294,8 @@ class ShizukuGamePathDiagnosticReader {
         const val CONNECT_TIMEOUT_SECONDS = 15L
         const val SHELL_TIMEOUT_SECONDS = 12L
         const val MAX_CHILD_NAMES = 40
+        const val MAX_PREVIEW_LINES = 8
         const val RETRY_DELAY_MS = 750L
+        val SHA_256_REGEX = Regex("^[0-9a-fA-F]{64}$")
     }
 }
