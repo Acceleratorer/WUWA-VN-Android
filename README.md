@@ -2,7 +2,7 @@
 
 Ứng dụng hỗ trợ cài bản Việt hoá cho Wuthering Waves trên Android.
 
-> Trạng thái hiện tại: bản `v3.3.20` là WUWA Global 3.3 Android 3.3.2 path diagnostic release. App thêm Game Path Diagnostic read-only trong More Tools để tester copy layout Engine.ini, DeviceProfiles.ini, MountLang_en.txt, Resources và PAK folders. Không đổi write logic, root write vẫn khóa, Shizuku vẫn là backend khuyến nghị, và Max Graphics vẫn khóa.
+> Trạng thái hiện tại: bản `v3.3.21` là WUWA Global 3.3 Android 3.3.2 path diagnostic hotfix. App sửa Game Path Diagnostic để dùng lại Shizuku backup service read-only đang ổn định, giúp tester copy layout Engine.ini, DeviceProfiles.ini, MountLang_en.txt, Resources và PAK folders. Không đổi write logic, root write vẫn khóa, Shizuku vẫn là backend khuyến nghị, và Max Graphics vẫn khóa.
 
 ## Tính Năng
 
@@ -70,7 +70,7 @@ Nút **Copy State Snapshot** copy thông tin ngắn gọn để debug issue repo
 
 ```text
 WUWA VN State Snapshot
-App version: 3.3.20 (54)
+App version: 3.3.21 (55)
 Game package: com.kurogame.wutheringwaves.global
 Game version: 3.3.x
 Launcher compatibility: WUWA Global 3.3
@@ -150,7 +150,7 @@ Không cài APK từ mirror lạ, link chat riêng, hoặc file không có SHA-2
 Ví dụ file phát hành hợp lệ:
 
 ```text
-WUWA-VN-v3.3.20-release.apk
+WUWA-VN-v3.3.21-release.apk
 ```
 
 Không phát hành file `app-debug.apk` cho người dùng phổ thông.
@@ -158,7 +158,7 @@ Không phát hành file `app-debug.apk` cho người dùng phổ thông.
 Trước khi phát hành, kiểm tra chữ ký:
 
 ```bash
-apksigner verify --print-certs WUWA-VN-v3.3.20-release.apk
+apksigner verify --print-certs WUWA-VN-v3.3.21-release.apk
 ```
 
 ## Cách Khôi Phục
@@ -256,13 +256,14 @@ Hiện tại app mở GitHub Releases để người dùng tự tải bản mớ
 - v3.3.18: Compose diagnostics/snapshot polish, hiển thị summary và snapshot preview rõ hơn trên màn chính.
 - v3.3.19: Non-tech home simplification + Optional Root Backend Preview, màn chính chỉ hiện phần cần thiết và root write vẫn khóa.
 - v3.3.20: Android 3.3.2 path diagnostic, thêm Game Path Diagnostic read-only và không đổi write behavior.
+- v3.3.21: Game Path Diagnostic hotfix, dùng lại Shizuku backup service read-only để tránh timeout.
 
 ## Roadmap
 
 - v3.4.0: WUWA Global 3.4 compatibility release
 
 Source app hiện đã được migrate sang Kotlin. Từ `v3.3.11`, Gradle là build path chính và vẫn dùng `version.properties` làm source of truth cho app version. Từ `v3.3.12`, GitHub Actions có thể build release APK khi tạo GitHub Release tag mới.
-Từ `v3.3.17`, màn chính runtime dùng Jetpack Compose nhưng vẫn giữ các controller, Shizuku flow, và write logic hiện có. Từ `v3.3.18`, màn chính Compose có Diagnostics Summary và State Snapshot Preview. Từ `v3.3.19`, màn chính ưu tiên user phổ thông với 6 Quick Actions, tool nâng cao nằm trong More Tools, và Root Backend Preview chỉ detect root thủ công chứ không mở root write. Từ `v3.3.20`, More Tools có Game Path Diagnostic read-only để kiểm tra layout Android 3.3.2 trước khi đổi write target.
+Từ `v3.3.17`, màn chính runtime dùng Jetpack Compose nhưng vẫn giữ các controller, Shizuku flow, và write logic hiện có. Từ `v3.3.18`, màn chính Compose có Diagnostics Summary và State Snapshot Preview. Từ `v3.3.19`, màn chính ưu tiên user phổ thông với 6 Quick Actions, tool nâng cao nằm trong More Tools, và Root Backend Preview chỉ detect root thủ công chứ không mở root write. Từ `v3.3.21`, More Tools có Game Path Diagnostic read-only dùng Shizuku backup service để kiểm tra layout Android 3.3.2 trước khi đổi write target.
 
 ## Build From Source
 
@@ -304,7 +305,7 @@ release-verification-report.txt
 Từ `v3.3.14`, release APK được verify bằng script:
 
 ```bash
-python tools/verify-release-apk.py WUWA-VN-v3.3.20-release.apk
+python tools/verify-release-apk.py WUWA-VN-v3.3.21-release.apk
 ```
 
 Script kiểm tra:
@@ -401,7 +402,7 @@ Xem checklist test LTS tại [`docs/WUWA-3.3-LTS-TEST-CHECKLIST.md`](docs/WUWA-3
 - [ ] Restore Original Files chỉ restore backup VERIFIED
 - [ ] Max Graphics vẫn khóa
 - [ ] Manifest không thêm permission mới và `android:debuggable=false`
-- [ ] Root write remains disabled in v3.3.20
+- [ ] Root write remains disabled in v3.3.21
 
 ## Security Checklist
 

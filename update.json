@@ -1,16 +1,16 @@
 {
   "manifest_version": 3,
   "app": {
-    "version_name": "3.3.20",
-    "version_code": 54,
+    "version_name": "3.3.21",
+    "version_code": 55,
     "supported_game_version": "3.3",
     "minimum_game_version": "3.3",
-    "apk_url": "https://github.com/Acceleratorer/WUWA-VN-Android/releases/download/v3.3.20/WUWA-VN-v3.3.20-release.apk",
+    "apk_url": "https://github.com/Acceleratorer/WUWA-VN-Android/releases/download/v3.3.21/WUWA-VN-v3.3.21-release.apk",
     "sha256": "PUT_REAL_APK_SHA256_HERE",
     "changelog": [
-      "Add read-only Game Path Diagnostic for Android 3.3.2 layout checks",
-      "Detect candidate Engine.ini, DeviceProfiles.ini, MountLang_en.txt, Resources, and PAK folders",
-      "Help testers confirm MountLang_en.txt under Saved/Resources/3.3.0",
+      "Fix Game Path Diagnostic Shizuku connection timeout",
+      "Reuse the existing Shizuku backup service for read-only path diagnostics",
+      "Keep Android 3.3.2 MountLang and Lang_en PAK/SIG candidate checks",
       "Do not change patch, backup, restore, preset, Shizuku, or root write behavior",
       "No write behavior changes",
       "Keep Max Graphics locked"

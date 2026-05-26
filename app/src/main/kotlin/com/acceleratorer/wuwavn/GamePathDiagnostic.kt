@@ -159,6 +159,11 @@ object GamePathDiagnosticPaths {
             .map { it.relativePath }
             .toSet()
 
+    val allowedAbsoluteRelativePaths: Set<String> =
+        allowedRelativePaths.map {
+            "Android/data/${AppConstants.GLOBAL_GAME_PACKAGE}/files/$it"
+        }.toSet()
+
     fun isAllowed(relativePath: String): Boolean {
         val normalized = relativePath.replace('\\', '/')
         return !normalized.contains("..") && allowedRelativePaths.contains(normalized)
@@ -230,6 +235,12 @@ object GamePathDiagnosticRenderer {
 
     private fun notes(report: GamePathDiagnosticReport): List<String> {
         val notes = mutableListOf<String>()
+        if (report.error != null) {
+            notes.add("Diagnostic did not read game paths because the Shizuku diagnostic connection failed.")
+            notes.add("Install the latest hotfix and retry More Tools > Game Path Diagnostic.")
+            return notes
+        }
+
         val resourceMountLangFound = report.files.any {
             it.candidate.label.startsWith("MountLang resources") && it.exists && it.isFile
         }

@@ -12,19 +12,19 @@ import rikka.shizuku.Shizuku
 
 class ShizukuGamePathDiagnosticReader {
     fun read(context: Context): GamePathDiagnosticReport {
-        val serviceRef = AtomicReference<IWuwaPathDiagnosticService?>()
+        val serviceRef = AtomicReference<IWuwaBackupService?>()
         val connected = CountDownLatch(1)
-        val componentName = ComponentName(context, WuwaPathDiagnosticUserService::class.java)
+        val componentName = ComponentName(context, WuwaBackupUserService::class.java)
         val args = Shizuku.UserServiceArgs(componentName)
             .daemon(false)
             .debuggable(false)
-            .processNameSuffix("path_diag")
-            .tag("path_diag")
+            .processNameSuffix("path_diag_backup")
+            .tag("path_diag_backup")
             .version(AppConstants.VERSION_CODE)
 
         val connection = object : ServiceConnection {
             override fun onServiceConnected(name: ComponentName, service: IBinder) {
-                serviceRef.set(IWuwaPathDiagnosticService.Stub.asInterface(service))
+                serviceRef.set(IWuwaBackupService.Stub.asInterface(service))
                 connected.countDown()
             }
 
@@ -36,11 +36,11 @@ class ShizukuGamePathDiagnosticReader {
         return try {
             Shizuku.bindUserService(args, connection)
             if (!connected.await(CONNECT_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
-                throw IllegalStateException("Timed out while connecting Shizuku path diagnostic service.")
+                throw IllegalStateException("Timed out while connecting Shizuku backup diagnostic service.")
             }
 
             val service = serviceRef.get()
-                ?: throw IllegalStateException("Shizuku path diagnostic service did not connect.")
+                ?: throw IllegalStateException("Shizuku backup diagnostic service did not connect.")
 
             GamePathDiagnosticReport(
                 files = GamePathDiagnosticPaths.fileCandidates.map { readFileCandidate(service, it) },
@@ -61,12 +61,12 @@ class ShizukuGamePathDiagnosticReader {
     }
 
     private fun readFileCandidate(
-        service: IWuwaPathDiagnosticService,
+        service: IWuwaBackupService,
         candidate: GamePathCandidate,
     ): GamePathFileResult {
         val absolutePath = gameAbsolutePath(candidate.relativePath)
         return try {
-            val exists = service.exists(absolutePath)
+            val exists = service.pathExists(absolutePath)
             val isFile = service.isFile(absolutePath)
             val sizeBytes = if (isFile) service.length(absolutePath) else null
             GamePathFileResult(candidate, exists, isFile, sizeBytes)
@@ -76,12 +76,12 @@ class ShizukuGamePathDiagnosticReader {
     }
 
     private fun readDirectoryCandidate(
-        service: IWuwaPathDiagnosticService,
+        service: IWuwaBackupService,
         candidate: GamePathCandidate,
     ): GamePathDirectoryResult {
         val absolutePath = gameAbsolutePath(candidate.relativePath)
         return try {
-            val exists = service.exists(absolutePath)
+            val exists = service.pathExists(absolutePath)
             val isDirectory = service.isDirectory(absolutePath)
             val children = if (isDirectory) {
                 service.listChildNames(absolutePath, MAX_CHILD_NAMES).toList()
