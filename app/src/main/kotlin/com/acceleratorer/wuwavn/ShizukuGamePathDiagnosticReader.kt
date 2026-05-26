@@ -12,14 +12,35 @@ import rikka.shizuku.Shizuku
 
 class ShizukuGamePathDiagnosticReader {
     fun read(context: Context): GamePathDiagnosticReport {
+        var lastError: String? = null
+        repeat(BIND_ATTEMPTS) { attempt ->
+            val report = readOnce(context, attempt + 1)
+            if (report.error == null) {
+                return report
+            }
+            lastError = report.error
+            Thread.sleep(RETRY_DELAY_MS)
+        }
+
+        return GamePathDiagnosticReport(
+            files = emptyList(),
+            directories = emptyList(),
+            error = lastError ?: "Shizuku backup diagnostic service did not connect.",
+        )
+    }
+
+    private fun readOnce(
+        context: Context,
+        attempt: Int,
+    ): GamePathDiagnosticReport {
         val serviceRef = AtomicReference<IWuwaBackupService?>()
         val connected = CountDownLatch(1)
         val componentName = ComponentName(context, WuwaBackupUserService::class.java)
         val args = Shizuku.UserServiceArgs(componentName)
             .daemon(false)
             .debuggable(false)
-            .processNameSuffix("path_diag_backup")
-            .tag("path_diag_backup")
+            .processNameSuffix("backup")
+            .tag("backup")
             .version(AppConstants.VERSION_CODE)
 
         val connection = object : ServiceConnection {
@@ -36,11 +57,11 @@ class ShizukuGamePathDiagnosticReader {
         return try {
             Shizuku.bindUserService(args, connection)
             if (!connected.await(CONNECT_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
-                throw IllegalStateException("Timed out while connecting Shizuku backup diagnostic service.")
+                throw IllegalStateException("Timed out while connecting Shizuku backup diagnostic service (attempt $attempt/$BIND_ATTEMPTS).")
             }
 
             val service = serviceRef.get()
-                ?: throw IllegalStateException("Shizuku backup diagnostic service did not connect.")
+                ?: throw IllegalStateException("Shizuku backup diagnostic service did not connect (attempt $attempt/$BIND_ATTEMPTS).")
 
             GamePathDiagnosticReport(
                 files = GamePathDiagnosticPaths.fileCandidates.map { readFileCandidate(service, it) },
@@ -106,7 +127,9 @@ class ShizukuGamePathDiagnosticReader {
     }
 
     private companion object {
-        const val CONNECT_TIMEOUT_SECONDS = 10L
+        const val BIND_ATTEMPTS = 2
+        const val CONNECT_TIMEOUT_SECONDS = 15L
         const val MAX_CHILD_NAMES = 40
+        const val RETRY_DELAY_MS = 750L
     }
 }

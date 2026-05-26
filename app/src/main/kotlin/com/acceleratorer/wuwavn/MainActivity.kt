@@ -215,7 +215,6 @@ class MainActivity : ComponentActivity() {
     )
 
     private fun showMoreTools() {
-        refreshStatus()
         val labels = arrayOf(
             "Install Help",
             "Current State",
@@ -296,8 +295,10 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun showGamePathDiagnostic() {
-        refreshStatus()
-        if (gameState != GamePackageDetector.State.GLOBAL_INSTALLED) {
+        val detectedGameState = gamePackageDetector.detect(this)
+        val detectedGameInfo = gamePackageDetector.detectGlobalInfo(this)
+        val detectedShizukuState = shizukuStateChecker.check(this)
+        if (detectedGameState != GamePackageDetector.State.GLOBAL_INSTALLED) {
             dialogs.showMessage(
                 "Game Path Diagnostic blocked",
                 "Wuthering Waves Global is not detected. Install or open the Global version first.",
@@ -305,21 +306,19 @@ class MainActivity : ComponentActivity() {
             logger.add("Game path diagnostic: blocked - game missing")
             return
         }
-        if (shizukuState != ShizukuState.READY) {
-            dialogs.showMessage("Game Path Diagnostic blocked", shizukuFileSystem.disabledReason(shizukuState))
+        if (detectedShizukuState != ShizukuState.READY) {
+            dialogs.showMessage("Game Path Diagnostic blocked", shizukuFileSystem.disabledReason(detectedShizukuState))
             logger.add("Game path diagnostic: blocked - Shizuku not ready")
             return
         }
 
-        val gameInfoSnapshot = gameInfo
-        val shizukuStateSnapshot = shizukuState
         lastAction = "Game Path Diagnostic requested"
         logger.add("Game path diagnostic: started")
         Toast.makeText(this, "Reading game paths...", Toast.LENGTH_SHORT).show()
 
         Thread {
             val report = gamePathDiagnosticReader.read(applicationContext)
-            val text = GamePathDiagnosticRenderer.render(report, gameInfoSnapshot, shizukuStateSnapshot)
+            val text = GamePathDiagnosticRenderer.render(report, detectedGameInfo, detectedShizukuState)
 
             runOnUiThread {
                 if (isFinishing || isDestroyed) {

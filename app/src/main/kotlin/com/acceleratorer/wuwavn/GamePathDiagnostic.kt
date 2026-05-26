@@ -237,7 +237,7 @@ object GamePathDiagnosticRenderer {
         val notes = mutableListOf<String>()
         if (report.error != null) {
             notes.add("Diagnostic did not read game paths because the Shizuku diagnostic connection failed.")
-            notes.add("Install the latest hotfix and retry More Tools > Game Path Diagnostic.")
+            notes.add("Close and reopen WUWA VN, make sure Shizuku is still Ready, then retry More Tools > Game Path Diagnostic.")
             return notes
         }
 
