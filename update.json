@@ -1,17 +1,16 @@
 {
   "manifest_version": 3,
   "app": {
-    "version_name": "3.3.22",
-    "version_code": 56,
+    "version_name": "3.3.23",
+    "version_code": 57,
     "supported_game_version": "3.3",
     "minimum_game_version": "3.3",
-    "apk_url": "https://github.com/Acceleratorer/WUWA-VN-Android/releases/download/v3.3.22/WUWA-VN-v3.3.22-release.apk",
+    "apk_url": "https://github.com/Acceleratorer/WUWA-VN-Android/releases/download/v3.3.23/WUWA-VN-v3.3.23-release.apk",
     "sha256": "PUT_REAL_APK_SHA256_HERE",
     "changelog": [
-      "Harden Game Path Diagnostic Shizuku binding",
-      "Avoid starting background state refresh before path diagnostics",
-      "Retry the read-only backup service connection before reporting timeout",
-      "Keep Android 3.3.2 MountLang and Lang_en PAK/SIG candidate checks",
+      "Add Shizuku shell fallback for Game Path Diagnostic",
+      "Keep diagnostic checks read-only and allowlisted",
+      "Improve Android 3.3.2 path reports when Shizuku user service binding times out",
       "Do not change patch, backup, restore, preset, Shizuku, or root write behavior",
       "No write behavior changes",
       "Keep Max Graphics locked"

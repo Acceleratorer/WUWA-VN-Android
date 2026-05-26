@@ -19,14 +19,12 @@ class ShizukuGamePathDiagnosticReader {
                 return report
             }
             lastError = report.error
-            Thread.sleep(RETRY_DELAY_MS)
+            if (attempt < BIND_ATTEMPTS - 1) {
+                Thread.sleep(RETRY_DELAY_MS)
+            }
         }
 
-        return GamePathDiagnosticReport(
-            files = emptyList(),
-            directories = emptyList(),
-            error = lastError ?: "Shizuku backup diagnostic service did not connect.",
-        )
+        return readWithShellFallback(lastError)
     }
 
     private fun readOnce(
@@ -66,6 +64,7 @@ class ShizukuGamePathDiagnosticReader {
             GamePathDiagnosticReport(
                 files = GamePathDiagnosticPaths.fileCandidates.map { readFileCandidate(service, it) },
                 directories = GamePathDiagnosticPaths.directoryCandidates.map { readDirectoryCandidate(service, it) },
+                source = "Shizuku backup service",
             )
         } catch (exception: Exception) {
             GamePathDiagnosticReport(
@@ -80,6 +79,140 @@ class ShizukuGamePathDiagnosticReader {
             }
         }
     }
+
+    private fun readWithShellFallback(serviceError: String?): GamePathDiagnosticReport =
+        try {
+            parseShellDiagnostic(runShizukuShell(buildShellDiagnosticScript()))
+        } catch (exception: Exception) {
+            val details = listOfNotNull(
+                serviceError?.let { "Backup service: $it" },
+                "Shell fallback: ${exception.message ?: exception.javaClass.simpleName}",
+            ).joinToString("\n")
+
+            GamePathDiagnosticReport(
+                files = emptyList(),
+                directories = emptyList(),
+                error = details,
+                source = "Shizuku diagnostic unavailable",
+            )
+        }
+
+    private fun buildShellDiagnosticScript(): String = buildString {
+        appendLine("echo __WUWA_DIAG_BEGIN__")
+        GamePathDiagnosticPaths.fileCandidates.forEachIndexed { index, candidate ->
+            appendLine("echo __WUWA_FILE__$index")
+            appendLine("p=${shellQuote(gameAbsolutePath(candidate.relativePath))}")
+            appendLine("if [ -e \"\$p\" ]; then echo exists=1; else echo exists=0; fi")
+            appendLine("if [ -f \"\$p\" ]; then echo file=1; size=\$(wc -c < \"\$p\" 2>/dev/null | tr -d '[:space:]'); echo size=\$size; else echo file=0; fi")
+        }
+        GamePathDiagnosticPaths.directoryCandidates.forEachIndexed { index, candidate ->
+            appendLine("echo __WUWA_DIR__$index")
+            appendLine("p=${shellQuote(gameAbsolutePath(candidate.relativePath))}")
+            appendLine("if [ -e \"\$p\" ]; then echo exists=1; else echo exists=0; fi")
+            appendLine("if [ -d \"\$p\" ]; then echo dir=1; ls -1 \"\$p\" 2>/dev/null | head -n $MAX_CHILD_NAMES | sed 's/^/child=/'; else echo dir=0; fi")
+        }
+        appendLine("echo __WUWA_DIAG_END__")
+    }
+
+    private fun runShizukuShell(script: String): String {
+        val process = startShizukuProcess(arrayOf("/system/bin/sh", "-c", script))
+        if (!process.waitFor(SHELL_TIMEOUT_SECONDS, TimeUnit.SECONDS)) {
+            process.destroy()
+            throw IllegalStateException("Timed out while running Shizuku shell diagnostic.")
+        }
+
+        val stdout = process.inputStream.readBytes().toString(Charsets.UTF_8)
+        val stderr = process.errorStream.readBytes().toString(Charsets.UTF_8).trim()
+        val exitCode = process.exitValue()
+        if (exitCode != 0 && stdout.isBlank()) {
+            throw IllegalStateException("Shizuku shell diagnostic failed with exit code $exitCode: $stderr")
+        }
+        return stdout
+    }
+
+    private fun startShizukuProcess(command: Array<String>): Process {
+        val method = Shizuku::class.java.getDeclaredMethod(
+            "newProcess",
+            Array<String>::class.java,
+            Array<String>::class.java,
+            String::class.java,
+        )
+        method.isAccessible = true
+        return method.invoke(null, *arrayOf<Any?>(command, null, null)) as Process
+    }
+
+    private fun parseShellDiagnostic(output: String): GamePathDiagnosticReport {
+        if (!output.contains("__WUWA_DIAG_BEGIN__")) {
+            throw IllegalStateException("Shizuku shell diagnostic returned no marker output.")
+        }
+
+        val blocks = mutableMapOf<String, MutableList<String>>()
+        var currentKey: String? = null
+        for (rawLine in output.lineSequence()) {
+            val line = rawLine.trimEnd('\r')
+            when {
+                line.startsWith("__WUWA_FILE__") || line.startsWith("__WUWA_DIR__") -> {
+                    currentKey = line
+                    blocks.getOrPut(line) { mutableListOf() }
+                }
+                line == "__WUWA_DIAG_BEGIN__" || line == "__WUWA_DIAG_END__" -> {
+                    currentKey = null
+                }
+                currentKey != null -> {
+                    blocks.getOrPut(currentKey) { mutableListOf() }.add(line)
+                }
+            }
+        }
+
+        return GamePathDiagnosticReport(
+            files = GamePathDiagnosticPaths.fileCandidates.mapIndexed { index, candidate ->
+                parseShellFileCandidate(candidate, blocks["__WUWA_FILE__$index"].orEmpty())
+            },
+            directories = GamePathDiagnosticPaths.directoryCandidates.mapIndexed { index, candidate ->
+                parseShellDirectoryCandidate(candidate, blocks["__WUWA_DIR__$index"].orEmpty())
+            },
+            source = "Shizuku shell fallback",
+        )
+    }
+
+    private fun parseShellFileCandidate(
+        candidate: GamePathCandidate,
+        lines: List<String>,
+    ): GamePathFileResult {
+        if (lines.isEmpty()) {
+            return GamePathFileResult(candidate, exists = false, isFile = false, sizeBytes = null, error = "No shell output.")
+        }
+
+        val exists = shellValue(lines, "exists") == "1"
+        val isFile = shellValue(lines, "file") == "1"
+        val sizeBytes = if (isFile) shellValue(lines, "size")?.toLongOrNull() else null
+        return GamePathFileResult(candidate, exists, isFile, sizeBytes)
+    }
+
+    private fun parseShellDirectoryCandidate(
+        candidate: GamePathCandidate,
+        lines: List<String>,
+    ): GamePathDirectoryResult {
+        if (lines.isEmpty()) {
+            return GamePathDirectoryResult(candidate, exists = false, isDirectory = false, childNames = emptyList(), error = "No shell output.")
+        }
+
+        val exists = shellValue(lines, "exists") == "1"
+        val isDirectory = shellValue(lines, "dir") == "1"
+        val children = if (isDirectory) {
+            lines.filter { it.startsWith("child=") }
+                .map { it.removePrefix("child=") }
+                .take(MAX_CHILD_NAMES)
+        } else {
+            emptyList()
+        }
+        return GamePathDirectoryResult(candidate, exists, isDirectory, children)
+    }
+
+    private fun shellValue(lines: List<String>, key: String): String? =
+        lines.firstOrNull { it.startsWith("$key=") }?.substringAfter("=")
+
+    private fun shellQuote(value: String): String = "'" + value.replace("'", "'\"'\"'") + "'"
 
     private fun readFileCandidate(
         service: IWuwaBackupService,
@@ -129,6 +262,7 @@ class ShizukuGamePathDiagnosticReader {
     private companion object {
         const val BIND_ATTEMPTS = 2
         const val CONNECT_TIMEOUT_SECONDS = 15L
+        const val SHELL_TIMEOUT_SECONDS = 12L
         const val MAX_CHILD_NAMES = 40
         const val RETRY_DELAY_MS = 750L
     }

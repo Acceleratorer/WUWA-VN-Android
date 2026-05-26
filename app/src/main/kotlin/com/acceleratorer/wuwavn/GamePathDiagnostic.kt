@@ -25,6 +25,7 @@ data class GamePathDiagnosticReport(
     val files: List<GamePathFileResult>,
     val directories: List<GamePathDirectoryResult>,
     val error: String? = null,
+    val source: String = "Shizuku backup service",
 )
 
 object GamePathDiagnosticPaths {
@@ -182,6 +183,7 @@ object GamePathDiagnosticRenderer {
         appendLine("Game version: ${gameInfo?.versionName ?: "unknown"}")
         appendLine("Shizuku: ${shizukuState.label}")
         appendLine("Mode: read-only diagnostic, no files changed")
+        appendLine("Source: ${report.source}")
         appendLine()
 
         if (report.error != null) {
@@ -239,6 +241,10 @@ object GamePathDiagnosticRenderer {
             notes.add("Diagnostic did not read game paths because the Shizuku diagnostic connection failed.")
             notes.add("Close and reopen WUWA VN, make sure Shizuku is still Ready, then retry More Tools > Game Path Diagnostic.")
             return notes
+        }
+
+        if (report.source == "Shizuku shell fallback") {
+            notes.add("Diagnostic used Shizuku shell fallback because the backup user service did not connect on this device.")
         }
 
         val resourceMountLangFound = report.files.any {
