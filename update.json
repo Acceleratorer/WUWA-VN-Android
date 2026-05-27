@@ -1,16 +1,17 @@
 {
   "manifest_version": 3,
   "app": {
-    "version_name": "3.3.25",
-    "version_code": 59,
+    "version_name": "3.3.26",
+    "version_code": 60,
     "supported_game_version": "3.3",
     "minimum_game_version": "3.3",
-    "apk_url": "https://github.com/Acceleratorer/WUWA-VN-Android/releases/download/v3.3.25/WUWA-VN-v3.3.25-release.apk",
+    "apk_url": "https://github.com/Acceleratorer/WUWA-VN-Android/releases/download/v3.3.26/WUWA-VN-v3.3.26-release.apk",
     "sha256": "PUT_REAL_APK_SHA256_HERE",
     "changelog": [
-      "Confirm Android 3.3.2 Resources layout in Game Path Diagnostic",
-      "Show read-only MountLang SHA-256 and short preview when available",
-      "Report that new Resources layout is confirmed while write support remains locked",
+      "Add Android 3.3.2 Patch Plan Preview to Game Path Diagnostic",
+      "Show proposed Resources PAK and SIG targets without writing files",
+      "Show verified local PAK SHA-256 and SHA-1 when available",
+      "Keep Android 3.3.2 install writer locked pending SIG and MountLang format confirmation",
       "Do not change patch, backup, restore, preset, Shizuku, or root write behavior",
       "No write behavior changes",
       "Keep Max Graphics locked"

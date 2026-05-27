@@ -5,12 +5,18 @@ import android.content.Context
 import android.content.ServiceConnection
 import android.os.Environment
 import android.os.IBinder
+import java.io.File
+import java.io.FileInputStream
+import java.security.MessageDigest
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 import rikka.shizuku.Shizuku
 
-class ShizukuGamePathDiagnosticReader {
+class ShizukuGamePathDiagnosticReader(
+    private val manifestRepository: PatchManifestRepository = PatchManifestRepository(),
+    private val downloadClient: DownloadClient = DownloadClient(),
+) {
     fun read(context: Context): GamePathDiagnosticReport {
         var lastError: String? = null
         repeat(BIND_ATTEMPTS) { attempt ->
@@ -24,7 +30,7 @@ class ShizukuGamePathDiagnosticReader {
             }
         }
 
-        return readWithShellFallback(lastError)
+        return readWithShellFallback(context, lastError)
     }
 
     private fun readOnce(
@@ -65,7 +71,7 @@ class ShizukuGamePathDiagnosticReader {
                 files = GamePathDiagnosticPaths.fileCandidates.map { readFileCandidate(service, it) },
                 directories = GamePathDiagnosticPaths.directoryCandidates.map { readDirectoryCandidate(service, it) },
                 source = "Shizuku backup service",
-            )
+            ).withPatchPlanPreview(context)
         } catch (exception: Exception) {
             GamePathDiagnosticReport(
                 files = emptyList(),
@@ -80,9 +86,13 @@ class ShizukuGamePathDiagnosticReader {
         }
     }
 
-    private fun readWithShellFallback(serviceError: String?): GamePathDiagnosticReport =
+    private fun readWithShellFallback(
+        context: Context,
+        serviceError: String?,
+    ): GamePathDiagnosticReport =
         try {
             parseShellDiagnostic(runShizukuShell(buildShellDiagnosticScript()))
+                .withPatchPlanPreview(context)
         } catch (exception: Exception) {
             val details = listOfNotNull(
                 serviceError?.let { "Backup service: $it" },
@@ -194,6 +204,103 @@ class ShizukuGamePathDiagnosticReader {
             },
             source = "Shizuku shell fallback",
         )
+    }
+
+    private fun GamePathDiagnosticReport.withPatchPlanPreview(context: Context): GamePathDiagnosticReport =
+        copy(android332PatchPlanPreview = buildAndroid332PatchPlanPreview(context, this))
+
+    private fun buildAndroid332PatchPlanPreview(
+        context: Context,
+        report: GamePathDiagnosticReport,
+    ): Android332PatchPlanPreview {
+        val manifest = manifestRepository.current()
+        val verifiedPak = downloadClient.verifiedPatchFile(context, manifest)
+        val localSig = verifiedPak?.parentFile?.let { parent ->
+            File(parent, manifest.pakFileName.removeSuffix(".pak") + ".sig")
+        }
+
+        val mountLang = report.files.firstOrNull {
+            it.candidate.label == "MountLang resources Mount folder" && it.exists && it.isFile
+        }
+        val mountPreview = mountLang?.previewLines.orEmpty()
+        val layoutConfirmed = android332ResourcesLayoutConfirmed(report)
+        val mountFormatValid = mountPreview.firstOrNull() == "::Mount::" && mountPreview.any { it == "::Del::" }
+        val currentPatchLine = mountPreview.firstOrNull { it.startsWith("Lang_en/3.3.9/") }
+        val resourcesRoot = mountLang?.candidate?.relativePath?.substringBefore("/Mount/MountLang_en.txt")
+        val proposedPakTarget = resourcesRoot?.let { "$it/Lang_en/3.3.9/${manifest.pakFileName}" }
+        val proposedSigTarget = proposedPakTarget?.removeSuffix(".pak")?.plus(".sig")
+        val localPakSha1 = verifiedPak?.let { sha1(it) }
+        val localSigSha1 = localSig?.takeIf { it.isFile }?.let { sha1(it) }
+        val proposedMountLine = if (resourcesRoot != null) {
+            "Lang_en/3.3.9/${manifest.pakFileName.removeSuffix(".pak")},<mount-order-tbd>," +
+                "${localPakSha1 ?: "<pak-sha1-required>"}," +
+                "${localSigSha1 ?: "<sig-sha1-required>"},,"
+        } else {
+            null
+        }
+
+        val blockers = mutableListOf<String>()
+        if (!layoutConfirmed) {
+            blockers.add("Android 3.3.2 Resources layout is not confirmed.")
+        }
+        if (!mountFormatValid) {
+            blockers.add("MountLang format preview is missing or incomplete.")
+        }
+        if (verifiedPak == null) {
+            blockers.add("Verified local Vietnamese PAK is missing. Run Download & Verify Patch first.")
+        }
+        if (localSig == null || !localSig.isFile) {
+            blockers.add("Matching Vietnamese SIG file is missing from the current patch manifest.")
+        }
+        blockers.add("MountLang mount order/index is not confirmed for third-party PAK.")
+        blockers.add("Install writer remains locked for Android 3.3.2 Resources layout.")
+
+        return Android332PatchPlanPreview(
+            layoutConfirmed = layoutConfirmed,
+            mountLangRelativePath = mountLang?.candidate?.relativePath,
+            mountLangFormatValid = mountFormatValid,
+            currentPatchMountLine = currentPatchLine,
+            proposedPakTargetRelativePath = proposedPakTarget,
+            proposedSigTargetRelativePath = proposedSigTarget,
+            proposedMountLineTemplate = proposedMountLine,
+            verifiedPakAvailable = verifiedPak != null,
+            localPakDisplayName = verifiedPak?.name,
+            localPakSizeBytes = verifiedPak?.length(),
+            localPakSha256 = verifiedPak?.let { manifest.pakSha256 },
+            localPakSha1 = localPakSha1,
+            localSigAvailable = localSig?.isFile == true,
+            localSigSha1 = localSigSha1,
+            blockers = blockers,
+        )
+    }
+
+    private fun android332ResourcesLayoutConfirmed(report: GamePathDiagnosticReport): Boolean {
+        val mountFolderMountLangFound = report.files.any {
+            it.candidate.label == "MountLang resources Mount folder" && it.exists && it.isFile
+        }
+        val langPakFound = report.files.any {
+            it.candidate.label.startsWith("Lang_en") && it.candidate.label.endsWith("PAK") && it.exists && it.isFile
+        }
+        val langSigFound = report.files.any {
+            it.candidate.label.startsWith("Lang_en") && it.candidate.label.endsWith("SIG") && it.exists && it.isFile
+        }
+        val legacyPakFolderFound = report.directories.any {
+            it.candidate.label.startsWith("Legacy Content/Paks") && it.exists && it.isDirectory
+        }
+        return mountFolderMountLangFound && langPakFound && langSigFound && !legacyPakFolderFound
+    }
+
+    private fun sha1(file: File): String {
+        val digest = MessageDigest.getInstance("SHA-1")
+        FileInputStream(file).use { input ->
+            val buffer = ByteArray(1024 * 1024)
+            while (true) {
+                val read = input.read(buffer)
+                if (read == -1) break
+                digest.update(buffer, 0, read)
+            }
+        }
+        return digest.digest().joinToString("") { "%02x".format(it.toInt() and 0xff) }
     }
 
     private fun parseShellFileCandidate(

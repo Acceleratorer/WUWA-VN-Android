@@ -23,11 +23,30 @@ data class GamePathDirectoryResult(
     val error: String? = null,
 )
 
+data class Android332PatchPlanPreview(
+    val layoutConfirmed: Boolean,
+    val mountLangRelativePath: String?,
+    val mountLangFormatValid: Boolean,
+    val currentPatchMountLine: String?,
+    val proposedPakTargetRelativePath: String?,
+    val proposedSigTargetRelativePath: String?,
+    val proposedMountLineTemplate: String?,
+    val verifiedPakAvailable: Boolean,
+    val localPakDisplayName: String?,
+    val localPakSizeBytes: Long?,
+    val localPakSha256: String?,
+    val localPakSha1: String?,
+    val localSigAvailable: Boolean,
+    val localSigSha1: String?,
+    val blockers: List<String>,
+)
+
 data class GamePathDiagnosticReport(
     val files: List<GamePathFileResult>,
     val directories: List<GamePathDirectoryResult>,
     val error: String? = null,
     val source: String = "Shizuku backup service",
+    val android332PatchPlanPreview: Android332PatchPlanPreview? = null,
 )
 
 object GamePathDiagnosticPaths {
@@ -195,6 +214,9 @@ object GamePathDiagnosticRenderer {
             appendLine("Diagnostic error:")
             appendLine(report.error)
             appendLine()
+        } else if (report.android332PatchPlanPreview != null) {
+            appendPatchPlanPreview(report.android332PatchPlanPreview)
+            appendLine()
         }
 
         appendLine("Files:")
@@ -232,6 +254,39 @@ object GamePathDiagnosticRenderer {
         appendLine("Notes:")
         for (note in notes(report)) {
             appendLine("- $note")
+        }
+    }
+
+    private fun StringBuilder.appendPatchPlanPreview(preview: Android332PatchPlanPreview) {
+        appendLine("Android 3.3.2 Patch Plan Preview:")
+        appendLine("Status: PREVIEW ONLY - write support remains locked")
+        appendLine("Layout confirmed: ${preview.layoutConfirmed}")
+        appendLine("MountLang target: ${preview.mountLangRelativePath ?: "unknown"}")
+        appendLine("MountLang format valid: ${preview.mountLangFormatValid}")
+        appendLine("Current Lang_en patch line: ${preview.currentPatchMountLine ?: "not found"}")
+        appendLine("Verified local PAK: ${if (preview.verifiedPakAvailable) "FOUND" else "missing"}")
+        if (preview.localPakDisplayName != null) {
+            appendLine("Local PAK: ${preview.localPakDisplayName}")
+        }
+        if (preview.localPakSizeBytes != null) {
+            appendLine("Local PAK size: ${preview.localPakSizeBytes} bytes")
+        }
+        if (preview.localPakSha256 != null) {
+            appendLine("Local PAK SHA-256: ${preview.localPakSha256}")
+        }
+        if (preview.localPakSha1 != null) {
+            appendLine("Local PAK SHA-1 for MountLang: ${preview.localPakSha1}")
+        }
+        appendLine("Local SIG beside PAK: ${if (preview.localSigAvailable) "FOUND" else "missing"}")
+        if (preview.localSigSha1 != null) {
+            appendLine("Local SIG SHA-1 for MountLang: ${preview.localSigSha1}")
+        }
+        appendLine("Proposed PAK target: ${preview.proposedPakTargetRelativePath ?: "unknown"}")
+        appendLine("Proposed SIG target: ${preview.proposedSigTargetRelativePath ?: "unknown"}")
+        appendLine("Proposed MountLang line template: ${preview.proposedMountLineTemplate ?: "not available"}")
+        appendLine("Preview blockers:")
+        for (blocker in preview.blockers) {
+            appendLine("- $blocker")
         }
     }
 
@@ -287,6 +342,7 @@ object GamePathDiagnosticRenderer {
         if (android332ResourcesLayoutConfirmed(report)) {
             notes.add("Android 3.3.2 Resources layout is confirmed for this device.")
             notes.add("Install writer remains locked for this new layout until MountLang write format is confirmed.")
+            notes.add("Android 3.3.2 Patch Plan Preview is read-only and does not enable Install Vietnamese Patch.")
         }
         if ((resourceMountLangFound || mountFolderMountLangFound) && !legacyMountLangFound) {
             notes.add("Detected MountLang_en.txt under Saved/Resources/3.3.0, not the legacy Config/Android path.")

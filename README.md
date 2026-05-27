@@ -2,7 +2,7 @@
 
 Ứng dụng hỗ trợ cài bản Việt hoá cho Wuthering Waves trên Android.
 
-> Trạng thái hiện tại: bản `v3.3.25` là WUWA Global 3.3 Android 3.3.2 layout confirmation release. Game Path Diagnostic vẫn read-only, xác nhận Resources layout khi thấy `Mount/MountLang_en.txt` cùng Lang_en PAK/SIG và không thấy legacy `Content/Paks`, đồng thời hiển thị SHA-256/preview ngắn của MountLang nếu đọc được. Không đổi write logic, root write vẫn khóa, Shizuku vẫn là backend khuyến nghị, và Max Graphics vẫn khóa.
+> Trạng thái hiện tại: bản `v3.3.26` là WUWA Global 3.3 Android 3.3.2 patch plan preview release. Game Path Diagnostic vẫn read-only, xác nhận Resources layout, hiển thị MountLang SHA/preview, và thêm Android 3.3.2 Patch Plan Preview với proposed PAK/SIG target cùng PAK SHA-256/SHA-1 nếu đã Download & Verify Patch. Không đổi write logic, root write vẫn khóa, Shizuku vẫn là backend khuyến nghị, và Max Graphics vẫn khóa.
 
 ## Tính Năng
 
@@ -47,7 +47,7 @@
 - Root Preview Help giải thích root bằng ngôn ngữ dễ hiểu cho user không rành kỹ thuật
 - Shortcut mở Developer Options, fallback sang Shizuku setup guide nếu ROM không hỗ trợ
 - More Tools gom các flow nâng cao: patch plan, presets, remove/restore, recovery, diagnostics, root preview, và install help
-- Game Path Diagnostic read-only trong More Tools để xác nhận layout WUWA Android 3.3.2, bao gồm `Saved/Resources/3.3.0/Mount/MountLang_en.txt`, Lang_en PAK/SIG, SHA-256/preview ngắn của MountLang, và trạng thái layout confirmed
+- Game Path Diagnostic read-only trong More Tools để xác nhận layout WUWA Android 3.3.2, bao gồm `Saved/Resources/3.3.0/Mount/MountLang_en.txt`, Lang_en PAK/SIG, SHA-256/preview ngắn của MountLang, trạng thái layout confirmed, và Patch Plan Preview read-only
 
 ## Screenshots
 
@@ -70,7 +70,7 @@ Nút **Copy State Snapshot** copy thông tin ngắn gọn để debug issue repo
 
 ```text
 WUWA VN State Snapshot
-App version: 3.3.25 (59)
+App version: 3.3.26 (60)
 Game package: com.kurogame.wutheringwaves.global
 Game version: 3.3.x
 Launcher compatibility: WUWA Global 3.3
@@ -150,7 +150,7 @@ Không cài APK từ mirror lạ, link chat riêng, hoặc file không có SHA-2
 Ví dụ file phát hành hợp lệ:
 
 ```text
-WUWA-VN-v3.3.25-release.apk
+WUWA-VN-v3.3.26-release.apk
 ```
 
 Không phát hành file `app-debug.apk` cho người dùng phổ thông.
@@ -158,7 +158,7 @@ Không phát hành file `app-debug.apk` cho người dùng phổ thông.
 Trước khi phát hành, kiểm tra chữ ký:
 
 ```bash
-apksigner verify --print-certs WUWA-VN-v3.3.25-release.apk
+apksigner verify --print-certs WUWA-VN-v3.3.26-release.apk
 ```
 
 ## Cách Khôi Phục
@@ -261,13 +261,14 @@ Hiện tại app mở GitHub Releases để người dùng tự tải bản mớ
 - v3.3.23: Game Path Diagnostic shell fallback hotfix, đọc path bằng Shizuku shell allowlist nếu user service bind timeout.
 - v3.3.24: Game Path Diagnostic shell process hotfix, sửa lỗi fallback báo `process hasn't exited`.
 - v3.3.25: Android 3.3.2 layout confirmation, report Resources layout confirmed và MountLang SHA/preview read-only.
+- v3.3.26: Android 3.3.2 Patch Plan Preview, report proposed Resources PAK/SIG targets và giữ writer khóa.
 
 ## Roadmap
 
 - v3.4.0: WUWA Global 3.4 compatibility release
 
 Source app hiện đã được migrate sang Kotlin. Từ `v3.3.11`, Gradle là build path chính và vẫn dùng `version.properties` làm source of truth cho app version. Từ `v3.3.12`, GitHub Actions có thể build release APK khi tạo GitHub Release tag mới.
-Từ `v3.3.17`, màn chính runtime dùng Jetpack Compose nhưng vẫn giữ các controller, Shizuku flow, và write logic hiện có. Từ `v3.3.18`, màn chính Compose có Diagnostics Summary và State Snapshot Preview. Từ `v3.3.19`, màn chính ưu tiên user phổ thông với 6 Quick Actions, tool nâng cao nằm trong More Tools, và Root Backend Preview chỉ detect root thủ công chứ không mở root write. Từ `v3.3.25`, More Tools có Game Path Diagnostic read-only xác nhận Android 3.3.2 Resources layout nhưng vẫn chưa mở writer cho layout mới.
+Từ `v3.3.17`, màn chính runtime dùng Jetpack Compose nhưng vẫn giữ các controller, Shizuku flow, và write logic hiện có. Từ `v3.3.18`, màn chính Compose có Diagnostics Summary và State Snapshot Preview. Từ `v3.3.19`, màn chính ưu tiên user phổ thông với 6 Quick Actions, tool nâng cao nằm trong More Tools, và Root Backend Preview chỉ detect root thủ công chứ không mở root write. Từ `v3.3.26`, More Tools có Game Path Diagnostic read-only xác nhận Android 3.3.2 Resources layout và show Patch Plan Preview, nhưng vẫn chưa mở writer cho layout mới.
 
 ## Build From Source
 
@@ -309,7 +310,7 @@ release-verification-report.txt
 Từ `v3.3.14`, release APK được verify bằng script:
 
 ```bash
-python tools/verify-release-apk.py WUWA-VN-v3.3.25-release.apk
+python tools/verify-release-apk.py WUWA-VN-v3.3.26-release.apk
 ```
 
 Script kiểm tra:
@@ -395,7 +396,7 @@ Xem checklist test LTS tại [`docs/WUWA-3.3-LTS-TEST-CHECKLIST.md`](docs/WUWA-3
 - [ ] Open Developer Options works or opens Shizuku setup guide fallback
 - [ ] Home screen shows 6 Quick Actions for non-tech users
 - [ ] More Tools contains advanced actions: presets, remove/restore, recovery, diagnostics, root preview, and install help
-- [ ] Game Path Diagnostic is read-only and reports candidate MountLang/Resources/PAK paths, layout confirmation, and MountLang SHA/preview when available
+- [ ] Game Path Diagnostic is read-only and reports candidate MountLang/Resources/PAK paths, layout confirmation, MountLang SHA/preview, and Android 3.3.2 Patch Plan Preview when available
 - [ ] Backup copy đúng `Engine.ini`, `DeviceProfiles.ini`, `MountLang_en.txt` và ghi metadata
 - [ ] Download verify PAK SHA-256 trước khi install
 - [ ] Install Vietnamese Patch chỉ ghi `WuWaVH_99_P.pak`
@@ -406,7 +407,7 @@ Xem checklist test LTS tại [`docs/WUWA-3.3-LTS-TEST-CHECKLIST.md`](docs/WUWA-3
 - [ ] Restore Original Files chỉ restore backup VERIFIED
 - [ ] Max Graphics vẫn khóa
 - [ ] Manifest không thêm permission mới và `android:debuggable=false`
-- [ ] Root write remains disabled in v3.3.25
+- [ ] Root write remains disabled in v3.3.26
 
 ## Security Checklist
 
