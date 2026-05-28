@@ -43,8 +43,11 @@ class BackupManager {
         content: ByteArray,
     ): BackupFileInfo {
         try {
-            if (!PatchDryRunPlanner.backupRelativePaths().contains(relativePath)) {
+            if (!PatchDryRunPlanner.isAllowedBackupReadTarget(relativePath)) {
                 throw SecurityException("Blocked non-backup target: $relativePath")
+            }
+            if (displayName != PatchDryRunPlanner.backupDisplayName(relativePath)) {
+                throw SecurityException("Blocked mismatched backup file name: $displayName")
             }
             if (displayName.contains("/") || displayName.contains("\\") || displayName.contains("..")) {
                 throw SecurityException("Blocked unsafe backup file name: $displayName")

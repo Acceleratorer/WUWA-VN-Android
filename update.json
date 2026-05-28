@@ -1,16 +1,16 @@
 {
   "manifest_version": 3,
   "app": {
-    "version_name": "3.3.29",
-    "version_code": 63,
+    "version_name": "3.3.30",
+    "version_code": 64,
     "supported_game_version": "3.3",
     "minimum_game_version": "3.3",
-    "apk_url": "https://github.com/Acceleratorer/WUWA-VN-Android/releases/download/v3.3.29/WUWA-VN-v3.3.29-release.apk",
+    "apk_url": "https://github.com/Acceleratorer/WUWA-VN-Android/releases/download/v3.3.30/WUWA-VN-v3.3.30-release.apk",
     "sha256": "PUT_REAL_APK_SHA256_HERE",
     "changelog": [
-      "Add read-only MountLang SHA-1 format probe to Game Path Diagnostic",
-      "Compare official Lang_en 3.3.9 PAK/SIG SHA-1 with MountLang_en.txt",
-      "Show proposed third-party mount order while keeping writer locked",
+      "Add Shizuku shell fallback for Backup Game Configs when backup user service times out",
+      "Allow read-only backup to include Android 3.3.2 Resources MountLang when present",
+      "Clarify whether a backup is trusted for write actions or read-only only",
       "Keep Android 3.3.2 install writer locked pending SIG and MountLang format confirmation",
       "Do not change patch, backup, restore, preset, Shizuku, or root write behavior",
       "No write behavior changes",

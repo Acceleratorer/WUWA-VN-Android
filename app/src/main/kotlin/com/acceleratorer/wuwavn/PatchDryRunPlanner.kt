@@ -31,6 +31,8 @@ class PatchDryRunPlanner(
         private const val ENGINE_INI = "UE4Game/Client/Client/Saved/Config/Android/Engine.ini"
         private const val DEVICE_PROFILES_INI = "UE4Game/Client/Client/Saved/Config/Android/DeviceProfiles.ini"
         private const val MOUNT_LANG = "UE4Game/Client/Client/Saved/Config/Android/MountLang_en.txt"
+        private const val ANDROID_332_MOUNT_LANG =
+            "UE4Game/Client/Client/Saved/Resources/3.3.0/Mount/MountLang_en.txt"
         private const val PATCH_PAK = "UE4Game/Client/Client/Content/Paks/WuWaVH_99_P.pak"
 
         private val BACKUP_RELATIVE_PATHS = listOf(
@@ -38,6 +40,8 @@ class PatchDryRunPlanner(
             DEVICE_PROFILES_INI,
             MOUNT_LANG,
         )
+
+        private val READ_ONLY_BACKUP_RELATIVE_PATHS = BACKUP_RELATIVE_PATHS + ANDROID_332_MOUNT_LANG
 
         private val ALLOWED_TARGETS = setOf(
             ENGINE_INI,
@@ -53,11 +57,20 @@ class PatchDryRunPlanner(
 
         fun backupRelativePaths(): List<String> = BACKUP_RELATIVE_PATHS
 
+        fun backupReadableRelativePaths(): List<String> = READ_ONLY_BACKUP_RELATIVE_PATHS
+
+        fun isAllowedBackupReadTarget(relativePath: String): Boolean {
+            val normalized = relativePath.replace('\\', '/')
+            return !normalized.contains("..") && READ_ONLY_BACKUP_RELATIVE_PATHS.contains(normalized)
+        }
+
         fun engineIniRelativePath(): String = ENGINE_INI
 
         fun deviceProfilesRelativePath(): String = DEVICE_PROFILES_INI
 
         fun mountLangRelativePath(): String = MOUNT_LANG
+
+        fun android332MountLangRelativePath(): String = ANDROID_332_MOUNT_LANG
 
         fun patchPakRelativePath(): String = PATCH_PAK
 
@@ -66,6 +79,13 @@ class PatchDryRunPlanner(
             val slash = normalized.lastIndexOf('/')
             return if (slash >= 0) normalized.substring(slash + 1) else normalized
         }
+
+        fun backupDisplayName(relativePath: String): String =
+            if (relativePath == ANDROID_332_MOUNT_LANG) {
+                "MountLang_en.Resources-3.3.0.txt"
+            } else {
+                displayName(relativePath)
+            }
 
         private fun assertAllowed(relativePath: String) {
             if (!isAllowedTarget(relativePath)) {

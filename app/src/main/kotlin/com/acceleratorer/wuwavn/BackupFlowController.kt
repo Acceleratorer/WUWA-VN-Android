@@ -70,6 +70,9 @@ class BackupFlowController(
         backupDirectory: File,
         result: ShizukuBackupReader.BackupResult,
     ): String = buildString {
+        append("Source: ")
+            .append(result.source)
+            .append("\n\n")
         append("Backed up files:\n")
         for (file in result.backedUpFiles) {
             append("- ")
@@ -80,13 +83,26 @@ class BackupFlowController(
                 .append(file.sha256.take(12))
                 .append("...)\n")
         }
-        if (result.missingFiles.isNotEmpty()) {
-            append("\nMissing files:\n")
-            for (file in result.missingFiles) {
-                append("- ").append(PatchDryRunPlanner.displayName(file)).append('\n')
+        val requiredPaths = PatchDryRunPlanner.backupRelativePaths().toSet()
+        val missingRequired = result.missingFiles.filter { requiredPaths.contains(it) }
+        val missingOptional = result.missingFiles.filterNot { requiredPaths.contains(it) }
+        if (missingRequired.isNotEmpty()) {
+            append("\nMissing required files:\n")
+            for (file in missingRequired) {
+                append("- ").append(PatchDryRunPlanner.backupDisplayName(file)).append('\n')
+            }
+        }
+        if (missingOptional.isNotEmpty()) {
+            append("\nOptional Android 3.3.2 files not found:\n")
+            for (file in missingOptional) {
+                append("- ").append(PatchDryRunPlanner.backupDisplayName(file)).append('\n')
             }
         }
         append("\nBackup folder:\n").append(backupDirectory.absolutePath)
-        append("\n\nThis version can restore verified original config files, install the verified PAK, apply Safe / Default config preset, and remove the PAK with MountLang rollback.")
+        if (result.isTrustedForWriteActions()) {
+            append("\n\nThis backup is trusted for restore, patch install prechecks, config presets, and remove with MountLang rollback.")
+        } else {
+            append("\n\nThis backup is read-only but not trusted for write actions yet. Install, presets, remove, and restore stay locked until the required original config set is verified.")
+        }
     }
 }

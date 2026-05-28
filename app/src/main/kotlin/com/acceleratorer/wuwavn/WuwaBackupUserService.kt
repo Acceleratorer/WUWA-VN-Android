@@ -139,6 +139,7 @@ class WuwaBackupUserService : IWuwaBackupService.Stub() {
             "Android/data/com.kurogame.wutheringwaves.global/files/UE4Game/Client/Client/Saved/Config/Android/Engine.ini",
             "Android/data/com.kurogame.wutheringwaves.global/files/UE4Game/Client/Client/Saved/Config/Android/DeviceProfiles.ini",
             "Android/data/com.kurogame.wutheringwaves.global/files/UE4Game/Client/Client/Saved/Config/Android/MountLang_en.txt",
+            "Android/data/com.kurogame.wutheringwaves.global/files/UE4Game/Client/Client/Saved/Resources/3.3.0/Mount/MountLang_en.txt",
         )
 
         val DIAGNOSTIC_RELATIVE_PATHS =
