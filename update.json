@@ -1,16 +1,16 @@
 {
   "manifest_version": 3,
   "app": {
-    "version_name": "3.3.26",
-    "version_code": 60,
+    "version_name": "3.3.27",
+    "version_code": 61,
     "supported_game_version": "3.3",
     "minimum_game_version": "3.3",
-    "apk_url": "https://github.com/Acceleratorer/WUWA-VN-Android/releases/download/v3.3.26/WUWA-VN-v3.3.26-release.apk",
+    "apk_url": "https://github.com/Acceleratorer/WUWA-VN-Android/releases/download/v3.3.27/WUWA-VN-v3.3.27-release.apk",
     "sha256": "PUT_REAL_APK_SHA256_HERE",
     "changelog": [
-      "Add Android 3.3.2 Patch Plan Preview to Game Path Diagnostic",
-      "Show proposed Resources PAK and SIG targets without writing files",
-      "Show verified local PAK SHA-256 and SHA-1 when available",
+      "Pin Vietnamese PAK download URL to WuwaVH 3.3.6 release",
+      "Refresh Vietnamese PAK SHA-256 after upstream asset update",
+      "Restore Download & Verify Patch compatibility with the pinned PAK",
       "Keep Android 3.3.2 install writer locked pending SIG and MountLang format confirmation",
       "Do not change patch, backup, restore, preset, Shizuku, or root write behavior",
       "No write behavior changes",
@@ -25,8 +25,8 @@
     "version": "3.3"
   },
   "patch": {
-    "version": "wuwa-3.3-vi-2026.05",
-    "pak_url": "https://github.com/CallMeDangDev/WuwaVH/releases/latest/download/WuWaVH_99_P.pak",
-    "sha256": "99202f84db73e771cd68ef1734893ee5f589666654fe7be3dcfff631df199a78"
+    "version": "wuwa-3.3.6-vi-2026.05",
+    "pak_url": "https://github.com/CallMeDangDev/WuwaVH/releases/download/3.3.6/WuWaVH_99_P.pak",
+    "sha256": "146abe4d4d0d17036776ac82ba26c0b4c6b1a4f073b8c84fed91a327d013eb85"
   }
 }
