@@ -118,6 +118,9 @@ class ShizukuGamePathDiagnosticReader(
                 appendLine("if [ -f \"\$p\" ]; then sha=\$(sha256sum \"\$p\" 2>/dev/null | awk '{print \$1}'); if [ -n \"\$sha\" ]; then echo sha256=\$sha; else echo sha256=unavailable; fi; fi")
                 appendLine("if [ -f \"\$p\" ]; then head -n $MAX_PREVIEW_LINES \"\$p\" 2>/dev/null | sed 's/\\r//g' | sed 's/^/preview=/'; fi")
             }
+            if (shouldHashSha1(candidate)) {
+                appendLine("if [ -f \"\$p\" ]; then sha=\$(sha1sum \"\$p\" 2>/dev/null | awk '{print \$1}'); if [ -n \"\$sha\" ]; then echo sha1=\$sha; else echo sha1=unavailable; fi; fi")
+            }
         }
         GamePathDiagnosticPaths.directoryCandidates.forEachIndexed { index, candidate ->
             appendLine("echo __WUWA_DIR__$index")
@@ -226,13 +229,22 @@ class ShizukuGamePathDiagnosticReader(
         val layoutConfirmed = android332ResourcesLayoutConfirmed(report)
         val mountFormatValid = mountPreview.firstOrNull() == "::Mount::" && mountPreview.any { it == "::Del::" }
         val currentPatchLine = mountPreview.firstOrNull { it.startsWith("Lang_en/3.3.9/") }
+        val currentPatchMountLine = parseMountLangLine(currentPatchLine)
+        val officialPatchPak = report.files.fileByLabel("Lang_en 3.3.9 PAK")
+        val officialPatchSig = report.files.fileByLabel("Lang_en 3.3.9 SIG")
+        val officialPakSha1 = officialPatchPak?.sha1
+        val officialSigSha1 = officialPatchSig?.sha1
+        val officialPakMatchesMountLine = matchSha1(officialPakSha1, currentPatchMountLine?.pakSha1)
+        val officialSigMatchesMountLine = matchSha1(officialSigSha1, currentPatchMountLine?.sigSha1)
         val resourcesRoot = mountLang?.candidate?.relativePath?.substringBefore("/Mount/MountLang_en.txt")
         val proposedPakTarget = resourcesRoot?.let { "$it/Lang_en/3.3.9/${manifest.pakFileName}" }
         val proposedSigTarget = proposedPakTarget?.removeSuffix(".pak")?.plus(".sig")
         val localPakSha1 = verifiedPak?.let { sha1(it) }
         val localSigSha1 = localSig?.takeIf { it.isFile }?.let { sha1(it) }
+        val proposedMountOrder = currentPatchMountLine?.mountOrder?.plus(1)
         val proposedMountLine = if (resourcesRoot != null) {
-            "Lang_en/3.3.9/${manifest.pakFileName.removeSuffix(".pak")},<mount-order-tbd>," +
+            "Lang_en/3.3.9/${manifest.pakFileName.removeSuffix(".pak")}," +
+                "${proposedMountOrder ?: "<mount-order-tbd>"}," +
                 "${localPakSha1 ?: "<pak-sha1-required>"}," +
                 "${localSigSha1 ?: "<sig-sha1-required>"},,"
         } else {
@@ -252,7 +264,10 @@ class ShizukuGamePathDiagnosticReader(
         if (localSig == null || !localSig.isFile) {
             blockers.add("Matching Vietnamese SIG file is missing from the current patch manifest.")
         }
-        blockers.add("MountLang mount order/index is not confirmed for third-party PAK.")
+        if (officialPakMatchesMountLine != true || officialSigMatchesMountLine != true) {
+            blockers.add("Official MountLang SHA-1 format is not fully confirmed on this device yet.")
+        }
+        blockers.add("Third-party MountLang mount order/index is not runtime-tested yet.")
         blockers.add("Install writer remains locked for Android 3.3.2 Resources layout.")
 
         return Android332PatchPlanPreview(
@@ -263,6 +278,12 @@ class ShizukuGamePathDiagnosticReader(
             proposedPakTargetRelativePath = proposedPakTarget,
             proposedSigTargetRelativePath = proposedSigTarget,
             proposedMountLineTemplate = proposedMountLine,
+            currentPatchMountOrder = currentPatchMountLine?.mountOrder,
+            proposedMountOrder = proposedMountOrder,
+            officialPakSha1 = officialPakSha1,
+            officialSigSha1 = officialSigSha1,
+            officialPakSha1MatchesMountLine = officialPakMatchesMountLine,
+            officialSigSha1MatchesMountLine = officialSigMatchesMountLine,
             verifiedPakAvailable = verifiedPak != null,
             localPakDisplayName = verifiedPak?.name,
             localPakSizeBytes = verifiedPak?.length(),
@@ -317,10 +338,13 @@ class ShizukuGamePathDiagnosticReader(
         val sha256 = shellValue(lines, "sha256")
             ?.takeIf { SHA_256_REGEX.matches(it) }
             ?.lowercase()
+        val sha1 = shellValue(lines, "sha1")
+            ?.takeIf { SHA_1_REGEX.matches(it) }
+            ?.lowercase()
         val previewLines = lines.filter { it.startsWith("preview=") }
             .map { it.removePrefix("preview=") }
             .take(MAX_PREVIEW_LINES)
-        return GamePathFileResult(candidate, exists, isFile, sizeBytes, sha256 = sha256, previewLines = previewLines)
+        return GamePathFileResult(candidate, exists, isFile, sizeBytes, sha256 = sha256, sha1 = sha1, previewLines = previewLines)
     }
 
     private fun parseShellDirectoryCandidate(
@@ -349,6 +373,36 @@ class ShizukuGamePathDiagnosticReader(
     private fun shouldHashAndPreview(candidate: GamePathCandidate): Boolean =
         candidate.label.startsWith("MountLang")
 
+    private fun shouldHashSha1(candidate: GamePathCandidate): Boolean =
+        candidate.label == "Lang_en 3.3.9 PAK" || candidate.label == "Lang_en 3.3.9 SIG"
+
+    private fun List<GamePathFileResult>.fileByLabel(label: String): GamePathFileResult? =
+        firstOrNull { it.candidate.label == label && it.exists && it.isFile }
+
+    private fun parseMountLangLine(line: String?): MountLangLine? {
+        if (line.isNullOrBlank()) {
+            return null
+        }
+        val parts = line.split(",")
+        if (parts.size < 4) {
+            return null
+        }
+        val mountOrder = parts[1].trim().toIntOrNull() ?: return null
+        val pakSha1 = parts[2].trim().takeIf { SHA_1_REGEX.matches(it) }?.lowercase()
+        val sigSha1 = parts[3].trim().takeIf { SHA_1_REGEX.matches(it) }?.lowercase()
+        if (pakSha1 == null || sigSha1 == null) {
+            return null
+        }
+        return MountLangLine(mountOrder, pakSha1, sigSha1)
+    }
+
+    private fun matchSha1(actual: String?, expected: String?): Boolean? {
+        if (actual == null || expected == null) {
+            return null
+        }
+        return actual.equals(expected, ignoreCase = true)
+    }
+
     private fun shellQuote(value: String): String = "'" + value.replace("'", "'\"'\"'") + "'"
 
     private fun readFileCandidate(
@@ -360,7 +414,14 @@ class ShizukuGamePathDiagnosticReader(
             val exists = service.pathExists(absolutePath)
             val isFile = service.isFile(absolutePath)
             val sizeBytes = if (isFile) service.length(absolutePath) else null
-            GamePathFileResult(candidate, exists, isFile, sizeBytes)
+            val sha1 = if (isFile && shouldHashSha1(candidate)) {
+                service.sha1(absolutePath)
+                    .takeIf { SHA_1_REGEX.matches(it) }
+                    ?.lowercase()
+            } else {
+                null
+            }
+            GamePathFileResult(candidate, exists, isFile, sizeBytes, sha1 = sha1)
         } catch (exception: Exception) {
             GamePathFileResult(candidate, exists = false, isFile = false, sizeBytes = null, error = exception.message)
         }
@@ -404,5 +465,12 @@ class ShizukuGamePathDiagnosticReader(
         const val MAX_PREVIEW_LINES = 8
         const val RETRY_DELAY_MS = 750L
         val SHA_256_REGEX = Regex("^[0-9a-fA-F]{64}$")
+        val SHA_1_REGEX = Regex("^[0-9a-fA-F]{40}$")
     }
+
+    private data class MountLangLine(
+        val mountOrder: Int,
+        val pakSha1: String,
+        val sigSha1: String,
+    )
 }

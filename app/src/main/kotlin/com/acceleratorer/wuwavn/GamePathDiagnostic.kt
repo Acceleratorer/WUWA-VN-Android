@@ -12,6 +12,7 @@ data class GamePathFileResult(
     val sizeBytes: Long?,
     val error: String? = null,
     val sha256: String? = null,
+    val sha1: String? = null,
     val previewLines: List<String> = emptyList(),
 )
 
@@ -31,6 +32,12 @@ data class Android332PatchPlanPreview(
     val proposedPakTargetRelativePath: String?,
     val proposedSigTargetRelativePath: String?,
     val proposedMountLineTemplate: String?,
+    val currentPatchMountOrder: Int?,
+    val proposedMountOrder: Int?,
+    val officialPakSha1: String?,
+    val officialSigSha1: String?,
+    val officialPakSha1MatchesMountLine: Boolean?,
+    val officialSigSha1MatchesMountLine: Boolean?,
     val verifiedPakAvailable: Boolean,
     val localPakDisplayName: String?,
     val localPakSizeBytes: Long?,
@@ -226,6 +233,9 @@ object GamePathDiagnosticRenderer {
             if (file.sha256 != null) {
                 appendLine("  SHA-256: ${file.sha256}")
             }
+            if (file.sha1 != null) {
+                appendLine("  SHA-1: ${file.sha1}")
+            }
             if (file.previewLines.isNotEmpty()) {
                 appendLine("  Preview:")
                 for (previewLine in file.previewLines) {
@@ -264,6 +274,11 @@ object GamePathDiagnosticRenderer {
         appendLine("MountLang target: ${preview.mountLangRelativePath ?: "unknown"}")
         appendLine("MountLang format valid: ${preview.mountLangFormatValid}")
         appendLine("Current Lang_en patch line: ${preview.currentPatchMountLine ?: "not found"}")
+        appendLine("Current Lang_en patch order: ${preview.currentPatchMountOrder ?: "unknown"}")
+        appendLine("Official Lang_en 3.3.9 PAK SHA-1: ${preview.officialPakSha1 ?: "unknown"}")
+        appendLine("Official Lang_en 3.3.9 SIG SHA-1: ${preview.officialSigSha1 ?: "unknown"}")
+        appendLine("Official PAK SHA-1 matches MountLang: ${matchLabel(preview.officialPakSha1MatchesMountLine)}")
+        appendLine("Official SIG SHA-1 matches MountLang: ${matchLabel(preview.officialSigSha1MatchesMountLine)}")
         appendLine("Verified local PAK: ${if (preview.verifiedPakAvailable) "FOUND" else "missing"}")
         if (preview.localPakDisplayName != null) {
             appendLine("Local PAK: ${preview.localPakDisplayName}")
@@ -281,6 +296,7 @@ object GamePathDiagnosticRenderer {
         if (preview.localSigSha1 != null) {
             appendLine("Local SIG SHA-1 for MountLang: ${preview.localSigSha1}")
         }
+        appendLine("Proposed mount order: ${preview.proposedMountOrder ?: "unknown"}")
         appendLine("Proposed PAK target: ${preview.proposedPakTargetRelativePath ?: "unknown"}")
         appendLine("Proposed SIG target: ${preview.proposedSigTargetRelativePath ?: "unknown"}")
         appendLine("Proposed MountLang line template: ${preview.proposedMountLineTemplate ?: "not available"}")
@@ -356,8 +372,21 @@ object GamePathDiagnosticRenderer {
         if (!legacyPakFolderFound) {
             notes.add("Legacy Content/Paks was not found. Do not force patch install until the real PAK target is confirmed.")
         }
+        val preview = report.android332PatchPlanPreview
+        if (preview?.officialPakSha1MatchesMountLine == true && preview.officialSigSha1MatchesMountLine == true) {
+            notes.add("MountLang analysis confirms the official 3.3.9 PAK/SIG line uses SHA-1 values from the actual files.")
+        }
+        if (preview?.verifiedPakAvailable == true && !preview.localSigAvailable) {
+            notes.add("Verified Vietnamese PAK is available, but a matching Vietnamese SIG is still missing.")
+        }
         notes.add("Send this report before changing write paths for Android 3.3.2 layouts.")
         return notes
+    }
+
+    private fun matchLabel(value: Boolean?): String = when (value) {
+        true -> "YES"
+        false -> "NO"
+        null -> "unknown"
     }
 
     private fun android332ResourcesLayoutConfirmed(report: GamePathDiagnosticReport): Boolean {

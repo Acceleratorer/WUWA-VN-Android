@@ -1,16 +1,16 @@
 {
   "manifest_version": 3,
   "app": {
-    "version_name": "3.3.28",
-    "version_code": 62,
+    "version_name": "3.3.29",
+    "version_code": 63,
     "supported_game_version": "3.3",
     "minimum_game_version": "3.3",
-    "apk_url": "https://github.com/Acceleratorer/WUWA-VN-Android/releases/download/v3.3.28/WUWA-VN-v3.3.28-release.apk",
+    "apk_url": "https://github.com/Acceleratorer/WUWA-VN-Android/releases/download/v3.3.29/WUWA-VN-v3.3.29-release.apk",
     "sha256": "PUT_REAL_APK_SHA256_HERE",
     "changelog": [
-      "Clarify Patch verified guidance for Android 3.3.2 testers",
-      "Tell users to run Game Path Diagnostic when Install Vietnamese Patch stays disabled",
-      "Keep Vietnamese PAK download pinned to WuwaVH 3.3.6",
+      "Add read-only MountLang SHA-1 format probe to Game Path Diagnostic",
+      "Compare official Lang_en 3.3.9 PAK/SIG SHA-1 with MountLang_en.txt",
+      "Show proposed third-party mount order while keeping writer locked",
       "Keep Android 3.3.2 install writer locked pending SIG and MountLang format confirmation",
       "Do not change patch, backup, restore, preset, Shizuku, or root write behavior",
       "No write behavior changes",

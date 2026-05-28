@@ -8,4 +8,5 @@ interface IWuwaBackupService {
     boolean isFile(String absolutePath);
     boolean isDirectory(String absolutePath);
     String[] listChildNames(String absolutePath, int maxEntries);
+    String sha1(String absolutePath);
 }

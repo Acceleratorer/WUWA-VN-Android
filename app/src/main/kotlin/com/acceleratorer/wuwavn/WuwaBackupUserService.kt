@@ -5,6 +5,7 @@ import android.os.RemoteException
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileInputStream
+import java.security.MessageDigest
 
 class WuwaBackupUserService : IWuwaBackupService.Stub() {
     override fun exists(absolutePath: String?): Boolean = validateBackupReadPath(absolutePath).isFile
@@ -64,6 +65,27 @@ class WuwaBackupUserService : IWuwaBackupService.Stub() {
             ?.take(maxEntries)
             ?.toTypedArray()
             ?: emptyArray()
+    }
+
+    override fun sha1(absolutePath: String?): String {
+        val file = validateDiagnosticPath(absolutePath)
+        if (!file.isFile) {
+            throw RemoteException("File does not exist.")
+        }
+        return try {
+            val digest = MessageDigest.getInstance("SHA-1")
+            FileInputStream(file).use { input ->
+                val buffer = ByteArray(1024 * 1024)
+                while (true) {
+                    val read = input.read(buffer)
+                    if (read == -1) break
+                    digest.update(buffer, 0, read)
+                }
+            }
+            digest.digest().joinToString("") { "%02x".format(it.toInt() and 0xff) }
+        } catch (exception: Exception) {
+            throw RemoteException("SHA-1 failed: ${exception.message}")
+        }
     }
 
     private fun validateBackupReadPath(absolutePath: String?): File =
