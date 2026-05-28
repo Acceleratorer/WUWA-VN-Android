@@ -865,8 +865,9 @@ class MainActivity : ComponentActivity() {
                 "Original state detected.\n\nRecommended:\n" +
                     "1. Run Backup Game Configs.\n" +
                     "2. Download & Verify Patch.\n" +
-                    "3. Install Vietnamese Patch.\n" +
-                    "4. Apply Safe / Balanced / Performance only after state becomes PATCHED."
+                    "3. Install Vietnamese Patch only if the button is enabled.\n" +
+                    "4. If install stays disabled, open More Tools > Game Path Diagnostic and send the report.\n" +
+                    "5. Apply Safe / Balanced / Performance only after state becomes PATCHED."
             PatchInstallState.PATCHED ->
                 "Patched state detected.\n\nAvailable:\n" +
                     "1. Apply Safe / Default.\n" +

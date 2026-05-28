@@ -69,7 +69,7 @@ class PatchPreparationController(
                 activity.runOnUiThread {
                     dialogs.showMessage(
                         "Patch verified",
-                        "Patch was downloaded and verified successfully.\n\nUse Backup Game Configs, then Install Vietnamese Patch. PAK install writes only WuWaVH_99_P.pak. Config presets are handled separately.",
+                        "Patch was downloaded and verified successfully.\n\nNext:\n1. Run Backup Game Configs.\n2. If Install Vietnamese Patch is enabled, you can install.\n3. If it stays disabled, open More Tools > Game Path Diagnostic and send the report.\n\nAndroid 3.3.2 install remains locked until SIG and MountLang order are confirmed.",
                     )
                 }
             } catch (exception: Exception) {
