@@ -1,18 +1,18 @@
 {
   "manifest_version": 3,
   "app": {
-    "version_name": "3.3.30",
-    "version_code": 64,
+    "version_name": "3.3.31",
+    "version_code": 65,
     "supported_game_version": "3.3",
     "minimum_game_version": "3.3",
-    "apk_url": "https://github.com/Acceleratorer/WUWA-VN-Android/releases/download/v3.3.30/WUWA-VN-v3.3.30-release.apk",
+    "apk_url": "https://github.com/Acceleratorer/WUWA-VN-Android/releases/download/v3.3.31/WUWA-VN-v3.3.31-release.apk",
     "sha256": "PUT_REAL_APK_SHA256_HERE",
     "changelog": [
-      "Add Shizuku shell fallback for Backup Game Configs when backup user service times out",
-      "Allow read-only backup to include Android 3.3.2 Resources MountLang when present",
-      "Clarify whether a backup is trusted for write actions or read-only only",
-      "Keep Android 3.3.2 install writer locked pending SIG and MountLang format confirmation",
-      "Do not change patch, backup, restore, preset, Shizuku, or root write behavior",
+      "Polish Backup Game Configs summary for Android 3.3.2 Resources layout",
+      "Show Resources MountLang backup as OK when the legacy MountLang path is missing as expected",
+      "Clarify that Android 3.3.2 Resources backup is diagnostic evidence, not write unlock",
+      "Keep Android 3.3.2 install writer locked pending SIG and install format confirmation",
+      "Do not change patch, backup, restore, preset, Shizuku, root, or UI behavior",
       "No write behavior changes",
       "Keep Max Graphics locked"
     ],

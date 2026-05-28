@@ -84,7 +84,15 @@ class BackupFlowController(
                 .append("...)\n")
         }
         val requiredPaths = PatchDryRunPlanner.backupRelativePaths().toSet()
-        val missingRequired = result.missingFiles.filter { requiredPaths.contains(it) }
+        val legacyMountLangPath = PatchDryRunPlanner.mountLangRelativePath()
+        val android332MountLangPath = PatchDryRunPlanner.android332MountLangRelativePath()
+        val backedUpPaths = result.backedUpFiles.map { it.relativePath }.toSet()
+        val hasAndroid332ResourcesBackup = backedUpPaths.contains(android332MountLangPath)
+        val missingLegacyMountLangWithResourcesBackup =
+            result.missingFiles.contains(legacyMountLangPath) && hasAndroid332ResourcesBackup
+        val missingRequired = result.missingFiles
+            .filter { requiredPaths.contains(it) }
+            .filterNot { it == legacyMountLangPath && missingLegacyMountLangWithResourcesBackup }
         val missingOptional = result.missingFiles.filterNot { requiredPaths.contains(it) }
         if (missingRequired.isNotEmpty()) {
             append("\nMissing required files:\n")
@@ -92,8 +100,13 @@ class BackupFlowController(
                 append("- ").append(PatchDryRunPlanner.backupDisplayName(file)).append('\n')
             }
         }
+        if (missingLegacyMountLangWithResourcesBackup) {
+            append("\nAndroid 3.3.2 Resources backup:\n")
+            append("- MountLang_en.Resources-3.3.0.txt: OK\n")
+            append("- Legacy MountLang_en.txt path: missing as expected for this layout\n")
+        }
         if (missingOptional.isNotEmpty()) {
-            append("\nOptional Android 3.3.2 files not found:\n")
+            append("\nAndroid 3.3.2 Resources files not found:\n")
             for (file in missingOptional) {
                 append("- ").append(PatchDryRunPlanner.backupDisplayName(file)).append('\n')
             }
@@ -101,6 +114,8 @@ class BackupFlowController(
         append("\nBackup folder:\n").append(backupDirectory.absolutePath)
         if (result.isTrustedForWriteActions()) {
             append("\n\nThis backup is trusted for restore, patch install prechecks, config presets, and remove with MountLang rollback.")
+        } else if (hasAndroid332ResourcesBackup) {
+            append("\n\nThis backup captured the Android 3.3.2 Resources layout for diagnostics and recovery evidence. Write actions remain locked until the Android 3.3.2 install format is confirmed.")
         } else {
             append("\n\nThis backup is read-only but not trusted for write actions yet. Install, presets, remove, and restore stay locked until the required original config set is verified.")
         }
