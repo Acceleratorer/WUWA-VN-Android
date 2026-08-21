@@ -5,7 +5,6 @@ import android.content.Context
 class InstalledStateDetector(
     private val stateReader: ShizukuInstalledStateReader,
     private val trustedBackupFinder: TrustedBackupFinder,
-    private val configStateDetector: ConfigStateDetector,
 ) {
     fun detect(
         context: Context,
@@ -34,26 +33,31 @@ class InstalledStateDetector(
         val diagnostics = mutableListOf<String>()
         diagnostics.addAll(readResult.diagnostics)
 
-        val pakExists = readResult.pakExists
-        val mountLang = readResult.mountLang
+        val snapshot = readResult.snapshot
+        val pakExists = snapshot?.pakExists
+        val mountLang = snapshot?.mountLangContent
         val mountLangExists = mountLang != null
-        val mountLangPointsToPak = mountLangPointsToVietnamesePak(mountLang)
-        val patchState = if (pakExists == null) {
+        val mountLangPointsToPak = snapshot?.patchRegistered == true
+        val patchState = if (snapshot == null) {
             PatchInstallState.UNKNOWN
         } else {
             resolvePatchState(
-                pakExists = pakExists,
+                pakExists = snapshot.pakExists,
+                sigExists = snapshot.sigExists,
                 mountLangExists = mountLangExists,
                 mountLangPointsToPak = mountLangPointsToPak,
+                mountLangValid = mountLang?.let(WuWa36Layout::isValidMountLang) == true,
             )
         }
-        val configState = configStateDetector.detect(
-            engineIni = readResult.engineIni,
-            deviceProfilesIni = readResult.deviceProfilesIni,
-            mountLang = mountLang,
+        val configState = ConfigStateDetector().detect(
+            readResult.engineIni,
+            readResult.deviceProfilesIni,
         )
 
+        diagnostics.add("WUWA 3.6 resource version: ${snapshot?.resolvedResourceVersion ?: "unknown"}")
+        diagnostics.add("WUWA 3.6 language version: ${snapshot?.resolvedLanguageVersion ?: "unknown"}")
         diagnostics.add("PAK exists: ${pakExists ?: "unknown"}")
+        diagnostics.add("SIG exists: ${snapshot?.sigExists ?: "unknown"}")
         diagnostics.add("MountLang exists: $mountLangExists")
         diagnostics.add("MountLang points to PAK: $mountLangPointsToPak")
         diagnostics.add("Engine.ini readable: ${readResult.engineIni != null}")
@@ -99,27 +103,15 @@ class InstalledStateDetector(
     companion object {
         fun resolvePatchState(
             pakExists: Boolean,
+            sigExists: Boolean,
             mountLangExists: Boolean,
             mountLangPointsToPak: Boolean,
+            mountLangValid: Boolean = true,
         ): PatchInstallState = when {
-            pakExists && mountLangPointsToPak -> PatchInstallState.PATCHED
-            !pakExists && mountLangExists && !mountLangPointsToPak -> PatchInstallState.ORIGINAL
-            !pakExists && !mountLangExists -> PatchInstallState.PARTIAL
-            pakExists && !mountLangPointsToPak -> PatchInstallState.PARTIAL
-            !pakExists && mountLangPointsToPak -> PatchInstallState.PARTIAL
+            pakExists && sigExists && mountLangPointsToPak -> PatchInstallState.PATCHED
+            !pakExists && !sigExists && mountLangExists && mountLangValid && !mountLangPointsToPak -> PatchInstallState.ORIGINAL
+            !pakExists && !sigExists && !mountLangExists -> PatchInstallState.PARTIAL
             else -> PatchInstallState.UNKNOWN
-        }
-
-        fun mountLangPointsToVietnamesePak(content: String?): Boolean {
-            if (content.isNullOrBlank()) {
-                return false
-            }
-            return content
-                .replace('\\', '/')
-                .lines()
-                .map { it.trim() }
-                .filter { it.isNotEmpty() && !it.startsWith("#") && !it.startsWith(";") }
-                .any { line -> line.contains("WuWaVH_99_P.pak", ignoreCase = true) }
         }
     }
 }

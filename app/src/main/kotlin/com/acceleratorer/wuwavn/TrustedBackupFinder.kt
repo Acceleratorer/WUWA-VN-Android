@@ -5,7 +5,10 @@ import android.content.Context
 class TrustedBackupFinder(
     private val restoreDryRunPlanner: RestoreDryRunPlanner,
 ) {
-    fun find(context: Context): RestoreDryRun? {
+    fun find(
+        context: Context,
+        predicate: (RestoreDryRun) -> Boolean = { true },
+    ): RestoreDryRun? {
         for (session in restoreDryRunPlanner.listBackupSessions(context)) {
             val dryRun = try {
                 restoreDryRunPlanner.plan(session)
@@ -13,7 +16,7 @@ class TrustedBackupFinder(
                 null
             } ?: continue
 
-            if (TrustedBackupPolicy.isTrustedBackup(dryRun)) {
+            if (TrustedBackupPolicy.isTrustedBackup(dryRun) && predicate(dryRun)) {
                 return dryRun
             }
         }

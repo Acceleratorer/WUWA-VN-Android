@@ -39,10 +39,10 @@ object HomeActionStateResolver {
             PatchInstallState.ORIGINAL -> HomeActionState(
                 installPatchEnabled = installedState.hasTrustedBackup,
                 removePatchEnabled = false,
-                applySafeEnabled = installedState.hasTrustedBackup,
+                applySafeEnabled = installedState.hasTrustedBackup && presetWriteEnabled(ConfigPresetId.SAFE_DEFAULT),
                 applyBalancedEnabled = false,
                 applyPerformanceEnabled = false,
-                restoreEnabled = installedState.hasTrustedBackup,
+                restoreEnabled = installedState.hasTrustedBackup && Wuwa36SafetyPolicy.RESTORE_WRITE_ENABLED,
                 backupEnabled = true,
                 downloadPatchEnabled = true,
                 primaryHint = if (installedState.hasTrustedBackup) {
@@ -53,16 +53,16 @@ object HomeActionStateResolver {
             )
 
             PatchInstallState.PATCHED -> HomeActionState(
-                installPatchEnabled = false,
+                installPatchEnabled = installedState.hasTrustedBackup,
                 removePatchEnabled = installedState.hasTrustedBackup,
-                applySafeEnabled = installedState.hasTrustedBackup,
-                applyBalancedEnabled = installedState.hasTrustedBackup,
-                applyPerformanceEnabled = installedState.hasTrustedBackup,
-                restoreEnabled = installedState.hasTrustedBackup,
+                applySafeEnabled = installedState.hasTrustedBackup && presetWriteEnabled(ConfigPresetId.SAFE_DEFAULT),
+                applyBalancedEnabled = installedState.hasTrustedBackup && presetWriteEnabled(ConfigPresetId.BALANCED),
+                applyPerformanceEnabled = installedState.hasTrustedBackup && presetWriteEnabled(ConfigPresetId.PERFORMANCE),
+                restoreEnabled = installedState.hasTrustedBackup && Wuwa36SafetyPolicy.RESTORE_WRITE_ENABLED,
                 backupEnabled = true,
                 downloadPatchEnabled = true,
                 primaryHint = if (installedState.hasTrustedBackup) {
-                    "Vietnamese patch appears installed. Safe, Balanced, Performance, Remove, or Restore is available."
+                    "Vietnamese patch appears installed. Reinstall/update or Remove is available; config and general restore writes are locked for WUWA 3.6."
                 } else {
                     "Vietnamese patch appears installed. Run Backup Game Configs before write actions."
                 },
@@ -74,7 +74,7 @@ object HomeActionStateResolver {
                 applySafeEnabled = false,
                 applyBalancedEnabled = false,
                 applyPerformanceEnabled = false,
-                restoreEnabled = installedState.hasTrustedBackup,
+                restoreEnabled = installedState.hasTrustedBackup && Wuwa36SafetyPolicy.RESTORE_WRITE_ENABLED,
                 backupEnabled = true,
                 downloadPatchEnabled = true,
                 primaryHint = if (installedState.hasTrustedBackup) {
@@ -97,4 +97,7 @@ object HomeActionStateResolver {
             )
         }
     }
+
+    private fun presetWriteEnabled(id: ConfigPresetId): Boolean =
+        ConfigPresetAvailabilityPolicy.availability(id) == PresetAvailability.WRITE_ENABLED
 }

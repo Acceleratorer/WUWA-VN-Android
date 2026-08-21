@@ -131,5 +131,6 @@ dependencies {
     implementation("dev.rikka.shizuku:provider:13.1.5") {
         exclude(group = "androidx.annotation", module = "annotation")
     }
+    testImplementation("junit:junit:4.13.2")
     debugImplementation("androidx.compose.ui:ui-tooling")
 }

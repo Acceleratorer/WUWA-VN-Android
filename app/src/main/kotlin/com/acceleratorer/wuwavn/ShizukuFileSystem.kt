@@ -1,7 +1,8 @@
 package com.acceleratorer.wuwavn
 
 class ShizukuFileSystem {
-    fun isRestoreWriteEnabled(state: ShizukuState): Boolean = state == ShizukuState.READY
+    fun isRestoreWriteEnabled(state: ShizukuState): Boolean =
+        state == ShizukuState.READY && Wuwa36SafetyPolicy.RESTORE_WRITE_ENABLED
 
     fun patchWriteStatus(state: ShizukuState): String =
         if (state == ShizukuState.READY) {
@@ -12,7 +13,7 @@ class ShizukuFileSystem {
 
     fun configPresetWriteStatus(state: ShizukuState): String =
         if (state == ShizukuState.READY) {
-            "Safe/Balanced gated"
+            "locked for WUWA 3.6"
         } else {
             "locked"
         }
@@ -21,6 +22,6 @@ class ShizukuFileSystem {
         if (state != ShizukuState.READY) {
             return "Shizuku is not ready yet."
         }
-        return "Patch writing is available only through the PAK-only verified install flow. Config preset writing is available only through the Safe / Default and Balanced verified flows."
+        return "Patch writing is available only through the verified WUWA 3.6 PAK + SIG + MountLang transaction. Config preset and general restore writes are locked in this release."
     }
 }

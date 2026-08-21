@@ -13,7 +13,6 @@ class PatchPreparationController(
     private val patchWritePreconditionChecker: PatchWritePreconditionChecker,
     private val removePatchPreconditionChecker: RemovePatchPreconditionChecker,
     private val patchWriter: ShizukuPatchWriter,
-    private val restoreWriter: ShizukuRestoreWriter,
     private val gamePackageDetector: GamePackageDetector,
     private val shizukuStateChecker: ShizukuStateChecker,
     private val dialogs: DialogFactory,
@@ -69,7 +68,7 @@ class PatchPreparationController(
                 activity.runOnUiThread {
                     dialogs.showMessage(
                         "Patch verified",
-                        "Patch was downloaded and verified successfully.\n\nNext:\n1. Run Backup Game Configs.\n2. If Install Vietnamese Patch is enabled, you can install.\n3. If it stays disabled, open More Tools > Game Path Diagnostic and send the report.\n\nAndroid 3.3.2 install remains locked until SIG and MountLang order are confirmed.",
+                        "Patch was downloaded and verified successfully.\n\nNext:\n1. Run Backup Game Configs.\n2. If Install Vietnamese Patch is enabled, you can install.\n3. If it stays disabled, open More Tools > Game Path Diagnostic and send the report.\n\nWUWA 3.6 install requires a resolved Resources layout and verified SIG source.",
                     )
                 }
             } catch (exception: Exception) {
@@ -187,7 +186,7 @@ class PatchPreparationController(
     private fun showFinalRemoveConfirmation(plan: RemovePatchPlan) {
         dialogs.showConfirmation(
             title = "Final remove confirmation",
-            message = "This will restore MountLang_en.txt from a trusted VERIFIED backup, then delete only this allowlisted PAK:\n\n" +
+            message = "This will restore the WUWA 3.6 Resources MountLang from a trusted VERIFIED backup, then delete only the allowlisted PAK and SIG:\n\n" +
                 "- ${plan.targetDisplayName}\n\n" +
                 "Engine.ini and DeviceProfiles.ini will not be changed by this remove flow. Continue only if the backup and target look correct.",
             positiveLabel = "Remove Patch Now",
@@ -212,7 +211,11 @@ class PatchPreparationController(
             return
         }
         if (plan.trustedBackupDryRun.sessionDirectory != confirmedPlan.trustedBackupDryRun.sessionDirectory ||
-            plan.mountLangFile.expectedSha256 != confirmedPlan.mountLangFile.expectedSha256
+            plan.mountLangFile.expectedSha256 != confirmedPlan.mountLangFile.expectedSha256 ||
+            plan.targetRelativePath != confirmedPlan.targetRelativePath ||
+            plan.resourceVersion != confirmedPlan.resourceVersion ||
+            plan.langVersion != confirmedPlan.langVersion ||
+            plan.mountLangSha256 != confirmedPlan.mountLangSha256
         ) {
             dialogs.showMessage("Patch removal blocked", "Trusted backup changed after dry-run. Reopen Remove Vietnamese Patch and confirm again.")
             logger.add("Patch remove: blocked - trusted backup changed after dry-run")
@@ -224,17 +227,10 @@ class PatchPreparationController(
 
         Thread {
             try {
-                val mountLangResult = restoreWriter.restoreConfigFile(
-                    activity,
-                    plan.trustedBackupDryRun,
-                    MOUNT_LANG_DISPLAY_NAME,
-                    logger,
-                )
-                logger.add("Patch remove: MountLang restored")
                 val removeResult = patchWriter.removePatchPak(activity, plan, logger)
                 logger.add("Patch remove: success")
                 activity.runOnUiThread {
-                    dialogs.showMessage("Patch removed", removePatchResultSummary(removeResult, mountLangResult))
+                    dialogs.showMessage("Patch removed", removePatchResultSummary(removeResult))
                 }
             } catch (exception: Exception) {
                 logger.add("Patch remove failed: ${exception.message}")
@@ -270,7 +266,7 @@ class PatchPreparationController(
                 .append("\nVerified config files: ")
                 .append(plan.trustedBackup.verifiedFiles)
                 .append("/")
-                .append(PatchDryRunPlanner.backupRelativePaths().size)
+                .append(TrustedBackupPolicy.REQUIRED_FILE_COUNT)
                 .append("\n\nTarget:\n")
                 .append(plan.targetRelativePath)
                 .append("\n\nAfter write:\n")
@@ -299,15 +295,15 @@ class PatchPreparationController(
     private fun removePatchDryRunSummary(precondition: RemovePatchPrecondition): String = buildString {
         val plan = precondition.plan
         append("Remove Vietnamese Patch plan:\n")
-            .append("PAK-only removal with MountLang rollback\n\n")
+            .append("WUWA 3.6 PAK + SIG removal with Resources MountLang rollback\n\n")
             .append("File to remove:\n")
-            .append("- WuWaVH_99_P.pak\n\n")
+            .append("- WuWaVH_99_P.pak\n- WuWaVH_99_P.sig\n\n")
             .append("Target:\n")
-            .append(PatchDryRunPlanner.patchPakRelativePath())
+            .append(plan?.targetRelativePath ?: "resolved after WUWA 3.6 preflight")
             .append("\n\nSafety rules:\n")
-            .append("- Restore MountLang_en.txt from a trusted VERIFIED backup first\n")
-            .append("- Delete only this exact allowlisted PAK target\n")
-            .append("- Verify WuWaVH_99_P.pak no longer exists after delete\n")
+            .append("- Restore the resolved WUWA 3.6 Resources MountLang from a trusted VERIFIED backup\n")
+            .append("- Delete only the resolved allowlisted PAK + SIG targets\n")
+            .append("- Verify both patch files no longer exist after delete\n")
             .append("- Do not modify Engine.ini or DeviceProfiles.ini\n")
 
         if (plan != null) {
@@ -315,12 +311,12 @@ class PatchPreparationController(
                 .append(plan.trustedBackupDryRun.sessionDirectory.absolutePath)
                 .append("\nCreated at: ")
                 .append(plan.trustedBackupDryRun.createdAt)
-                .append("\nMountLang_en.txt: ")
+                .append("\nResources MountLang: ")
                 .append(plan.mountLangFile.status.label)
                 .append("\nSHA-256: ")
                 .append(plan.mountLangFile.expectedSha256.orEmpty())
                 .append("\n\nAfter write:\n")
-                .append("The app will verify MountLang_en.txt after restore and verify the PAK target is deleted.")
+                .append("The app will verify Resources MountLang and verify both patch files are deleted.")
         } else {
             append("\nBlocked:\n")
             for (failure in precondition.failures) {
@@ -331,7 +327,6 @@ class PatchPreparationController(
 
     private fun removePatchResultSummary(
         removeResult: ShizukuPatchWriter.PatchRemoveResult,
-        mountLangResult: ShizukuRestoreWriter.RestoreWriteInfo,
     ): String = buildString {
         append("Removed patch target:\n")
             .append(removeResult.targetDisplayName)
@@ -341,12 +336,8 @@ class PatchPreparationController(
             .append(removeResult.existedBefore)
             .append("\nDelete performed:\n")
             .append(removeResult.deleted)
-            .append("\n\nMountLang_en.txt restored from trusted backup:\n")
-            .append(mountLangResult.sha256)
-            .append("\n\nThe app verified WuWaVH_99_P.pak no longer exists after removal.")
+            .append("\n\nWUWA 3.6 Resources MountLang restored from trusted backup in the same transaction.")
+            .append("\n\nThe app verified the WUWA 3.6 PAK target no longer exists after removal.")
     }
 
-    private companion object {
-        const val MOUNT_LANG_DISPLAY_NAME = "MountLang_en.txt"
-    }
 }

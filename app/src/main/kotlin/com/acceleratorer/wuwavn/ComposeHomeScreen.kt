@@ -250,7 +250,7 @@ private fun WuwaPatchedPreview() {
         ComposeHomeScreen(
             uiState = ComposeHomeUiState(
                 statusText = "Game package: com.kurogame.wutheringwaves.global\n" +
-                    "Game version: 3.3.1\n" +
+                    "Game version: 3.6.0\n" +
                     "Shizuku: Ready\n" +
                     "Patch state: PATCHED\n" +
                     "Config state: PERFORMANCE",
@@ -260,31 +260,31 @@ private fun WuwaPatchedPreview() {
                     "Trusted backup: OK\n" +
                     "Patch state: PATCHED\n" +
                     "Ready to install patch: NO\n" +
-                    "Ready to apply presets: YES",
+                    "Ready to apply presets: NO (locked in WUWA 3.6)",
                 rootPreviewText = RootPreviewRenderer.render(RootAccessState.AVAILABLE),
-                diagnosticsSummaryText = "App version: 3.3.22 (56)\n" +
-                    "Supported game version: 3.3\n" +
+                diagnosticsSummaryText = "App version: 3.6.0 (66)\n" +
+                    "Supported game version: 3.6\n" +
                     "Shizuku: Ready\n" +
                     "Root preview: Root access detected\n" +
                     "Patch state: PATCHED\n" +
                     "Trusted backup: true\n" +
-                    "Hint: Vietnamese patch appears installed. Safe, Balanced, Performance, Remove, or Restore is available.",
+                    "Hint: Vietnamese patch appears installed. Update/remove is available; config and restore writes are locked for WUWA 3.6.",
                 snapshotPreviewText = "Preset write policy:\n" +
-                    "Safe: WRITE_ENABLED\n" +
-                    "Balanced: WRITE_ENABLED\n" +
-                    "Performance: WRITE_ENABLED\n" +
+                    "Safe: LOCKED\n" +
+                    "Balanced: LOCKED\n" +
+                    "Performance: LOCKED\n" +
                     "Max Graphics: LOCKED\n\n" +
                     "Root backend preview: Root access detected\n" +
                     "Root write enabled: false\n\n" +
                     "Actions:\n" +
-                    "Install Patch: false\n" +
-                    "Apply Safe: true\n" +
-                    "Apply Balanced: true\n" +
-                    "Apply Performance: true\n" +
+                    "Install Patch: true\n" +
+                    "Apply Safe: false\n" +
+                    "Apply Balanced: false\n" +
+                    "Apply Performance: false\n" +
                     "Remove Patch: true\n" +
-                    "Restore Original: true\n" +
+                    "Restore Original: false\n" +
                     "Last action: App started",
-                debugLogText = "[12:00:00] Smart UI: Safe, Balanced, Performance, Remove, or Restore is available.",
+                debugLogText = "[12:00:00] Smart UI: Update/remove available; config and restore writes locked for WUWA 3.6.",
                 actionState = previewActionState(patched = true),
             ),
             callbacks = previewCallbacks(),
@@ -299,7 +299,7 @@ private fun WuwaSetupBlockedPreview() {
         ComposeHomeScreen(
             uiState = ComposeHomeUiState(
                 statusText = "Game package: com.kurogame.wutheringwaves.global\n" +
-                    "Game version: 3.3.1\n" +
+                    "Game version: 3.6.0\n" +
                     "Shizuku: Shizuku installed but not running\n" +
                     "Patch state: UNKNOWN\n" +
                     "Config state: UNKNOWN",
@@ -311,17 +311,17 @@ private fun WuwaSetupBlockedPreview() {
                     "Ready to install patch: NO\n" +
                     "Ready to apply presets: NO",
                 rootPreviewText = RootPreviewRenderer.render(RootAccessState.NOT_CHECKED),
-                diagnosticsSummaryText = "App version: 3.3.22 (56)\n" +
-                    "Supported game version: 3.3\n" +
+                diagnosticsSummaryText = "App version: 3.6.0 (66)\n" +
+                    "Supported game version: 3.6\n" +
                     "Shizuku: Shizuku installed but not running\n" +
                     "Root preview: Root preview not checked\n" +
                     "Patch state: UNKNOWN\n" +
                     "Trusted backup: false\n" +
                     "Hint: Complete game/Shizuku setup before file operations.",
                 snapshotPreviewText = "Preset write policy:\n" +
-                    "Safe: WRITE_ENABLED\n" +
-                    "Balanced: WRITE_ENABLED\n" +
-                    "Performance: WRITE_ENABLED\n" +
+                    "Safe: LOCKED\n" +
+                    "Balanced: LOCKED\n" +
+                    "Performance: LOCKED\n" +
                     "Max Graphics: LOCKED\n\n" +
                     "Root backend preview: Root preview not checked\n" +
                     "Root write enabled: false\n\n" +
@@ -342,16 +342,16 @@ private fun WuwaSetupBlockedPreview() {
 }
 
 private fun previewActionState(patched: Boolean): HomeActionState = HomeActionState(
-    installPatchEnabled = false,
+    installPatchEnabled = patched,
     removePatchEnabled = patched,
-    applySafeEnabled = patched,
-    applyBalancedEnabled = patched,
-    applyPerformanceEnabled = patched,
-    restoreEnabled = patched,
+    applySafeEnabled = false,
+    applyBalancedEnabled = false,
+    applyPerformanceEnabled = false,
+    restoreEnabled = false,
     backupEnabled = patched,
     downloadPatchEnabled = true,
     primaryHint = if (patched) {
-        "Safe, Balanced, Performance, Remove, or Restore is available."
+        "Update/remove is available; config and restore writes are locked for WUWA 3.6."
     } else {
         "Complete game/Shizuku setup before file operations."
     },

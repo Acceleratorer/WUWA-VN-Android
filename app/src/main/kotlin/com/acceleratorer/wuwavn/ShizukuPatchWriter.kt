@@ -50,8 +50,16 @@ class ShizukuPatchWriter {
             val service = serviceRef.get()
                 ?: throw IllegalStateException("Shizuku patch service did not connect.")
 
-            val targetPath = gameAbsolutePath(plan.targetRelativePath)
-            service.beginWritePatch(targetPath, plan.patchSizeBytes, plan.patchSha256)
+            service.beginWuWa36Install(
+                plan.resourceVersion,
+                plan.langVersion,
+                plan.sigSourceRelativePath,
+                plan.patchSizeBytes,
+                plan.patchSha256,
+                plan.sigSha1,
+                plan.mountLangContent,
+                plan.mountLangSha256,
+            )
             logger.add("Patch write: started ${formatMb(plan.patchSizeBytes)}")
 
             val buffer = ByteArray(CHUNK_BYTES)
@@ -62,7 +70,7 @@ class ShizukuPatchWriter {
                     val read = input.read(buffer)
                     if (read == -1) break
                     val chunk = if (read == buffer.size) buffer else buffer.copyOf(read)
-                    service.writePatchChunk(targetPath, chunk, read, plan.patchSizeBytes)
+                    service.writeWuWa36InstallChunk(chunk, read, plan.patchSizeBytes)
                     writtenBytes += read.toLong()
                     if (writtenBytes >= nextLogBytes) {
                         logger.add("Patch write: ${formatMb(writtenBytes)} / ${formatMb(plan.patchSizeBytes)}")
@@ -71,7 +79,8 @@ class ShizukuPatchWriter {
                 }
             }
 
-            service.finishWritePatch(targetPath, plan.patchSizeBytes, plan.patchSha256)
+            service.finishWuWa36Install()
+            val targetPath = gameAbsolutePath(plan.targetRelativePath)
             val targetSize = service.length(targetPath)
             val targetSha256 = service.sha256(targetPath)
             if (targetSize != plan.patchSizeBytes) {
@@ -136,7 +145,12 @@ class ShizukuPatchWriter {
             val targetPath = gameAbsolutePath(plan.targetRelativePath)
             val existedBefore = service.exists(targetPath)
             logger.add("Patch remove: target existed before delete = $existedBefore")
-            val deleted = service.deletePatch(targetPath)
+            val deleted = service.removeWuWa36Patch(
+                plan.resourceVersion,
+                plan.langVersion,
+                plan.mountLangContent,
+                plan.mountLangSha256,
+            )
             if (service.exists(targetPath)) {
                 throw IllegalStateException("Patch target still exists after delete.")
             }
@@ -157,46 +171,56 @@ class ShizukuPatchWriter {
     }
 
     private fun requireSafePlan(plan: PatchWritePlan) {
-        if (plan.targetRelativePath != PatchDryRunPlanner.patchPakRelativePath()) {
-            throw IllegalStateException("Patch write target must be WuWaVH_99_P.pak only.")
-        }
-        if (!PatchDryRunPlanner.isAllowedTarget(plan.targetRelativePath)) {
+        if (!WuWa36Layout.isPatchPakPath(plan.targetRelativePath)) {
             throw IllegalStateException("Patch write target is not allowlisted.")
         }
+        if (!WuWa36Layout.isPatchSigPath(WuWa36Layout.targets(plan.resourceVersion, plan.langVersion).sigRelativePath) ||
+            !WuWa36Layout.isMountLangPath(WuWa36Layout.targets(plan.resourceVersion, plan.langVersion).mountLangRelativePath)
+        ) throw IllegalStateException("WUWA 3.6 transaction targets are not allowlisted.")
         if (!plan.patchFile.isFile || !Sha256Verifier.verify(plan.patchFile, plan.patchSha256)) {
             throw IllegalStateException("Patch file is missing or SHA-256 verification failed.")
         }
         if (plan.patchSizeBytes <= 0L || plan.patchSizeBytes > MAX_PATCH_BYTES) {
             throw IllegalStateException("Patch file size is outside the safe write limit.")
         }
-        if (plan.trustedBackup.verifiedFiles != PatchDryRunPlanner.backupRelativePaths().size) {
+        if (plan.trustedBackup.verifiedFiles != TrustedBackupPolicy.REQUIRED_FILE_COUNT) {
             throw IllegalStateException("Trusted backup is incomplete.")
         }
     }
 
     private fun requireSafeRemovePlan(plan: RemovePatchPlan) {
-        if (plan.targetRelativePath != PatchDryRunPlanner.patchPakRelativePath()) {
-            throw IllegalStateException("Patch remove target must be WuWaVH_99_P.pak only.")
-        }
-        if (!PatchDryRunPlanner.isAllowedTarget(plan.targetRelativePath)) {
+        val target = WuWa36Layout.targets(plan.resourceVersion, plan.langVersion)
+        if (plan.targetRelativePath != target.pakRelativePath ||
+            !WuWa36Layout.isPatchPakPath(plan.targetRelativePath) ||
+            !WuWa36Layout.isPatchSigPath(target.sigRelativePath) ||
+            !WuWa36Layout.isMountLangPath(target.mountLangRelativePath)
+        ) {
             throw IllegalStateException("Patch remove target is not allowlisted.")
         }
         if (!TrustedBackupPolicy.isTrustedBackup(plan.trustedBackupDryRun)) {
             throw IllegalStateException("Patch remove requires a trusted VERIFIED backup.")
         }
-        if (plan.mountLangFile.displayName != MOUNT_LANG_DISPLAY_NAME ||
+        if (plan.mountLangFile.relativePath != target.mountLangRelativePath ||
             plan.mountLangFile.status != RestoreFileStatus.VERIFIED
         ) {
-            throw IllegalStateException("Patch remove requires VERIFIED MountLang_en.txt backup.")
+            throw IllegalStateException("Patch remove requires VERIFIED WUWA 3.6 Resources MountLang backup.")
+        }
+        if (!Sha256Verifier.sha256(plan.mountLangContent).equals(plan.mountLangSha256, ignoreCase = true)) {
+            throw IllegalStateException("Patch remove MountLang backup changed before write.")
         }
     }
 
     private fun gameAbsolutePath(relativePath: String): String =
+        if (WuWa36Layout.isAllowedDynamicPath(relativePath)) {
+            Environment.getExternalStorageDirectory().absolutePath +
+                "/Android/data/" + AppConstants.GLOBAL_GAME_PACKAGE + "/files/" + relativePath
+        } else {
         Environment.getExternalStorageDirectory().absolutePath +
             "/Android/data/" +
             AppConstants.GLOBAL_GAME_PACKAGE +
             "/files/" +
             relativePath
+        }
 
     private fun formatMb(bytes: Long): String =
         String.format(Locale.US, "%.1f MB", bytes / 1024.0 / 1024.0)
@@ -218,6 +242,5 @@ class ShizukuPatchWriter {
     private companion object {
         const val CHUNK_BYTES = 256 * 1024
         const val MAX_PATCH_BYTES = 1024L * 1024L * 1024L
-        const val MOUNT_LANG_DISPLAY_NAME = "MountLang_en.txt"
     }
 }

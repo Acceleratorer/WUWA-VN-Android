@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
     inputs:
       release_tag:
-        description: "Existing release tag to upload assets to, for example v3.3.14"
+        description: "Existing release tag to upload assets to, for example v3.6.0"
         required: false
         default: ""
 
@@ -75,8 +75,8 @@ jobs:
           checks = [
               (app["version_name"] == expected_name, f"update.json version_name must be {expected_name}"),
               (int(app["version_code"]) == expected_code, f"update.json version_code must be {expected_code}"),
-              (app["supported_game_version"] == "3.3", "supported_game_version must remain 3.3"),
-              (app["minimum_game_version"] == "3.3", "minimum_game_version must remain 3.3"),
+              (app["supported_game_version"] == "3.6", "supported_game_version must remain 3.6"),
+              (app["minimum_game_version"] == "3.6", "minimum_game_version must remain 3.6"),
               (app["apk_url"] == expected_url, f"apk_url must be {expected_url}"),
           ]
           failures = [message for ok, message in checks if not ok]

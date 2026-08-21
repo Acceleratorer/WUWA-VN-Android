@@ -10,7 +10,7 @@ import java.security.MessageDigest
 class WuwaBackupUserService : IWuwaBackupService.Stub() {
     override fun exists(absolutePath: String?): Boolean = validateBackupReadPath(absolutePath).isFile
 
-    override fun length(absolutePath: String?): Long = validateDiagnosticPath(absolutePath).length()
+    override fun length(absolutePath: String?): Long = validateBackupReadPath(absolutePath).length()
 
     override fun readFile(absolutePath: String?, maxBytes: Int): ByteArray {
         val file = validateBackupReadPath(absolutePath)
@@ -88,8 +88,11 @@ class WuwaBackupUserService : IWuwaBackupService.Stub() {
         }
     }
 
+    override fun wuwa36MountLangRelativePath(preferredSeries: String?): String? =
+        WuWa36PathResolver().snapshot(preferredSeries)?.mountLangRelativePath
+
     private fun validateBackupReadPath(absolutePath: String?): File =
-        validate(absolutePath, BACKUP_READ_RELATIVE_PATHS, "Blocked non-allowlisted backup path.")
+        validate(absolutePath, BACKUP_READ_RELATIVE_PATHS, "Blocked non-allowlisted backup path.", allowWuWa36MountLang = true)
 
     private fun validateDiagnosticPath(absolutePath: String?): File =
         validate(absolutePath, DIAGNOSTIC_RELATIVE_PATHS, "Blocked non-allowlisted diagnostic path.")
@@ -98,6 +101,7 @@ class WuwaBackupUserService : IWuwaBackupService.Stub() {
         absolutePath: String?,
         allowedRelativePaths: Set<String>,
         blockedMessage: String,
+        allowWuWa36MountLang: Boolean = false,
     ): File {
         if (absolutePath == null) {
             throw RemoteException("Path is null.")
@@ -124,6 +128,11 @@ class WuwaBackupUserService : IWuwaBackupService.Stub() {
                     return file
                 }
             }
+            val gameRelative = normalized.substringAfter("/Android/data/", "")
+                .substringAfter("/files/", "")
+            if (allowWuWa36MountLang && WuWa36Layout.isMountLangPath(gameRelative)) {
+                return file
+            }
             throw RemoteException(blockedMessage)
         } catch (exception: RemoteException) {
             throw exception
@@ -138,11 +147,8 @@ class WuwaBackupUserService : IWuwaBackupService.Stub() {
         val BACKUP_READ_RELATIVE_PATHS = setOf(
             "Android/data/com.kurogame.wutheringwaves.global/files/UE4Game/Client/Client/Saved/Config/Android/Engine.ini",
             "Android/data/com.kurogame.wutheringwaves.global/files/UE4Game/Client/Client/Saved/Config/Android/DeviceProfiles.ini",
-            "Android/data/com.kurogame.wutheringwaves.global/files/UE4Game/Client/Client/Saved/Config/Android/MountLang_en.txt",
-            "Android/data/com.kurogame.wutheringwaves.global/files/UE4Game/Client/Client/Saved/Resources/3.3.0/Mount/MountLang_en.txt",
         )
 
-        val DIAGNOSTIC_RELATIVE_PATHS =
-            BACKUP_READ_RELATIVE_PATHS + GamePathDiagnosticPaths.allowedAbsoluteRelativePaths
+        val DIAGNOSTIC_RELATIVE_PATHS = BACKUP_READ_RELATIVE_PATHS
     }
 }

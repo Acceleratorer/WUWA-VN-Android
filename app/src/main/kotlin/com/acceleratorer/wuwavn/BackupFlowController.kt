@@ -83,16 +83,15 @@ class BackupFlowController(
                 .append(file.sha256.take(12))
                 .append("...)\n")
         }
-        val requiredPaths = PatchDryRunPlanner.backupRelativePaths().toSet()
-        val legacyMountLangPath = PatchDryRunPlanner.mountLangRelativePath()
-        val android332MountLangPath = PatchDryRunPlanner.android332MountLangRelativePath()
+        val requiredPaths = setOf(
+            PatchDryRunPlanner.engineIniRelativePath(),
+            PatchDryRunPlanner.deviceProfilesRelativePath(),
+        )
         val backedUpPaths = result.backedUpFiles.map { it.relativePath }.toSet()
-        val hasAndroid332ResourcesBackup = backedUpPaths.contains(android332MountLangPath)
-        val missingLegacyMountLangWithResourcesBackup =
-            result.missingFiles.contains(legacyMountLangPath) && hasAndroid332ResourcesBackup
+        val resourcesMountLangPath = backedUpPaths.firstOrNull(WuWa36Layout::isMountLangPath)
+        val hasResourcesBackup = resourcesMountLangPath != null
         val missingRequired = result.missingFiles
             .filter { requiredPaths.contains(it) }
-            .filterNot { it == legacyMountLangPath && missingLegacyMountLangWithResourcesBackup }
         val missingOptional = result.missingFiles.filterNot { requiredPaths.contains(it) }
         if (missingRequired.isNotEmpty()) {
             append("\nMissing required files:\n")
@@ -100,22 +99,21 @@ class BackupFlowController(
                 append("- ").append(PatchDryRunPlanner.backupDisplayName(file)).append('\n')
             }
         }
-        if (missingLegacyMountLangWithResourcesBackup) {
-            append("\nAndroid 3.3.2 Resources backup:\n")
-            append("- MountLang_en.Resources-3.3.0.txt: OK\n")
-            append("- Legacy MountLang_en.txt path: missing as expected for this layout\n")
+        if (hasResourcesBackup) {
+            append("\nWUWA 3.6 Resources backup:\n")
+            append("- ").append(PatchDryRunPlanner.backupDisplayName(resourcesMountLangPath!!)).append(": OK\n")
         }
         if (missingOptional.isNotEmpty()) {
-            append("\nAndroid 3.3.2 Resources files not found:\n")
+            append("\nOptional Resources files not found:\n")
             for (file in missingOptional) {
                 append("- ").append(PatchDryRunPlanner.backupDisplayName(file)).append('\n')
             }
         }
         append("\nBackup folder:\n").append(backupDirectory.absolutePath)
-        if (result.isTrustedForWriteActions()) {
+        if (result.isTrustedForWriteActions(backupDirectory)) {
             append("\n\nThis backup is trusted for restore, patch install prechecks, config presets, and remove with MountLang rollback.")
-        } else if (hasAndroid332ResourcesBackup) {
-            append("\n\nThis backup captured the Android 3.3.2 Resources layout for diagnostics and recovery evidence. Write actions remain locked until the Android 3.3.2 install format is confirmed.")
+        } else if (hasResourcesBackup) {
+            append("\n\nThis backup captured the WUWA 3.6 Resources MountLang for transactional patch recovery.")
         } else {
             append("\n\nThis backup is read-only but not trusted for write actions yet. Install, presets, remove, and restore stay locked until the required original config set is verified.")
         }

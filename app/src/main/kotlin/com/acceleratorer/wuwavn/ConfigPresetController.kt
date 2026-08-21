@@ -226,8 +226,7 @@ class ConfigPresetController(
     private fun finalConfirmationMessage(plan: ConfigPresetPlan): String {
         val base = "This will write only bundled ${plan.preset.name} templates to these allowlisted files:\n\n" +
             "- Engine.ini\n" +
-            "- DeviceProfiles.ini\n" +
-            "- MountLang_en.txt\n\n" +
+            "- DeviceProfiles.ini\n\n" +
             warningBlock(plan.preset)
 
         if (plan.preset.id == ConfigPresetId.PERFORMANCE) {
@@ -302,7 +301,7 @@ class ConfigPresetController(
                 .append("\nVerified config files: ")
                 .append(plan.trustedBackup.verifiedFiles)
                 .append("/")
-                .append(PatchDryRunPlanner.backupRelativePaths().size)
+                .append(TrustedBackupPolicy.REQUIRED_FILE_COUNT)
         } else {
             append("\nBlocked:\n")
             for (failure in precondition.failures) {

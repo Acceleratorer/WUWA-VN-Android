@@ -43,7 +43,6 @@ class MainActivity : ComponentActivity() {
     private val installedStateDetector = InstalledStateDetector(
         ShizukuInstalledStateReader(),
         trustedBackupFinder,
-        ConfigStateDetector(),
     )
     private val configPresetPreconditionChecker = ConfigPresetPreconditionChecker(restoreDryRunPlanner)
     private val configPresetWriter = ShizukuConfigPresetWriter()
@@ -132,7 +131,6 @@ class MainActivity : ComponentActivity() {
             patchWritePreconditionChecker = patchWritePreconditionChecker,
             removePatchPreconditionChecker = removePatchPreconditionChecker,
             patchWriter = patchWriter,
-            restoreWriter = restoreWriter,
             gamePackageDetector = gamePackageDetector,
             shizukuStateChecker = shizukuStateChecker,
             dialogs = dialogs,
@@ -380,14 +378,12 @@ class MainActivity : ComponentActivity() {
 
     private fun restoreOriginalFiles() {
         refreshStatus()
-        if (blockIfActionDisabled(actionState?.restoreEnabled == true, "Restore Original Files")) return
         lastAction = "Restore Original Files opened"
         restoreFlowController.showRestoreSessions()
     }
 
     private fun applySafePreset() {
         refreshStatus()
-        if (blockIfActionDisabled(actionState?.applySafeEnabled == true, "Apply Safe Config Preset")) return
         pendingConfigPresetName = "Safe / Default"
         lastAction = "Apply Safe Config Preset requested"
         configPresetController.showSafeDefaultDryRun(gameState, shizukuState)
@@ -395,7 +391,6 @@ class MainActivity : ComponentActivity() {
 
     private fun applyBalancedPreset() {
         refreshStatus()
-        if (blockIfActionDisabled(actionState?.applyBalancedEnabled == true, "Apply Balanced Preset")) return
         pendingConfigPresetName = "Balanced"
         lastAction = "Apply Balanced Preset requested"
         configPresetController.showBalancedDryRun(gameState, shizukuState, installedState)
@@ -403,7 +398,6 @@ class MainActivity : ComponentActivity() {
 
     private fun applyPerformancePreset() {
         refreshStatus()
-        if (blockIfActionDisabled(actionState?.applyPerformanceEnabled == true, "Apply Performance Preset")) return
         pendingConfigPresetName = "Performance"
         lastAction = "Apply Performance Preset requested"
         configPresetController.showPerformanceDryRun(gameState, shizukuState, installedState)
@@ -578,7 +572,7 @@ class MainActivity : ComponentActivity() {
             ShizukuState.RUNNING_PERMISSION_DENIED ->
                 "Shizuku is running but permission is not granted.\n\nGrant permission to WUWA VN in Shizuku."
             ShizukuState.READY ->
-                "Shizuku is READY.\n\nYou can backup, install, remove, restore, and apply config presets."
+                "Shizuku is READY.\n\nYou can backup, inspect dry-runs, install/update, and remove the verified WUWA 3.6 patch. Config preset and general restore writes are locked in this release."
         }
 
         dialogs.showMessage("Shizuku Setup Help", message)
@@ -867,26 +861,25 @@ class MainActivity : ComponentActivity() {
                     "2. Download & Verify Patch.\n" +
                     "3. Install Vietnamese Patch only if the button is enabled.\n" +
                     "4. If install stays disabled, open More Tools > Game Path Diagnostic and send the report.\n" +
-                    "5. Apply Safe / Balanced / Performance only after state becomes PATCHED."
+                    "5. Config preset writes are locked in WUWA 3.6; use patch install/update or remove transaction only."
             PatchInstallState.PATCHED ->
                 "Patched state detected.\n\nAvailable:\n" +
-                    "1. Apply Safe / Default.\n" +
-                    "2. Apply Balanced.\n" +
-                    "3. Apply Performance.\n" +
-                    "4. Remove Vietnamese Patch.\n" +
-                    "5. Restore Original Files."
+                    "1. Update/reinstall Vietnamese Patch.\n" +
+                    "2. Remove Vietnamese Patch transactionally.\n" +
+                    "3. Inspect config/preset dry-runs; config writes are locked in WUWA 3.6.\n" +
+                    "4. Inspect Restore Original Files dry-run; restore write is locked."
             PatchInstallState.PARTIAL ->
                 "Partial state detected.\n\nRecommended recovery:\n" +
                     "1. Do not apply config presets.\n" +
                     "2. Use Remove Vietnamese Patch if available.\n" +
-                    "3. Use Restore Original Files if config files look wrong.\n" +
+                    "3. Inspect Restore Original Files dry-run; restore write is locked in WUWA 3.6.\n" +
                     "4. Refresh state after recovery."
             PatchInstallState.UNKNOWN, null ->
                 "State unknown.\n\nRecommended:\n" +
                     "1. Check Shizuku is running.\n" +
                     "2. Grant Shizuku permission.\n" +
                     "3. Check Game Folder.\n" +
-                    "4. Restore from trusted backup if needed."
+                    "4. Inspect the trusted backup dry-run; restore write is locked in WUWA 3.6."
         }
 
         dialogs.showMessage("Recovery Guide", message)

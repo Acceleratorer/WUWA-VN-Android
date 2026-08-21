@@ -17,6 +17,12 @@ data class PatchWritePlan(
     val targetRelativePath: String,
     val targetDisplayName: String,
     val trustedBackup: TrustedBackupInfo,
+    val resourceVersion: String,
+    val langVersion: String,
+    val sigSourceRelativePath: String,
+    val sigSha1: String,
+    val mountLangContent: ByteArray,
+    val mountLangSha256: String,
 )
 
 data class TrustedBackupInfo(

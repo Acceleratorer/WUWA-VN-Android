@@ -4,28 +4,24 @@ class ConfigStateDetector {
     fun detect(
         engineIni: String?,
         deviceProfilesIni: String?,
-        mountLang: String?,
     ): ConfigInstallState {
-        if (engineIni == null || deviceProfilesIni == null || mountLang == null) {
+        if (engineIni == null || deviceProfilesIni == null) {
             return ConfigInstallState.UNKNOWN
         }
 
         val safeFiles = ConfigPresets.safeDefaultFilesByName()
         val engineMatches = matchesTemplate(engineIni, safeFiles["Engine.ini"])
         val deviceMatches = matchesTemplate(deviceProfilesIni, safeFiles["DeviceProfiles.ini"])
-        val mountMatches = matchesTemplate(mountLang, safeFiles["MountLang_en.txt"])
-
-        if (engineMatches && deviceMatches && mountMatches) {
+        if (engineMatches && deviceMatches) {
             return ConfigInstallState.SAFE_DEFAULT
         }
 
         val balancedFiles = BalancedConfigTemplates.files().associateBy { it.displayName }
         val balancedEngineMatches = matchesTemplate(engineIni, balancedFiles["Engine.ini"])
         val balancedDeviceMatches = matchesTemplate(deviceProfilesIni, balancedFiles["DeviceProfiles.ini"])
-        val balancedMountMatches = matchesTemplate(mountLang, balancedFiles["MountLang_en.txt"])
-        return if (balancedEngineMatches && balancedDeviceMatches && balancedMountMatches) {
+        return if (balancedEngineMatches && balancedDeviceMatches) {
             ConfigInstallState.BALANCED
-        } else if (matchesPerformance(engineIni, deviceProfilesIni, mountLang)) {
+        } else if (matchesPerformance(engineIni, deviceProfilesIni)) {
             ConfigInstallState.PERFORMANCE
         } else {
             ConfigInstallState.CUSTOM
@@ -35,12 +31,10 @@ class ConfigStateDetector {
     private fun matchesPerformance(
         engineIni: String,
         deviceProfilesIni: String,
-        mountLang: String,
     ): Boolean {
         val performanceFiles = PerformanceConfigTemplates.files().associateBy { it.displayName }
         return matchesTemplate(engineIni, performanceFiles["Engine.ini"]) &&
-            matchesTemplate(deviceProfilesIni, performanceFiles["DeviceProfiles.ini"]) &&
-            matchesTemplate(mountLang, performanceFiles["MountLang_en.txt"])
+            matchesTemplate(deviceProfilesIni, performanceFiles["DeviceProfiles.ini"])
     }
 
     private fun matchesTemplate(content: String, template: ConfigTemplateFile?): Boolean {

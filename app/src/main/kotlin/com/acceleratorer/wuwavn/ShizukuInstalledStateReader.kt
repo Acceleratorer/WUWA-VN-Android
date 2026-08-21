@@ -13,24 +13,28 @@ import rikka.shizuku.Shizuku
 class ShizukuInstalledStateReader {
     fun read(context: Context): ReadResult {
         val diagnostics = mutableListOf<String>()
-        val pakExists = readPakExists(context, diagnostics)
+        val snapshot = readSnapshot(context, diagnostics)
         val configFiles = readConfigFiles(context, diagnostics)
 
         return ReadResult(
-            pakExists = pakExists,
+            snapshot = snapshot,
             engineIni = configFiles[PatchDryRunPlanner.engineIniRelativePath()],
             deviceProfilesIni = configFiles[PatchDryRunPlanner.deviceProfilesRelativePath()],
-            mountLang = configFiles[PatchDryRunPlanner.mountLangRelativePath()],
             diagnostics = diagnostics,
         )
     }
 
-    private fun readPakExists(
+    private fun readSnapshot(
         context: Context,
         diagnostics: MutableList<String>,
-    ): Boolean? = withPatchService(context) { service ->
-        service.exists(gameAbsolutePath(PatchDryRunPlanner.patchPakRelativePath()))
-    }.onFailure { diagnostics.add("PAK read failed: ${it.message}") }
+    ): WuWa36Snapshot? = withPatchService(context) { service ->
+        val json = service.wuwa36Snapshot(AppConstants.SUPPORTED_GAME_VERSION)
+        if (!org.json.JSONObject(json).optBoolean("ready")) {
+            null
+        } else {
+            WuWa36Snapshot.fromJson(json)
+        }
+    }.onFailure { diagnostics.add("WUWA 3.6 snapshot read failed: ${it.message}") }
         .getOrNull()
 
     private fun readConfigFiles(
@@ -39,13 +43,19 @@ class ShizukuInstalledStateReader {
     ): Map<String, String?> {
         val values = mutableMapOf<String, String?>()
         val result = withBackupService(context) { service ->
-            for (relativePath in PatchDryRunPlanner.backupRelativePaths()) {
+            for (relativePath in listOf(
+                PatchDryRunPlanner.engineIniRelativePath(),
+                PatchDryRunPlanner.deviceProfilesRelativePath(),
+            )) {
                 values[relativePath] = readTextIfExists(service, relativePath, diagnostics)
             }
         }
         result.onFailure { exception ->
             diagnostics.add("Config read failed: ${exception.message}")
-            for (relativePath in PatchDryRunPlanner.backupRelativePaths()) {
+            for (relativePath in listOf(
+                PatchDryRunPlanner.engineIniRelativePath(),
+                PatchDryRunPlanner.deviceProfilesRelativePath(),
+            )) {
                 values.putIfAbsent(relativePath, null)
             }
         }
@@ -156,10 +166,9 @@ class ShizukuInstalledStateReader {
     }
 
     data class ReadResult(
-        val pakExists: Boolean?,
+        val snapshot: WuWa36Snapshot?,
         val engineIni: String?,
         val deviceProfilesIni: String?,
-        val mountLang: String?,
         val diagnostics: List<String>,
     )
 

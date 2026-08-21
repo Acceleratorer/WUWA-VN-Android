@@ -140,7 +140,7 @@ class RestoreDryRunPlanner(
             "missing metadata item"
         }
 
-        if (!PatchDryRunPlanner.backupRelativePaths().contains(relativePath)) {
+        if (!isRequiredBackupPath(relativePath)) {
             return RestoreFilePlan(
                 displayName = displayName,
                 relativePath = relativePath,
@@ -170,12 +170,15 @@ class RestoreDryRunPlanner(
     }
 
     private fun isSafeRestoreMetadata(displayName: String, relativePath: String): Boolean {
-        if (!PatchDryRunPlanner.backupRelativePaths().contains(relativePath)) {
+        if (!isRequiredBackupPath(relativePath)) {
             return false
         }
         if (displayName.contains("/") || displayName.contains("\\") || displayName.contains("..")) {
             return false
         }
-        return displayName == PatchDryRunPlanner.displayName(relativePath)
+        return displayName == PatchDryRunPlanner.backupDisplayName(relativePath)
     }
+
+    private fun isRequiredBackupPath(relativePath: String): Boolean =
+        PatchDryRunPlanner.backupRelativePaths().contains(relativePath) || WuWa36Layout.isMountLangPath(relativePath)
 }

@@ -1,8 +1,11 @@
 package com.acceleratorer.wuwavn
 
 import android.content.Context
+import java.io.File
 
 object TrustedBackupPolicy {
+    const val REQUIRED_FILE_COUNT = 3
+
     fun findTrustedBackup(
         context: Context,
         restoreDryRunPlanner: RestoreDryRunPlanner,
@@ -30,5 +33,22 @@ object TrustedBackupPolicy {
             dryRun.gamePackage == AppConstants.GLOBAL_GAME_PACKAGE &&
             dryRun.restoreWriteEnabled == false &&
             dryRun.allFilesVerified() &&
-            dryRun.hasOnlyVerifiedRequiredConfigFiles()
+            dryRun.hasOnlyVerifiedRequiredConfigFiles() &&
+            hasOriginalMountLang(dryRun)
+
+    private fun hasOriginalMountLang(dryRun: RestoreDryRun): Boolean {
+        val mountFiles = dryRun.files.filter {
+            it.status == RestoreFileStatus.VERIFIED && WuWa36Layout.isMountLangPath(it.relativePath)
+        }
+        if (mountFiles.size != 1) return false
+
+        val mountFile = File(dryRun.sessionDirectory, mountFiles.single().displayName)
+        return mountFile.isFile &&
+            mountFile.length() <= MAX_MOUNT_BYTES &&
+            runCatching {
+                WuWa36Layout.isOriginalMountLang(mountFile.readText(Charsets.UTF_8))
+            }.getOrDefault(false)
+    }
+
+    private const val MAX_MOUNT_BYTES = 512 * 1024L
 }

@@ -111,6 +111,11 @@ class WuwaConfigUserService : IWuwaRestoreService.Stub() {
                     return file
                 }
             }
+            val gameRelative = normalized.substringAfter("/Android/data/", "")
+                .substringAfter("/files/", "")
+            if (WuWa36Layout.isMountLangPath(gameRelative)) {
+                return file
+            }
             throw RemoteException("Blocked non-allowlisted restore path.")
         } catch (exception: RemoteException) {
             throw exception
@@ -125,7 +130,6 @@ class WuwaConfigUserService : IWuwaRestoreService.Stub() {
         val RESTORE_RELATIVE_PATHS = setOf(
             "Android/data/com.kurogame.wutheringwaves.global/files/UE4Game/Client/Client/Saved/Config/Android/Engine.ini",
             "Android/data/com.kurogame.wutheringwaves.global/files/UE4Game/Client/Client/Saved/Config/Android/DeviceProfiles.ini",
-            "Android/data/com.kurogame.wutheringwaves.global/files/UE4Game/Client/Client/Saved/Config/Android/MountLang_en.txt",
         )
     }
 }

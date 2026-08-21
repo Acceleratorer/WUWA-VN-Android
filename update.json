@@ -1,19 +1,17 @@
 {
   "manifest_version": 3,
   "app": {
-    "version_name": "3.3.31",
-    "version_code": 65,
-    "supported_game_version": "3.3",
-    "minimum_game_version": "3.3",
-    "apk_url": "https://github.com/Acceleratorer/WUWA-VN-Android/releases/download/v3.3.31/WUWA-VN-v3.3.31-release.apk",
+    "version_name": "3.6.0",
+    "version_code": 66,
+    "supported_game_version": "3.6",
+    "minimum_game_version": "3.6",
+    "apk_url": "https://github.com/Acceleratorer/WUWA-VN-Android/releases/download/v3.6.0/WUWA-VN-v3.6.0-release.apk",
     "sha256": "PUT_REAL_APK_SHA256_HERE",
     "changelog": [
-      "Polish Backup Game Configs summary for Android 3.3.2 Resources layout",
-      "Show Resources MountLang backup as OK when the legacy MountLang path is missing as expected",
-      "Clarify that Android 3.3.2 Resources backup is diagnostic evidence, not write unlock",
-      "Keep Android 3.3.2 install writer locked pending SIG and install format confirmation",
-      "Do not change patch, backup, restore, preset, Shizuku, root, or UI behavior",
-      "No write behavior changes",
+      "Port patch install, SIG pairing, and MountLang registry to WUWA Global 3.6",
+      "Use dynamic Saved/Resources/<resource-version>/Lang_en/<lang-version> targets",
+      "Make install and remove transactions verify PAK, SIG, and MountLang together",
+      "Keep root writes disabled and Max Graphics locked",
       "Keep Max Graphics locked"
     ],
     "force_update": false
@@ -22,11 +20,11 @@
     "name": "Wuthering Waves",
     "server": "Global",
     "package": "com.kurogame.wutheringwaves.global",
-    "version": "3.3"
+    "version": "3.6"
   },
   "patch": {
-    "version": "wuwa-3.3.6-vi-2026.05",
-    "pak_url": "https://github.com/CallMeDangDev/WuwaVH/releases/download/3.3.6/WuWaVH_99_P.pak",
-    "sha256": "146abe4d4d0d17036776ac82ba26c0b4c6b1a4f073b8c84fed91a327d013eb85"
+    "version": "wuwa-3.6.0-vi-2026.08",
+    "pak_url": "https://dl.dangdev.io.vn/o",
+    "sha256": "850db0d3865f29fe4502fbbd4439593068246929b7a98324d5c63ecde7136e52"
   }
 }

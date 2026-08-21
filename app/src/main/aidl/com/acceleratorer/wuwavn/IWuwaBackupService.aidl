@@ -9,4 +9,5 @@ interface IWuwaBackupService {
     boolean isDirectory(String absolutePath);
     String[] listChildNames(String absolutePath, int maxEntries);
     String sha1(String absolutePath);
+    String wuwa36MountLangRelativePath(String preferredSeries);
 }

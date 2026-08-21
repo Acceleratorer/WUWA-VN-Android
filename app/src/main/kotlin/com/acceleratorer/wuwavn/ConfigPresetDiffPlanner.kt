@@ -108,13 +108,6 @@ class ConfigPresetDiffPlanner {
                     newValue = "1",
                     note = "Conservative effects quality.",
                 ),
-                ConfigChange(
-                    fileName = "MountLang_en.txt",
-                    key = "Vietnamese PAK mount",
-                    oldValue = "current",
-                    newValue = "../../../Client/Content/Paks/WuWaVH_99_P.pak",
-                    note = "Keep Vietnamese PAK mount path.",
-                ),
             ),
             writeEnabled = writeEnabled,
             blockedReason = if (writeEnabled) {
@@ -166,13 +159,6 @@ class ConfigPresetDiffPlanner {
                     oldValue = "default",
                     newValue = "1",
                     note = "Use lower texture quality while avoiding extreme degradation.",
-                ),
-                ConfigChange(
-                    fileName = "MountLang_en.txt",
-                    key = "Vietnamese PAK mount",
-                    oldValue = "current",
-                    newValue = "../../../Client/Content/Paks/WuWaVH_99_P.pak",
-                    note = "Keep Vietnamese PAK mount path.",
                 ),
             ),
             writeEnabled = writeEnabled,

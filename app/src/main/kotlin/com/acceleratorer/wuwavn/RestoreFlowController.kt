@@ -139,26 +139,17 @@ class RestoreFlowController(
         gameState: GamePackageDetector.State,
         shizukuState: ShizukuState,
     ): String? {
+        if (!Wuwa36SafetyPolicy.RESTORE_WRITE_ENABLED) {
+            return "Restore Original Files write is locked for WUWA 3.6 until the three-file restore flow is transactional. Use Remove Vietnamese Patch for transactional PAK/SIG + MountLang recovery."
+        }
         if (gameState != GamePackageDetector.State.GLOBAL_INSTALLED) {
             return "Wuthering Waves Global is not detected."
         }
         if (shizukuState != ShizukuState.READY) {
             return "Shizuku is not ready yet."
         }
-        if (dryRun.backupType != BackupManager.READ_ONLY_CONFIG_BACKUP_TYPE) {
-            return "Backup type is not trusted for restore writing."
-        }
-        if (dryRun.gamePackage != AppConstants.GLOBAL_GAME_PACKAGE) {
-            return "Backup metadata does not match Wuthering Waves Global."
-        }
-        if (dryRun.restoreWriteEnabled != false) {
-            return "Backup metadata must explicitly have restore_write_enabled=false."
-        }
-        if (!dryRun.allFilesVerified()) {
-            return "Every restore file must be VERIFIED before writing."
-        }
-        if (!dryRun.hasOnlyVerifiedRequiredConfigFiles()) {
-            return "Backup must contain exactly the three verified config files."
+        if (!TrustedBackupPolicy.isTrustedBackup(dryRun)) {
+            return "Backup must be a trusted original WUWA 3.6 backup with exactly three verified files."
         }
         return null
     }

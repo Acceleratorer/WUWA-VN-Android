@@ -6,18 +6,12 @@ class PatchDryRunPlanner(
     private val backupManager: BackupManager,
 ) {
     fun plan(context: Context): PatchDryRun {
-        assertAllowed(PATCH_PAK)
-        for (relativePath in BACKUP_RELATIVE_PATHS) {
-            assertAllowed(relativePath)
-        }
-
-        val filesToAdd = listOf("WuWaVH_99_P.pak")
-        val filesToModify = listOf("Engine.ini", "DeviceProfiles.ini", "MountLang_en.txt")
+        val filesToAdd = listOf("WuWaVH_99_P.pak", "WuWaVH_99_P.sig")
+        val filesToModify = listOf("Resources/<3.6.x>/Mount/MountLang_en.txt")
         val metadataFiles = listOf(
-            "Engine.ini",
-            "DeviceProfiles.ini",
-            "MountLang_en.txt",
             "WuWaVH_99_P.pak",
+            "WuWaVH_99_P.sig",
+            "Resources/<3.6.x>/Mount/MountLang_en.txt",
         )
         return PatchDryRun(
             filesToAdd = filesToAdd,
@@ -30,24 +24,16 @@ class PatchDryRunPlanner(
     companion object {
         private const val ENGINE_INI = "UE4Game/Client/Client/Saved/Config/Android/Engine.ini"
         private const val DEVICE_PROFILES_INI = "UE4Game/Client/Client/Saved/Config/Android/DeviceProfiles.ini"
-        private const val MOUNT_LANG = "UE4Game/Client/Client/Saved/Config/Android/MountLang_en.txt"
-        private const val ANDROID_332_MOUNT_LANG =
-            "UE4Game/Client/Client/Saved/Resources/3.3.0/Mount/MountLang_en.txt"
-        private const val PATCH_PAK = "UE4Game/Client/Client/Content/Paks/WuWaVH_99_P.pak"
-
-        private val BACKUP_RELATIVE_PATHS = listOf(
+        private val CONFIG_RELATIVE_PATHS = listOf(
             ENGINE_INI,
             DEVICE_PROFILES_INI,
-            MOUNT_LANG,
         )
 
-        private val READ_ONLY_BACKUP_RELATIVE_PATHS = BACKUP_RELATIVE_PATHS + ANDROID_332_MOUNT_LANG
+        private val READ_ONLY_BACKUP_RELATIVE_PATHS = CONFIG_RELATIVE_PATHS
 
         private val ALLOWED_TARGETS = setOf(
             ENGINE_INI,
             DEVICE_PROFILES_INI,
-            MOUNT_LANG,
-            PATCH_PAK,
         )
 
         fun isAllowedTarget(relativePath: String): Boolean {
@@ -55,24 +41,25 @@ class PatchDryRunPlanner(
             return !normalized.contains("..") && ALLOWED_TARGETS.contains(normalized)
         }
 
-        fun backupRelativePaths(): List<String> = BACKUP_RELATIVE_PATHS
+        fun backupRelativePaths(): List<String> = CONFIG_RELATIVE_PATHS
 
-        fun backupReadableRelativePaths(): List<String> = READ_ONLY_BACKUP_RELATIVE_PATHS
+        fun backupReadableRelativePaths(dynamicMountLangPath: String? = null): List<String> =
+            if (dynamicMountLangPath != null) {
+                listOf(ENGINE_INI, DEVICE_PROFILES_INI, dynamicMountLangPath)
+            } else {
+                READ_ONLY_BACKUP_RELATIVE_PATHS
+            }
 
         fun isAllowedBackupReadTarget(relativePath: String): Boolean {
             val normalized = relativePath.replace('\\', '/')
-            return !normalized.contains("..") && READ_ONLY_BACKUP_RELATIVE_PATHS.contains(normalized)
+            return !normalized.contains("..") &&
+                (READ_ONLY_BACKUP_RELATIVE_PATHS.contains(normalized) || WuWa36Layout.isMountLangPath(normalized))
         }
 
         fun engineIniRelativePath(): String = ENGINE_INI
 
         fun deviceProfilesRelativePath(): String = DEVICE_PROFILES_INI
 
-        fun mountLangRelativePath(): String = MOUNT_LANG
-
-        fun android332MountLangRelativePath(): String = ANDROID_332_MOUNT_LANG
-
-        fun patchPakRelativePath(): String = PATCH_PAK
 
         fun displayName(relativePath: String): String {
             val normalized = relativePath.replace('\\', '/')
@@ -81,16 +68,11 @@ class PatchDryRunPlanner(
         }
 
         fun backupDisplayName(relativePath: String): String =
-            if (relativePath == ANDROID_332_MOUNT_LANG) {
-                "MountLang_en.Resources-3.3.0.txt"
+            if (WuWa36Layout.isMountLangPath(relativePath)) {
+                "MountLang_en.Resources-${relativePath.substringAfter("Saved/Resources/").substringBefore('/')}.txt"
             } else {
                 displayName(relativePath)
             }
 
-        private fun assertAllowed(relativePath: String) {
-            if (!isAllowedTarget(relativePath)) {
-                throw SecurityException("Blocked unsafe target path: $relativePath")
-            }
-        }
     }
 }

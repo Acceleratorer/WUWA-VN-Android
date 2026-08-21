@@ -43,9 +43,9 @@ data class ConfigTemplateFile(
 
 object ConfigPresetAvailabilityPolicy {
     fun availability(id: ConfigPresetId): PresetAvailability = when (id) {
-        ConfigPresetId.SAFE_DEFAULT -> PresetAvailability.WRITE_ENABLED
-        ConfigPresetId.BALANCED -> PresetAvailability.WRITE_ENABLED
-        ConfigPresetId.PERFORMANCE -> PresetAvailability.WRITE_ENABLED
+        ConfigPresetId.SAFE_DEFAULT -> PresetAvailability.LOCKED
+        ConfigPresetId.BALANCED -> PresetAvailability.LOCKED
+        ConfigPresetId.PERFORMANCE -> PresetAvailability.LOCKED
         ConfigPresetId.MAX_GRAPHICS -> PresetAvailability.LOCKED
     }
 }

@@ -36,7 +36,7 @@ class StatusRenderer(
             stateText +
             "Patch: ${manifest.patchVersion}\n" +
             "Patch SHA-256: ${manifest.pakSha256.take(12)}...\n" +
-            "Mode: Safe / Default + Balanced + Performance\n" +
+            "Mode: Safe / Default + Balanced + Performance (locked for WUWA 3.6)\n" +
             "Restore writing: ${if (shizukuFileSystem.isRestoreWriteEnabled(shizukuState)) "enabled" else "locked"}\n" +
             "Patch writing: ${shizukuFileSystem.patchWriteStatus(shizukuState)}\n" +
             "Config preset writing: ${shizukuFileSystem.configPresetWriteStatus(shizukuState)}"
@@ -80,13 +80,13 @@ class StatusRenderer(
             }
         PatchInstallState.PATCHED ->
             if (installedState.hasTrustedBackup) {
-                "Safe, Balanced, Performance, Remove Patch, or Restore Original Files is available."
+                    "Update patch or Remove Patch is available. Config presets and Restore Original Files are locked for WUWA 3.6."
             } else {
                 "Run Backup Game Configs before write actions."
             }
         PatchInstallState.PARTIAL ->
             if (installedState.hasTrustedBackup) {
-                "Use Remove Vietnamese Patch or Restore Original Files before applying presets."
+                "Use Remove Vietnamese Patch for transactional recovery. Config presets and Restore Original Files are locked for WUWA 3.6."
             } else {
                 "Recover or create a trusted backup before repair."
             }
@@ -99,7 +99,7 @@ class StatusRenderer(
             "\nPartial state detected.\n" +
                 "Recommended recovery:\n" +
                 "1. Use Remove Vietnamese Patch if PAK exists.\n" +
-                "2. Use Restore Original Files if config files look wrong.\n" +
+                "2. Restore Original Files write is locked for WUWA 3.6 until transactional rollback is available.\n" +
                 "3. Do not apply Balanced or Performance until state becomes PATCHED.\n"
         PatchInstallState.UNKNOWN ->
             "\nState unknown.\n" +
@@ -107,7 +107,7 @@ class StatusRenderer(
                 "1. Open Shizuku.\n" +
                 "2. Grant permission.\n" +
                 "3. Check Game Folder.\n" +
-                "4. Restore from trusted backup if needed.\n"
+                "4. Inspect the trusted backup dry-run; restore write is locked in WUWA 3.6.\n"
         else -> ""
     }
 }

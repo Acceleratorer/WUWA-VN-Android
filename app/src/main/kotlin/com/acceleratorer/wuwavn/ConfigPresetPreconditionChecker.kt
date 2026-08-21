@@ -35,7 +35,7 @@ class ConfigPresetPreconditionChecker(
             failures.add("No trusted VERIFIED backup found. Run Backup Game Configs first.")
         }
         if (!hasExactConfigSet(templateFiles)) {
-            failures.add("Config preset templates must be exactly Engine.ini, DeviceProfiles.ini, and MountLang_en.txt.")
+            failures.add("Config preset templates must be exactly Engine.ini and DeviceProfiles.ini.")
         }
         for (file in templateFiles) {
             if (!PatchDryRunPlanner.isAllowedTarget(file.relativePath)) {
@@ -71,7 +71,10 @@ class ConfigPresetPreconditionChecker(
     }
 
     private fun hasExactConfigSet(templateFiles: List<ConfigTemplateFile>): Boolean {
-        val requiredPaths = PatchDryRunPlanner.backupRelativePaths().toSet()
+        val requiredPaths = setOf(
+            PatchDryRunPlanner.engineIniRelativePath(),
+            PatchDryRunPlanner.deviceProfilesRelativePath(),
+        )
         val templatePaths = templateFiles.map { it.relativePath }.toSet()
         return templateFiles.size == requiredPaths.size && templatePaths == requiredPaths
     }

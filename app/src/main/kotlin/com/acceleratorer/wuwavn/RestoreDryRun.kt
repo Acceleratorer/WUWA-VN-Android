@@ -20,15 +20,22 @@ data class RestoreDryRun(
             .filter { it.status == RestoreFileStatus.VERIFIED }
             .map { it.relativePath }
             .toSet()
-        return PatchDryRunPlanner.backupRelativePaths().all { verifiedPaths.contains(it) }
+        return requiredBackupPathsSatisfied(verifiedPaths)
     }
 
     fun hasOnlyVerifiedRequiredConfigFiles(): Boolean {
-        val requiredPaths = PatchDryRunPlanner.backupRelativePaths().toSet()
         val filePaths = files.map { it.relativePath }
-        return files.size == requiredPaths.size &&
-            filePaths.toSet() == requiredPaths &&
+        return requiredBackupPathsSatisfied(filePaths.toSet()) &&
+            filePaths.size == filePaths.toSet().size &&
+            filePaths.size == 3 &&
             files.all { it.status == RestoreFileStatus.VERIFIED }
+    }
+
+    private fun requiredBackupPathsSatisfied(paths: Set<String>): Boolean {
+        val engine = PatchDryRunPlanner.engineIniRelativePath()
+        val device = PatchDryRunPlanner.deviceProfilesRelativePath()
+        val mountCount = paths.count(WuWa36Layout::isMountLangPath)
+        return engine in paths && device in paths && mountCount == 1
     }
 }
 

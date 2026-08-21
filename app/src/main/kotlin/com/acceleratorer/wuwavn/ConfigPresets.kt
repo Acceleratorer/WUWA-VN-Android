@@ -11,7 +11,6 @@ object ConfigPresets {
         val contentByName = mapOf(
             "Engine.ini" to SAFE_ENGINE_INI,
             "DeviceProfiles.ini" to SAFE_DEVICE_PROFILES_INI,
-            "MountLang_en.txt" to SAFE_MOUNT_LANG,
         )
 
         return PatchDryRunPlanner.backupRelativePaths().map { relativePath ->
@@ -124,10 +123,6 @@ Paths=../../../Engine/Plugins/Runtime/Nvidia/NRD/Content
 [Android DeviceProfile]
 ; Safe / Default keeps the game's Android graphics defaults.
 ; No FPS, resolution, Vulkan, or quality CVars are changed by this preset.
-"""
-
-    private const val SAFE_MOUNT_LANG = """
-../../../Client/Content/Paks/WuWaVH_99_P.pak
 """
 
 }

@@ -5,4 +5,6 @@ data class PatchManifest(
     val pakUrl: String,
     val pakSha256: String,
     val pakFileName: String,
+    val upstreamVersion: String,
+    val pakSizeBytes: Long,
 )

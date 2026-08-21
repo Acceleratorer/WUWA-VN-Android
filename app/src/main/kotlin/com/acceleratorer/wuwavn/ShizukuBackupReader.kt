@@ -64,7 +64,9 @@ class ShizukuBackupReader(
 
             val backedUpFiles = mutableListOf<BackupFileInfo>()
             val missingFiles = mutableListOf<String>()
-            for (relativePath in PatchDryRunPlanner.backupReadableRelativePaths()) {
+            val dynamicMountLang = service.wuwa36MountLangRelativePath(AppConstants.SUPPORTED_GAME_VERSION)
+                ?: throw IllegalStateException("WUWA 3.6 Resources MountLang was not resolved.")
+            for (relativePath in PatchDryRunPlanner.backupReadableRelativePaths(dynamicMountLang)) {
                 val absolutePath = gameAbsolutePath(relativePath)
                 val displayName = PatchDryRunPlanner.backupDisplayName(relativePath)
                 if (!service.exists(absolutePath)) {
@@ -103,12 +105,17 @@ class ShizukuBackupReader(
         logger: DebugLogger,
         serviceError: String?,
     ): BackupResult {
-        val output = runShizukuShell(buildShellBackupScript())
+        val dynamicMountLang = resolveDynamicMountLangWithShell()
+        if (dynamicMountLang == null) {
+            throw IllegalStateException("WUWA 3.6 Resources MountLang was not resolved.")
+        }
+        val readablePaths = PatchDryRunPlanner.backupReadableRelativePaths(dynamicMountLang)
+        val output = runShizukuShell(buildShellBackupScript(readablePaths))
         val blocks = parseShellBlocks(output)
         val backedUpFiles = mutableListOf<BackupFileInfo>()
         val missingFiles = mutableListOf<String>()
 
-        for ((index, relativePath) in PatchDryRunPlanner.backupReadableRelativePaths().withIndex()) {
+        for ((index, relativePath) in readablePaths.withIndex()) {
             val displayName = PatchDryRunPlanner.backupDisplayName(relativePath)
             val lines = blocks["__WUWA_BACKUP_FILE__$index"].orEmpty()
             if (lines.isEmpty()) {
@@ -154,9 +161,9 @@ class ShizukuBackupReader(
         return BackupResult(backedUpFiles, missingFiles, source = "Shizuku shell fallback")
     }
 
-    private fun buildShellBackupScript(): String = buildString {
+    private fun buildShellBackupScript(readablePaths: List<String>): String = buildString {
         appendLine("echo __WUWA_BACKUP_BEGIN__")
-        PatchDryRunPlanner.backupReadableRelativePaths().forEachIndexed { index, relativePath ->
+        readablePaths.forEachIndexed { index, relativePath ->
             appendLine("echo __WUWA_BACKUP_FILE__$index")
             appendLine("p=${shellQuote(gameAbsolutePath(relativePath))}")
             appendLine("if [ -f \"\$p\" ]; then")
@@ -175,16 +182,40 @@ class ShizukuBackupReader(
         appendLine("echo __WUWA_BACKUP_END__")
     }
 
+    private fun resolveDynamicMountLangWithShell(): String? {
+        val root = gameAbsolutePath("UE4Game/Client/Client/Saved/Resources")
+        val script = "for d in ${shellQuote(root)}/3.6.*; do [ -d \"\$d/ResManifest\" ] && basename \"\$d\"; done"
+        val versions = runShizukuShellRaw(script).lineSequence().map(String::trim)
+            .filter { it.matches(Regex("^3\\.6\\.\\d+$")) }.toList()
+        val resourceVersion = WuWa36Layout.resolveResourceVersion(
+            AppConstants.SUPPORTED_GAME_VERSION,
+            versions,
+            versions,
+        ) ?: return null
+        return WuWa36Layout.mountLangPath(resourceVersion)
+    }
+
+    private fun runShizukuShellRaw(script: String): String {
+        val process = startShizukuProcess(arrayOf("/system/bin/sh", "-c", script))
+        val reader = ThreadedProcessOutput(process)
+        if (!waitForShizukuProcess(process)) {
+            process.destroy()
+            throw IllegalStateException("Timed out while resolving WUWA 3.6 Resources layout.")
+        }
+        return reader.stdout()
+    }
+
     private fun runShizukuShell(script: String): String {
         val process = startShizukuProcess(arrayOf("/system/bin/sh", "-c", script))
+        val output = ThreadedProcessOutput(process)
         val completed = waitForShizukuProcess(process)
         if (!completed) {
             process.destroy()
             throw IllegalStateException("Timed out while running Shizuku backup shell fallback.")
         }
 
-        val stdout = process.inputStream.readBytes().toString(Charsets.UTF_8)
-        val stderr = process.errorStream.readBytes().toString(Charsets.UTF_8).trim()
+        val stdout = output.stdout()
+        val stderr = output.stderr().trim()
         if (stdout.contains("__WUWA_BACKUP_BEGIN__") && stdout.contains("__WUWA_BACKUP_END__")) {
             return stdout
         }
@@ -217,6 +248,28 @@ class ShizukuBackupReader(
         )
         method.isAccessible = true
         return method.invoke(null, *arrayOf<Any?>(command, null, null)) as Process
+    }
+
+    private class ThreadedProcessOutput(private val process: Process) {
+        private val stdoutThread: Thread
+        private val stderrThread: Thread
+        @Volatile private var stdoutBytes = ByteArray(0)
+        @Volatile private var stderrBytes = ByteArray(0)
+
+        init {
+            stdoutThread = Thread { stdoutBytes = process.inputStream.readBytes() }.apply { start() }
+            stderrThread = Thread { stderrBytes = process.errorStream.readBytes() }.apply { start() }
+        }
+
+        fun stdout(): String {
+            stdoutThread.join(2_000)
+            return stdoutBytes.toString(Charsets.UTF_8)
+        }
+
+        fun stderr(): String {
+            stderrThread.join(2_000)
+            return stderrBytes.toString(Charsets.UTF_8)
+        }
     }
 
     private fun parseShellBlocks(output: String): Map<String, List<String>> {
@@ -266,10 +319,20 @@ class ShizukuBackupReader(
         val missingFiles: List<String>,
         val source: String,
     ) {
-        fun isTrustedForWriteActions(): Boolean {
-            val required = PatchDryRunPlanner.backupRelativePaths().toSet()
+        fun isTrustedForWriteActions(backupDirectory: File): Boolean {
             val backedUp = backedUpFiles.map { it.relativePath }.toSet()
-            return backedUp == required && missingFiles.none { required.contains(it) }
+            val engine = PatchDryRunPlanner.engineIniRelativePath()
+            val device = PatchDryRunPlanner.deviceProfilesRelativePath()
+            val mountPath = backedUp.firstOrNull(WuWa36Layout::isMountLangPath)
+            if (backedUpFiles.size != 3 || engine !in backedUp || device !in backedUp || mountPath == null) {
+                return false
+            }
+            val mountFile = File(backupDirectory, PatchDryRunPlanner.backupDisplayName(mountPath))
+            return mountFile.isFile &&
+                mountFile.length() <= MAX_CONFIG_BYTES &&
+                runCatching {
+                    WuWa36Layout.isOriginalMountLang(mountFile.readText(Charsets.UTF_8))
+                }.getOrDefault(false)
         }
     }
 

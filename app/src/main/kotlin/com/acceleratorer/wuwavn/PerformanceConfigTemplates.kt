@@ -4,7 +4,6 @@ object PerformanceConfigTemplates {
     fun files(): List<ConfigTemplateFile> = listOf(
         engineIni(),
         deviceProfilesIni(),
-        mountLang(),
     )
 
     private fun engineIni(): ConfigTemplateFile {
@@ -37,15 +36,6 @@ object PerformanceConfigTemplates {
         return templateFile(
             displayName = "DeviceProfiles.ini",
             relativePath = PatchDryRunPlanner.deviceProfilesRelativePath(),
-            content = content,
-        )
-    }
-
-    private fun mountLang(): ConfigTemplateFile {
-        val content = "../../../Client/Content/Paks/WuWaVH_99_P.pak\n"
-        return templateFile(
-            displayName = "MountLang_en.txt",
-            relativePath = PatchDryRunPlanner.mountLangRelativePath(),
             content = content,
         )
     }

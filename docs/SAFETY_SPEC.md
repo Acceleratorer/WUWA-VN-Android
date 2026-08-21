@@ -2,6 +2,51 @@
 
 This app should behave like a safe patch manager, not a generic file copier.
 
+## Current runtime contract: WUWA Global 3.6
+
+The rules below are the current `v3.6.0` contract. Older 2.x/3.3 notes later in this file are historical design notes and do not override this section.
+
+The resolved layout is dynamic:
+
+```text
+UE4Game/Client/Client/Saved/Resources/<resource-version>/Lang_en/<lang-version>/WuWaVH_99_P.pak
+UE4Game/Client/Client/Saved/Resources/<resource-version>/Lang_en/<lang-version>/WuWaVH_99_P.sig
+UE4Game/Client/Client/Saved/Resources/<resource-version>/Mount/MountLang_en.txt
+```
+
+Only these 3.6 target shapes are allowlisted. The legacy `Content/Paks` and `Saved/Config/Android/MountLang_en.txt` targets are rejected by runtime path validation.
+
+The patch transaction requires all of the following:
+
+- PAK SHA-256 and exact pinned size are verified before commit.
+- The SIG is copied from an allowlisted official source, verified by SHA-1, and paired with a PAK sharing its basename.
+- `MountLang_en.txt` is valid `::Mount::` / `::Del::` six-field format and contains the matching `Lang_en/<lang-version>/WuWaVH_99_P.pak,99,<PAK_SHA1>,<SIG_SHA1>,,` entry.
+- Install/update stages PAK, SIG, and MountLang together and rolls back all three on commit failure.
+- Remove stages the trusted original MountLang, removes the PAK/SIG pair, verifies the result, and rolls back all three on failure.
+- A stale install session is cleaned before a new session starts; rollback failures are reported together with the original operation failure.
+
+Trusted backup policy is exact and content-aware:
+
+- exactly `Engine.ini`, `DeviceProfiles.ini`, and one dynamic 3.6 Resources MountLang;
+- all files are VERIFIED and metadata has `restore_write_enabled=false`;
+- the backed-up MountLang is valid six-field format and contains no `Lang_en/*/WuWaVH_99_P.pak` registry entry.
+
+General three-file `Restore Original Files` writing and Safe/Balanced/Performance config writes remain locked in 3.6 until their format and rollback behavior are validated. Dry-run, read-only backup, patch install/update, and patch remove remain available under their own preconditions. Root write, arbitrary paths, `REQUEST_INSTALL_PACKAGES`, and Max Graphics remain disabled.
+
+The pinned patch payload is:
+
+```text
+Version: 3.6.0
+URL: https://dl.dangdev.io.vn/o
+PAK: WuWaVH_99_P.pak
+Size: 65216325 bytes
+SHA-256: 850db0d3865f29fe4502fbbd4439593068246929b7a98324d5c63ecde7136e52
+```
+
+## Historical pre-3.6 design notes
+
+The remaining sections preserve the earlier 2.x/3.3 design and release audit trail. They are not the active 3.6 allowlist or write policy.
+
 ## Allowed file targets
 
 Only these relative Wuthering Waves paths should be modified:

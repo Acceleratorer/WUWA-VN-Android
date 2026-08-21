@@ -137,20 +137,11 @@ class ShizukuRestoreWriter {
             relativePath
 
     private fun requireSafeDryRun(dryRun: RestoreDryRun) {
-        if (dryRun.backupType != BackupManager.READ_ONLY_CONFIG_BACKUP_TYPE) {
-            throw IllegalStateException("Restore blocked because backup type is not trusted.")
+        if (!Wuwa36SafetyPolicy.RESTORE_WRITE_ENABLED) {
+            throw IllegalStateException("Restore Original Files write is locked for WUWA 3.6 until it has a transactional three-file rollback.")
         }
-        if (dryRun.gamePackage != AppConstants.GLOBAL_GAME_PACKAGE) {
-            throw IllegalStateException("Restore blocked because backup game package is not WUWA Global.")
-        }
-        if (dryRun.restoreWriteEnabled != false) {
-            throw IllegalStateException("Restore blocked because restore_write_enabled=false is missing.")
-        }
-        if (!dryRun.allFilesVerified()) {
-            throw IllegalStateException("Restore blocked because not every file is VERIFIED.")
-        }
-        if (!dryRun.hasOnlyVerifiedRequiredConfigFiles()) {
-            throw IllegalStateException("Restore blocked because backup is not the exact required config set.")
+        if (!TrustedBackupPolicy.isTrustedBackup(dryRun)) {
+            throw IllegalStateException("Restore blocked because backup is not a trusted original WUWA 3.6 backup.")
         }
     }
 

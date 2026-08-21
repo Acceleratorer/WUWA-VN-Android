@@ -2,9 +2,11 @@ package com.acceleratorer.wuwavn
 
 class PatchManifestRepository {
     fun current(): PatchManifest = PatchManifest(
-        patchVersion = "wuwa-3.3.6-vi-2026.05",
-        pakUrl = "https://github.com/CallMeDangDev/WuwaVH/releases/download/3.3.6/WuWaVH_99_P.pak",
-        pakSha256 = "146abe4d4d0d17036776ac82ba26c0b4c6b1a4f073b8c84fed91a327d013eb85",
+        patchVersion = "wuwa-3.6.0-vi-2026.08",
+        pakUrl = "https://dl.dangdev.io.vn/o",
+        pakSha256 = "850db0d3865f29fe4502fbbd4439593068246929b7a98324d5c63ecde7136e52",
         pakFileName = "WuWaVH_99_P.pak",
+        upstreamVersion = "3.6.0",
+        pakSizeBytes = 65_216_325L,
     )
 }

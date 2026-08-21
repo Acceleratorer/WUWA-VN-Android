@@ -92,10 +92,13 @@ class ShizukuConfigPresetWriter {
         if (!isWriteEnabledPreset(plan.preset.id)) {
             throw IllegalStateException("${plan.preset.name} write is locked.")
         }
-        val requiredPaths = PatchDryRunPlanner.backupRelativePaths().toSet()
+        val requiredPaths = setOf(
+            PatchDryRunPlanner.engineIniRelativePath(),
+            PatchDryRunPlanner.deviceProfilesRelativePath(),
+        )
         val templatePaths = plan.templateFiles.map { it.relativePath }.toSet()
         if (plan.templateFiles.size != requiredPaths.size || templatePaths != requiredPaths) {
-            throw IllegalStateException("Config preset must contain exactly the three required config files.")
+            throw IllegalStateException("Config preset must contain exactly Engine.ini and DeviceProfiles.ini.")
         }
         for (template in plan.templateFiles) {
             if (!PatchDryRunPlanner.isAllowedTarget(template.relativePath)) {
@@ -108,7 +111,7 @@ class ShizukuConfigPresetWriter {
                 throw IllegalStateException("${template.displayName} template SHA-256 mismatch.")
             }
         }
-        if (plan.trustedBackup.verifiedFiles != PatchDryRunPlanner.backupRelativePaths().size) {
+        if (plan.trustedBackup.verifiedFiles != TrustedBackupPolicy.REQUIRED_FILE_COUNT) {
             throw IllegalStateException("Trusted backup is incomplete.")
         }
         if (plan.preset.id == ConfigPresetId.BALANCED) {
@@ -120,10 +123,11 @@ class ShizukuConfigPresetWriter {
     }
 
     private fun isWriteEnabledPreset(id: ConfigPresetId): Boolean = when (id) {
-        ConfigPresetId.SAFE_DEFAULT -> true
-        ConfigPresetId.BALANCED -> true
-        ConfigPresetId.PERFORMANCE -> true
-        ConfigPresetId.MAX_GRAPHICS -> false
+        ConfigPresetId.SAFE_DEFAULT,
+        ConfigPresetId.BALANCED,
+        ConfigPresetId.PERFORMANCE,
+        ConfigPresetId.MAX_GRAPHICS,
+        -> ConfigPresetAvailabilityPolicy.availability(id) == PresetAvailability.WRITE_ENABLED
     }
 
     private fun requireNoForbiddenBalancedTokens(templateFiles: List<ConfigTemplateFile>) {

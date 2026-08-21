@@ -7,8 +7,8 @@ object AppConstants {
     const val RELEASES_URL = "https://github.com/Acceleratorer/WUWA-VN-Android/releases"
     const val SUPPORTED_GAME_NAME = "Wuthering Waves"
     const val SUPPORTED_GAME_SERVER = "Global"
-    const val SUPPORTED_GAME_VERSION = "3.3"
-    const val MINIMUM_GAME_VERSION = "3.3"
+    const val SUPPORTED_GAME_VERSION = "3.6"
+    const val MINIMUM_GAME_VERSION = "3.6"
 
     val VERSION_NAME: String = BuildValues.VERSION_NAME
     val VERSION_CODE: Int = BuildValues.VERSION_CODE
