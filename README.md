@@ -1,466 +1,348 @@
 # WUWA Việt Hoá Android
 
-Ứng dụng hỗ trợ cài bản Việt hoá cho Wuthering Waves trên Android.
+Ứng dụng cài bản Việt hoá cho **Wuthering Waves Global 3.6 trên Android**.
 
-> Trạng thái hiện tại: bản `v3.6.0` đã port sang WUWA Global 3.6. Patch dùng `Saved/Resources/<resource-version>/Lang_en/<lang-version>/WuWaVH_99_P.pak` + `.sig` và registry sáu trường trong `Saved/Resources/<resource-version>/Mount/MountLang_en.txt`. Install/update và remove là transaction PAK/SIG/MountLang; preset config, Restore Original Files write, root write và Max Graphics vẫn khóa cho đến khi format/rollback được xác minh đầy đủ.
+README này viết cho người mới hoàn toàn. Bạn chỉ cần làm theo đúng thứ tự bên dưới.
 
-## Tính Năng
-
-- Chuẩn bị luồng cài bản Việt hoá cho Wuthering Waves bản Global
-- Cập nhật bản dịch mới nhất từ GitHub Releases
-- Sao lưu read-only các file cấu hình gốc trước khi chỉnh sửa
-- Restore dry-run: liệt kê backup, verify metadata/SHA-256, show restore plan
-- Restore dry-run từ backup đã VERIFIED; restore write tổng quát đang khóa trong 3.6
-- Cài/cập nhật patch bằng transaction: ghi `WuWaVH_99_P.pak`, SIG đi kèm và MountLang registry
-- Hỗ trợ Shizuku để thao tác với thư mục game
-- Hiển thị compatibility với Wuthering Waves Global `3.6`
-- Smart State Detection: nhận diện Original / Patched / Partial / Unknown
-- Hiển thị trạng thái PAK, `MountLang_en.txt`, Safe config, trusted backup và recommended action
-- UI tự bật/tắt action theo trạng thái để tránh bấm đè hoặc thao tác sai
-- Hiển thị dry-run cho Safe / Balanced / Performance nhưng các preset write bị khóa trong 3.6
-- Remove Vietnamese Patch: restore Resources MountLang từ trusted original backup, xoá đúng PAK + SIG, rồi verify transaction
-- Chuẩn bị cấu hình đồ hoạ theo lộ trình: preset config và Max Graphics vẫn khóa
-- Header UI dùng artwork bundled trong APK, không tải ảnh từ mạng
-- Icon app dùng artwork bundled trong APK
-- Jetpack Compose home screen: màn chính runtime dùng Compose nhưng vẫn gọi controller/write flow cũ
-- Compose diagnostics polish: state snapshot và issue report vẫn có app/game/Shizuku/patch/backup/hint summary, preset policy, và action state
-- Non-tech home screen: chỉ giữ What To Do Now, Setup Checklist, và 6 Quick Actions chính gồm Start Setup, Open Shizuku, Backup, Download, Install, và More Tools
-- Install Help cho user không rành kỹ thuật: tải đúng APK release, Android 11+, BlueStacks Android 11 64-bit, unknown-source prompt, và Shizuku setup
-- Tải PAK vào app storage và kiểm tra SHA-256 trước khi cho phép bước tiếp theo
-- Ghi `metadata.json` với danh sách file backup thật, dung lượng và SHA-256
-- Copy đường dẫn backup để dễ gửi log hoặc tự kiểm tra
-- Copy debug log để gửi báo lỗi
-- Copy State Snapshot để gửi nhanh trạng thái app/game/Shizuku/backup khi báo lỗi
-- Recovery Guide hướng dẫn xử lý Original / Patched / Partial / Unknown state
-- Gradle build path từ `v3.3.11`; manual PowerShell pipeline vẫn giữ làm legacy fallback
-- GitHub Actions release automation từ `v3.3.12`: build/sign APK, tạo `sha256.txt`, và upload release assets
-- First-run setup guide cho user mới
-- Setup Checklist hiển thị game/Shizuku/backup/patch state và Ready YES/NO
-- Shizuku Setup Help giải thích trạng thái Shizuku hiện tại
-- Optional Root Backend Preview cho máy đã root: chỉ check root thủ công, không ghi file bằng root
-- Root Preview Help giải thích root bằng ngôn ngữ dễ hiểu cho user không rành kỹ thuật
-- Shortcut mở Developer Options, fallback sang Shizuku setup guide nếu ROM không hỗ trợ
-- More Tools gom các flow nâng cao: patch plan, presets, remove/restore, recovery, diagnostics, root preview, và install help
-- Game Path Diagnostic read-only trong More Tools để xác nhận layout WUWA 3.6 động, Lang_en PAK/SIG, SHA-256/preview ngắn của MountLang, và Patch Plan Preview read-only
-
-## Screenshots
-
-| ORIGINAL | PATCHED | PARTIAL | UNKNOWN / Shizuku |
-|---|---|---|---|
-| Cần chụp state gốc: PAK missing, MountLang không trỏ PAK | Cần chụp state đã cài: PAK exists, MountLang trỏ PAK | Cần chụp state lệch: PAK/MountLang không khớp | Cần chụp khi Shizuku chưa READY hoặc không đọc được state |
-
-## Apply State Matrix
-
-| State | Install / Update Patch | Apply Safe / Default | Apply Balanced | Apply Performance | Remove Patch | Restore Original |
-|---|---|---|---|---|---|---|
-| ORIGINAL | Enabled if trusted original backup exists | Locked in 3.6 | Locked in 3.6 | Locked in 3.6 | Disabled | Locked in 3.6 |
-| PATCHED | Enabled if trusted original backup exists | Locked in 3.6 | Locked in 3.6 | Locked in 3.6 | Enabled if trusted original backup exists | Locked in 3.6 |
-| PARTIAL | Disabled | Disabled | Disabled | Disabled | Enabled if trusted original backup exists | Locked in 3.6 |
-| UNKNOWN | Disabled | Disabled | Disabled | Disabled | Disabled | Disabled |
-
-## Diagnostics Snapshot
-
-Nút **Copy State Snapshot** copy thông tin ngắn gọn để debug issue report:
+## Tóm tắt cực ngắn
 
 ```text
-WUWA VN State Snapshot
-App version: 3.6.0 (66)
-Game package: com.kurogame.wutheringwaves.global
-Game version: 3.6.x
-Launcher compatibility: WUWA Global 3.6
-Supported game version: 3.6
-
-Preset write policy:
-Safe: LOCKED
-Balanced: LOCKED
-Performance: LOCKED
-Max Graphics: LOCKED
-
-Root backend preview: Root preview not checked
-Root write enabled: false
-
-Shizuku: READY
-
-Patch state: PATCHED
-Config state: BALANCED
-Trusted backup: true
-PAK exists: true
-MountLang exists: true
-MountLang points to PAK: true
-Engine.ini readable: true
-DeviceProfiles.ini readable: true
-
-Actions:
-Install Patch: false
-Apply Safe: false
-Apply Balanced: false
-Apply Performance: false
-Remove Patch: true
-Restore Original: false
-Backup Configs: true
-Download Patch: true
-Hint: Vietnamese patch appears installed. Update/remove is available; config preset and restore writes are locked for WUWA 3.6.
-Last action: State refreshed
+1. Cài Shizuku và bật Shizuku
+2. Cài WUWA VN
+3. Mở game một lần để game tải xong dữ liệu
+4. Trong WUWA VN: Backup Game Configs
+5. Trong WUWA VN: Download & Verify Patch
+6. Trong WUWA VN: Install Vietnamese Patch
+7. Mở Wuthering Waves và kiểm tra tiếng Việt
 ```
 
-## Yêu Cầu
+Nếu một nút đang màu xám hoặc bị khoá, đừng cố bấm. Đọc mục [Nút bị khoá nghĩa là gì?](#nut-bi-khoa-nghia-la-gi).
 
-- Android 11 trở lên
-- Đã cài Wuthering Waves bản Global
-- Đã cài và bật Shizuku
-- Còn đủ dung lượng trống để tải patch và tạo backup
-- Root là tuỳ chọn nâng cao, không bắt buộc. Root chỉ là preview check thủ công và không có root write.
+## Tải đúng file
 
-## Supported Game Versions
+### APK WUWA VN v3.6.0
 
-- Wuthering Waves Global
-- Android package: `com.kurogame.wutheringwaves.global`
-- Supported game version: `3.6`
-- Mục tiêu test: Android 11 / 12 / 13 / 14 / 15
+- [Tải APK trực tiếp](https://github.com/Acceleratorer/WUWA-VN-Android/releases/download/v3.6.0/WUWA-VN-v3.6.0-release.apk)
+- [Mở trang GitHub Releases](https://github.com/Acceleratorer/WUWA-VN-Android/releases/tag/v3.6.0)
 
-## Cách Cài
-
-1. Tải file APK release từ [GitHub Releases](https://github.com/Acceleratorer/WUWA-VN-Android/releases).
-2. Chỉ cài file `WUWA-VN-vX.Y.Z-release.apk`, không cài Source code zip/tar.gz.
-3. Dùng Android 11 trở lên. Nếu test bằng BlueStacks, tạo instance Android 11 64-bit.
-4. Nếu Android hỏi, cho phép Install unknown apps cho browser hoặc file manager đang dùng để mở APK.
-5. Nếu cài đặt fail, gỡ bản WUWA VN cũ rồi cài lại APK release.
-6. Mở Shizuku và bật dịch vụ bằng Wireless Debugging.
-7. Cấp quyền Shizuku cho WUWA VN.
-8. Mở WUWA VN và bấm **Start Setup** nếu cần hướng dẫn từng bước.
-9. Bấm **Open Shizuku** nếu Shizuku chưa chạy hoặc chưa cấp quyền.
-10. Bấm **Backup Game Configs** để copy read-only `Engine.ini`, `DeviceProfiles.ini` và Resources MountLang động vào backup.
-11. Bấm **Download & Verify Patch** để tải PAK và kiểm tra SHA-256.
-12. Chỉ bấm **Install Vietnamese Patch** nếu nút được bật. Nếu nút vẫn khóa, bấm **More Tools > Game Path Diagnostic** và gửi report trước khi thử cài.
-13. Bấm **More Tools** nếu cần thao tác nâng cao như Install Help, Game Path Diagnostic, Show Patch Plan, Remove Patch, restore dry-run, preset dry-run, Recovery Guide, Copy State Snapshot, hoặc Root Preview. Config preset write và Restore Original Files write đang khóa trong 3.6.
-14. Nếu máy đã root và muốn kiểm tra thử, mở **More Tools** rồi bấm **Root Preview Help** trước, sau đó mới bấm **Check Root Access**. Bước này không ghi file.
-
-## Verify APK
-
-Sau khi tải APK, so sánh SHA-256 của APK với file `sha256.txt` trong GitHub Releases.
-
-Không cài APK từ mirror lạ, link chat riêng, hoặc file không có SHA-256 đi kèm.
-
-Ví dụ file phát hành hợp lệ:
+Tên file đúng là:
 
 ```text
 WUWA-VN-v3.6.0-release.apk
 ```
 
-Không phát hành file `app-debug.apk` cho người dùng phổ thông.
+Không tải hoặc cài các file sau:
 
-Trước khi phát hành, kiểm tra chữ ký:
+- `app-debug.apk`
+- `Source code (zip)` hoặc `Source code (tar.gz)`
+- APK từ link lạ, link rút gọn, mirror không rõ nguồn
 
-```bash
- apksigner verify --print-certs WUWA-VN-v3.6.0-release.apk
-```
+### Shizuku
 
-## Cách Khôi Phục
+WUWA VN cần Shizuku để truy cập thư mục dữ liệu của game. Tải Shizuku từ nguồn chính thức:
 
-Mở app, chọn **Restore Original Files** để xem backup và dry-run. Restore write tổng quát đang khóa trong 3.6 vì chưa có transaction rollback cho cả ba file config.
+- [Tải Shizuku trên GitHub chính thức](https://github.com/RikkaApps/Shizuku/releases/latest)
+- [Hướng dẫn Shizuku chính thức](https://shizuku.rikka.app/guide/setup/)
 
-Backup được lưu trong thư mục app-specific external storage để tránh xin quyền lưu trữ rộng:
+Chỉ tải Shizuku từ GitHub của `RikkaApps` hoặc trang `shizuku.rikka.app`.
+
+## Trước khi cài: kiểm tra 5 điều
+
+- Điện thoại chạy **Android 11 trở lên**.
+- Đã cài **Wuthering Waves Global**, không phải bản Trung Quốc.
+- Game có package `com.kurogame.wutheringwaves.global`.
+- Game đã cập nhật đến **3.6.x**.
+- Máy còn đủ dung lượng trống để chứa APK, patch và bản backup.
+
+> Không cần root. Bản này dùng Shizuku. Root write không được bật.
+
+## Cài lần đầu — làm từng bước
+
+### Bước 1: Cài WUWA VN
+
+1. Tải `WUWA-VN-v3.6.0-release.apk` từ link GitHub ở trên.
+2. Mở file APK.
+3. Nếu Android hỏi quyền cài ứng dụng không rõ nguồn, bật **Allow from this source / Cho phép từ nguồn này** cho trình duyệt hoặc trình quản lý file đang dùng.
+4. Bấm **Install / Cài đặt**.
+
+Nếu Android báo đã có ứng dụng khác cùng tên hoặc cài đặt thất bại, gỡ **WUWA VN cũ** rồi cài lại APK v3.6.0. Không gỡ Wuthering Waves.
+
+### Bước 2: Cài và bật Shizuku
+
+Trên Android 11 trở lên, Shizuku thường được bật bằng **Wireless debugging**. Tên menu có thể hơi khác tuỳ hãng máy.
+
+1. Mở **Settings / Cài đặt** của điện thoại.
+2. Tìm **Developer options / Tùy chọn nhà phát triển**. Nếu chưa có, vào **About phone / Giới thiệu điện thoại**, bấm **Build number / Số hiệu bản dựng** khoảng 7 lần để mở.
+3. Vào Developer options và bật **Wireless debugging / Gỡ lỗi không dây**.
+4. Mở ứng dụng **Shizuku**.
+5. Nếu Shizuku yêu cầu ghép đôi:
+   - Trong Shizuku, chọn **Pairing**.
+   - Trong Android, mở **Wireless debugging > Pair device with pairing code**.
+   - Nhập mã ghép đôi vào thông báo hoặc ô nhập của Shizuku.
+6. Quay lại Shizuku và bấm **Start / Bắt đầu** ở mục Wireless debugging.
+7. Chờ Shizuku hiện trạng thái đang chạy.
+
+Sau mỗi lần khởi động lại điện thoại, Android có thể yêu cầu bấm Start Shizuku lại. Đây là giới hạn của Wireless debugging, không phải lỗi WUWA VN.
+
+Nếu không tìm thấy menu, mở [hướng dẫn Shizuku chính thức](https://shizuku.rikka.app/guide/setup/) và tìm phần **Start via wireless debugging**.
+
+### Bước 3: Cho WUWA VN quyền Shizuku
+
+1. Mở **WUWA VN**.
+2. Bấm **Open Shizuku**.
+3. Nếu Shizuku hiện yêu cầu cấp quyền cho WUWA VN, bấm **Allow / Cho phép**.
+4. Quay lại WUWA VN.
+5. Màn hình phải hiện Shizuku ở trạng thái **READY** hoặc **Sẵn sàng**.
+
+Nếu chưa READY, xem [Sửa lỗi Shizuku](#1-shizuku-chua-ready).
+
+### Bước 4: Mở game một lần
+
+1. Mở Wuthering Waves Global.
+2. Đợi game tải và giải nén xong toàn bộ dữ liệu bản 3.6.
+3. Vào được màn hình chính của game rồi thoát game hoàn toàn.
+
+> Không để game đang chạy khi backup hoặc cài patch.
+
+### Bước 5: Backup trước
+
+Trong WUWA VN:
+
+1. Bấm **Backup Game Configs**.
+2. Chờ đến khi app báo backup thành công.
+3. Chỉ tiếp tục khi backup hiển thị đủ và **VERIFIED**.
+
+Backup là bản sao an toàn để app có thể phục hồi trạng thái gốc khi gỡ patch. Đừng xoá dữ liệu WUWA VN sau khi backup nếu bạn còn đang dùng patch.
+
+### Bước 6: Tải và kiểm tra patch
+
+1. Bấm **Download & Verify Patch**.
+2. Chờ tải xong. Patch khoảng **65.2 MB**.
+3. Chờ app báo SHA-256 đã được kiểm tra thành công.
+
+Nếu tải lỗi hoặc SHA-256 không khớp, **không cài patch**. Xem [Sửa lỗi tải patch](#3-tai-patch-loi-hoac-sha-256-khong-khop).
+
+### Bước 7: Cài bản Việt hoá
+
+1. Đóng Wuthering Waves hoàn toàn.
+2. Trong WUWA VN, bấm **Install Vietnamese Patch**.
+3. Đọc màn hình kế hoạch cài đặt.
+4. Nếu mọi thứ đúng, bấm nút xác nhận cài.
+5. Chờ app báo cài thành công và kiểm tra xong.
+6. Mở Wuthering Waves Global 3.6 và kiểm tra menu, nhiệm vụ hoặc hội thoại.
+
+App sẽ tự kiểm tra đường dẫn game. App chỉ ghi đúng các file patch cần thiết và có rollback nếu transaction gặp lỗi.
+
+## Cập nhật patch khi đã cài bản cũ
+
+Khi game lên bản 3.6.x mới hoặc có patch Việt hoá mới:
+
+1. Cập nhật Wuthering Waves và mở game một lần để game tải xong dữ liệu.
+2. Thoát game hoàn toàn.
+3. Mở WUWA VN và bảo đảm Shizuku đang **READY**.
+4. Bấm **Backup Game Configs** nếu app yêu cầu.
+5. Bấm **Download & Verify Patch**.
+6. Bấm **Install Vietnamese Patch** khi nút được bật.
+
+Không tự xoá file cũ bằng trình quản lý file. Không chép PAK thủ công.
+
+## Gỡ bản Việt hoá
+
+Nếu muốn quay về bản gốc:
+
+1. Đóng Wuthering Waves.
+2. Mở WUWA VN và bảo đảm Shizuku đang **READY**.
+3. Vào **More Tools > Remove Vietnamese Patch**.
+4. Đọc kế hoạch phục hồi.
+5. Chỉ xác nhận khi app báo trusted backup là **VERIFIED**.
+6. Bấm **Remove Patch Now**.
+7. Chờ app báo đã phục hồi và xoá patch thành công.
+
+Không tự xoá `WuWaVH_99_P.pak`, `.sig` hoặc sửa `MountLang_en.txt` bằng tay. App cần phục hồi các file theo đúng thứ tự để game không bị trạng thái nửa cài nửa gỡ.
+
+> Nếu nút Remove bị khoá, thường là vì chưa có trusted original backup đúng với dữ liệu game hiện tại. Đừng xoá file thủ công; gửi State Snapshot để kiểm tra.
+
+## Nút bị khoá nghĩa là gì?
+
+| Nút | Điều kiện để dùng |
+|---|---|
+| **Open Shizuku** | Luôn có thể mở Shizuku hoặc trang hướng dẫn |
+| **Backup Game Configs** | Game Global được nhận diện và Shizuku READY |
+| **Download & Verify Patch** | Có thể tải patch; cần mạng ổn định |
+| **Install Vietnamese Patch** | Game 3.6.x, Shizuku READY, backup gốc VERIFIED, layout game hợp lệ và patch đã verify |
+| **Remove Vietnamese Patch** | Có patch và trusted original backup VERIFIED |
+| **Apply Safe / Balanced / Performance** | Đang bị khoá trong v3.6.0 để tránh ghi sai config |
+| **Restore Original Files** | Restore write tổng quát đang bị khoá trong v3.6.0 |
+| **Max Graphics** | Luôn bị khoá trong bản này |
+
+Nút bị khoá là cơ chế an toàn. Đừng thử root, đừng sửa file bằng tay và đừng dùng app khác để “ép” cài.
+
+## Các lỗi thường gặp
+
+### 1. Shizuku chưa READY
+
+- Mở Shizuku và kiểm tra service có đang chạy không.
+- Bật lại Wireless debugging.
+- Nếu điện thoại vừa restart, bấm Start Shizuku lại.
+- Mở WUWA VN > **Open Shizuku** và cấp quyền cho WUWA VN.
+- Nếu máy Xiaomi/POCO yêu cầu, bật thêm **USB debugging (Security settings)** trong Developer options.
+- Cho phép Shizuku chạy nền, không bật chế độ tiết kiệm pin quá mạnh cho Shizuku.
+
+### 2. WUWA VN không thấy game
+
+- Kiểm tra bạn cài bản **Global**, không phải bản Trung Quốc.
+- Mở game một lần, chờ tải xong resource rồi thoát hoàn toàn.
+- Kiểm tra game là bản **3.6.x**.
+- Vào WUWA VN > **More Tools > Check Game Folder**.
+- Nếu vẫn không thấy, vào **More Tools > Game Path Diagnostic**, bấm copy report và gửi report.
+
+### 3. Tải patch lỗi hoặc SHA-256 không khớp
+
+- Kiểm tra mạng và thử lại sau.
+- Không đổi URL patch trong app hoặc tải PAK từ nguồn khác.
+- Xoá phiên tải lỗi trong app nếu app yêu cầu rồi tải lại.
+- Nếu vẫn lỗi, gửi **Copy Debug Log**; không gửi file APK/PAK lên nhóm công khai nếu không cần.
+
+### 4. Install bị khoá dù đã backup
+
+- Backup phải được tạo **sau khi game đã lên 3.6.x**.
+- Backup phải có đủ 3 mục và trạng thái **VERIFIED**.
+- Shizuku phải hiện **READY**.
+- Game phải đang đóng hoàn toàn.
+- Bấm **More Tools > Game Path Diagnostic** để kiểm tra layout Resources 3.6.
+- Gửi **Copy State Snapshot** và diagnostic report nếu vẫn không được.
+
+### 5. Android không cho cài APK
+
+- Vào Settings > Security/Privacy > Install unknown apps.
+- Cho phép đúng ứng dụng đang mở APK: Chrome, Files, ZArchiver, v.v.
+- Mở lại file `WUWA-VN-v3.6.0-release.apk`.
+- Nếu báo xung đột, gỡ WUWA VN cũ rồi cài lại. Không gỡ Wuthering Waves.
+
+### 6. Game bị lỗi sau khi cài
+
+1. Không mở game liên tục để thử lại.
+2. Đóng game.
+3. Mở WUWA VN > **More Tools > Remove Vietnamese Patch**.
+4. Chỉ xác nhận nếu app tìm thấy trusted backup VERIFIED.
+5. Nếu Remove cũng bị khoá, gửi State Snapshot và Debug Log; không tự xoá file.
+
+## Kiểm tra APK có phải bản thật không (tuỳ chọn)
+
+Người dùng bình thường chỉ cần tải từ GitHub Release chính thức. Nếu muốn tự kiểm tra, SHA-256 của APK v3.6.0 là:
 
 ```text
-Android/data/com.acceleratorer.wuwavn/files/WUWA-VH-Backup/
-  2026-05-15_22-30-10/
-    Engine.ini
-    DeviceProfiles.ini
-    MountLang_en.Resources-3.6.x.txt
-    metadata.json
+2a4ca78adfdbd6eabe08b43167b311a1bd0098b986577b9faa5515db7e19c523
 ```
 
-Restore chỉ được mở khi backup thoả tất cả điều kiện:
+Bạn có thể tải file [sha256.txt](https://github.com/Acceleratorer/WUWA-VN-Android/releases/download/v3.6.0/sha256.txt) cạnh APK để đối chiếu.
 
-- `backup_type` là `shizuku_read_only_config_backup`
-- `game_package` là `com.kurogame.wutheringwaves.global`
-- `restore_write_enabled` trong metadata là `false`
-- Cả 3 file `Engine.ini`, `DeviceProfiles.ini` và Resources MountLang động đều VERIFIED
-- Shizuku đang READY để đọc dry-run
-- Wuthering Waves Global được phát hiện
-- Resources MountLang phải đúng format sáu trường và không được chứa entry `Lang_en/*/WuWaVH_99_P.pak`
+Trên Windows PowerShell:
 
-Trong `v3.6.0`, app mở khóa install/update và remove transaction cho WUWA Global `3.6`. Safe / Default, Balanced, Performance, Restore Original Files write, root write và Max Graphics đều đang khóa; dry-run vẫn có để kiểm tra kế hoạch.
+```powershell
+Get-FileHash .\WUWA-VN-v3.6.0-release.apk -Algorithm SHA256
+```
 
-## Các Chế Độ Cấu Hình
+Trên Linux/macOS:
 
-- **Safe / Default, Balanced, Performance**: chỉ preview/dry-run trong 3.6; chưa ghi config cho đến khi format config mới được xác minh.
-- **Max Graphics**: đang khóa vĩnh viễn trong release này, vì có thể gây nóng máy, hao pin, crash hoặc tụt FPS.
+```bash
+sha256sum WUWA-VN-v3.6.0-release.apk
+```
 
-Mặc định nên giữ config game hiện tại và chỉ dùng patch transaction đã verify.
+## Gửi báo lỗi cho dễ xử lý
 
-## Shizuku Dùng Để Làm Gì?
+Trong WUWA VN, vào **More Tools** rồi lấy:
 
-WUWA VN cần Shizuku để truy cập đúng thư mục dữ liệu của game trên Android mới. Ứng dụng chỉ nên chỉnh sửa những file nằm trong allowlist của Wuthering Waves, không nhận đường dẫn tuỳ ý từ người dùng.
+1. **Copy State Snapshot** — thông tin trạng thái ngắn gọn.
+2. **Game Path Diagnostic** — thông tin đường dẫn game 3.6.
+3. **Copy Debug Log** hoặc **Send Issue Report** — log thao tác.
 
-Các trạng thái Shizuku cần kiểm tra trong app:
+Kèm thêm:
 
-- Shizuku chưa được cài
-- Shizuku đã cài nhưng chưa chạy
-- Shizuku đang chạy nhưng chưa cấp quyền
-- Sẵn sàng
+- Dòng máy.
+- Phiên bản Android.
+- Phiên bản Wuthering Waves.
+- Bạn đang làm đến bước nào.
+- Ảnh lỗi nếu có.
 
-## Optional Root Backend Preview
+Mẫu báo lỗi:
 
-Từ `v3.3.19`, app có **Root Backend Preview** cho máy đã root.
+```text
+Máy: Samsung/ Xiaomi/ ..., Android ...
+Game: Wuthering Waves Global 3.6.x
+Shizuku: READY / chưa READY
+Patch state: ORIGINAL / PATCHED / PARTIAL / UNKNOWN
+Bước lỗi: Download / Backup / Install / Remove
+Thông báo lỗi: ...
+Đã gửi kèm: State Snapshot + Game Path Diagnostic + Debug Log
+```
 
-- **Root Preview Help**: giải thích root bằng ngôn ngữ dễ hiểu.
-- **Check Root Access**: chỉ chạy check thủ công `su -c id` sau khi user xác nhận.
-- Nếu Magisk/root manager hiện popup, user có thể deny và tiếp tục dùng Shizuku.
-- Root write vẫn khóa trong `v3.3.19`.
-- Backup/install/remove/restore/config preset vẫn dùng Shizuku flow hiện tại.
+## Bản này có gì và có gì chưa mở?
 
-Root preview không thêm permission mới, không nhận path tuỳ ý, không mở Max Graphics, và không bỏ qua SHA-256.
+### Đã mở trong v3.6.0
 
-## Cập Nhật App
+- Cài hoặc cập nhật patch Việt hoá cho WUWA Global 3.6.x.
+- Kiểm tra kích thước và SHA-256 của patch trước khi cài.
+- Kiểm tra PAK, SIG và registry game cùng nhau.
+- Cài/gỡ theo transaction và có rollback khi thao tác lỗi.
+- Backup read-only các file cần cho khôi phục.
 
-Hiện tại app mở GitHub Releases để người dùng tự tải bản mới. Manifest không xin quyền `REQUEST_INSTALL_PACKAGES`.
+### Chưa mở trong v3.6.0
 
-Ứng dụng không tự cài APK âm thầm.
+- Safe / Default config write.
+- Balanced config write.
+- Performance config write.
+- Restore Original Files write tổng quát.
+- Root write.
+- Max Graphics.
 
-## Known Issues
+Các mục trên bị khoá có chủ ý vì chưa hoàn tất kiểm chứng format và rollback trên game 3.6. Không phải lỗi cài đặt.
 
-- Shizuku chưa chạy
-- Chưa cấp quyền Shizuku cho app
-- Game vẫn đang mở và file có thể bị khoá
-- Không đủ dung lượng để tạo backup
-- Android chặn cài APK từ nguồn không xác định
-- Root manager popup bị deny hoặc timeout khi bấm Check Root Access
-- Max Graphics vẫn khóa
-- Preset config writes và general Restore Original Files write đang khóa trong 3.6
-- Remove Vietnamese Patch cần trusted original backup VERIFIED để restore Resources MountLang trước khi xoá PAK + SIG
-- Backup có MountLang đã chứa patch registry sẽ không được coi là original trusted backup
-- Khi state là UNKNOWN, các action nguy hiểm sẽ bị tắt để tránh ghi/xoá sai trạng thái
+## Thông tin kỹ thuật cho người muốn biết
 
-## Release 3.6
+Patch v3.6.0 sử dụng layout động của game:
 
-- `v3.6.0`: port WUWA Global layout to dynamic `Saved/Resources/<resource-version>/Lang_en/<lang-version>` targets.
-- `v3.6.0`: install/update now stages and verifies PAK + SIG + six-field Resources MountLang as one transaction.
-- `v3.6.0`: remove now restores trusted original Resources MountLang and removes the PAK/SIG pair transactionally.
-- `v3.6.0`: reject patched MountLang files as original backups, tighten SIG pairing, bound download redirects, and preserve rollback errors.
-- `v3.6.0`: keep config preset writes, general restore writes, root writes, and Max Graphics locked pending further 3.6 validation.
+```text
+Saved/Resources/<resource-version>/Lang_en/<lang-version>/WuWaVH_99_P.pak
+Saved/Resources/<resource-version>/Lang_en/<lang-version>/WuWaVH_99_P.sig
+Saved/Resources/<resource-version>/Mount/MountLang_en.txt
+```
 
-## Historical Release Line 3.3
+Thông tin patch:
 
-- v3.3.6: Stability release, Balanced chỉ apply khi state là PATCHED.
-- v3.3.7: QA hardening release, thêm diagnostics snapshot, recovery guidance, và test checklist.
-- v3.3.8: Performance preview release, thêm Performance dry-run only và giữ Performance write khóa.
-- v3.3.9: Performance write release, chỉ apply khi state là PATCHED và có trusted backup.
-- v3.3.10: WUWA Global 3.3 LTS release, thêm Recovery Guide, preset policy trong snapshot, và checklist test LTS.
-- v3.3.11: Gradle migration release, không đổi app behavior.
-- v3.3.12: GitHub Actions release automation, build/sign/upload APK tự động.
-- v3.3.13: Low-tech onboarding polish, thêm setup guide/checklist/Shizuku help, không đổi app behavior.
-- v3.3.14: Release hardening, CI verify APK SHA/version/package/permission/debuggable.
-- v3.3.15: Compose preview foundation, thêm preview-only Compose screens, không đổi runtime UI/write logic.
-- v3.3.16: Compose home screen parity, màn chính runtime dùng Compose nhưng giữ controller/write flow cũ.
-- v3.3.17: Non-tech install polish, thêm Install Help và hướng dẫn APK/Android 11+/BlueStacks/unknown-source rõ hơn.
-- v3.3.18: Compose diagnostics/snapshot polish, hiển thị summary và snapshot preview rõ hơn trên màn chính.
-- v3.3.19: Non-tech home simplification + Optional Root Backend Preview, màn chính chỉ hiện phần cần thiết và root write vẫn khóa.
-- v3.3.20: Android 3.3.2 path diagnostic, thêm Game Path Diagnostic read-only và không đổi write behavior.
-- v3.3.21: Game Path Diagnostic hotfix, dùng lại Shizuku backup service read-only để tránh timeout.
-- v3.3.22: Game Path Diagnostic binding hotfix, tránh background state refresh và retry Shizuku backup service.
-- v3.3.23: Game Path Diagnostic shell fallback hotfix, đọc path bằng Shizuku shell allowlist nếu user service bind timeout.
-- v3.3.24: Game Path Diagnostic shell process hotfix, sửa lỗi fallback báo `process hasn't exited`.
-- v3.3.25: Android 3.3.2 layout confirmation, report Resources layout confirmed và MountLang SHA/preview read-only.
-- v3.3.26: Android 3.3.2 Patch Plan Preview, report proposed Resources PAK/SIG targets và giữ writer khóa.
-- v3.3.27: Patch SHA refresh, pin WuwaVH `3.3.6` PAK URL và cập nhật SHA-256 để Download & Verify Patch pass lại.
-- v3.3.28: Patch verified guidance hotfix, nói rõ Install chỉ dùng khi nút được bật và Android 3.3.2 writer vẫn khóa.
-- v3.3.29: MountLang SHA-1 probe, xác nhận official PAK/SIG hash format và proposed mount order trong diagnostic read-only.
-- v3.3.30: Backup shell fallback hotfix, Backup Game Configs tránh timeout user-service và vẫn không mở writer Android 3.3.2.
-- v3.3.31: Android 3.3.2 backup summary polish, Resources MountLang backup hiển thị OK khi legacy MountLang path missing là expected.
+```text
+Patch version: wuwa-3.6.0-vi-2026.08
+PAK: WuWaVH_99_P.pak
+PAK size: 65,216,325 bytes
+PAK SHA-256: 850db0d3865f29fe4502fbbd4439593068246929b7a98324d5c63ecde7136e52
+```
 
-## Roadmap
+App không cho nhập đường dẫn tuỳ ý và không xin quyền `REQUEST_INSTALL_PACKAGES`. App không tự cài APK âm thầm.
 
-- v3.6.x: validate config formats and implement transactional config restore before unlocking preset/general restore writes.
+## Dành cho developer
 
-Source app hiện đã được migrate sang Kotlin. Từ `v3.3.11`, Gradle là build path chính và vẫn dùng `version.properties` làm source of truth cho app version. Từ `v3.3.12`, GitHub Actions có thể build release APK khi tạo GitHub Release tag mới.
-Từ `v3.3.17`, màn chính runtime dùng Jetpack Compose nhưng vẫn giữ các controller, Shizuku flow, và write logic hiện có. Từ `v3.3.18`, màn chính Compose có Diagnostics Summary và State Snapshot Preview. Từ `v3.3.19`, màn chính ưu tiên user phổ thông với 6 Quick Actions, tool nâng cao nằm trong More Tools, và Root Backend Preview chỉ detect root thủ công chứ không mở root write. Từ `v3.3.31`, Backup Game Configs có Shizuku shell fallback khi user-service timeout và summary nói rõ Android 3.3.2 Resources MountLang backup OK nhưng writer vẫn khóa.
-
-## Build From Source
-
-Từ `v3.3.11`, repo hỗ trợ Gradle build.
-
-Debug build:
+Build debug:
 
 ```bash
 ./gradlew :app:assembleDebug
 ```
 
-Release build local:
+Build release cần keystore riêng và các biến môi trường ký APK. Release chính thức được build, ký, kiểm tra và upload bằng GitHub Actions.
+
+Các kiểm tra release:
 
 ```bash
-./gradlew :app:assembleRelease
-```
-
-Compose home screen:
-
-Ví dụ log lịch sử (format 3.3, chỉ để minh hoạ; không phải trạng thái runtime 3.6):
-
-```text
-app/src/main/kotlin/com/acceleratorer/wuwavn/ComposeHomeScreen.kt
-```
-
-Mở file này trong Android Studio để xem `@Preview` cho home/status/setup/diagnostics/snapshot/preset policy. Runtime `MainActivity` cũng dùng Compose screen này từ `v3.3.17`.
-
-Từ `v3.3.12`, GitHub Actions có thể build release APK khi tạo GitHub Release tag mới.
-
-Release artifact gồm:
-
-```text
-WUWA-VN-vX.Y.Z-release.apk
-sha256.txt
-update.json
-release-verification-report.txt
-```
-
-## Release Verification
-
-Từ `v3.3.14`, release APK được verify bằng script:
-
-```bash
+./gradlew :app:compileDebugKotlin
+./gradlew :app:testDebugUnitTest
+./gradlew :app:lintDebug
 python tools/verify-release-apk.py WUWA-VN-v3.6.0-release.apk
 ```
 
-Script kiểm tra:
+## Nguồn và giấy phép
 
-- SHA-256 APK khớp `update.json`
-- `versionName` và `versionCode` khớp `version.properties`
-- package là `com.acceleratorer.wuwavn`
-- release APK không debuggable
-- APK không xin `REQUEST_INSTALL_PACKAGES`
+- Patch Việt hoá được app tải từ endpoint đã pin kích thước và SHA-256; không tải PAK từ link khác.
+- Ứng dụng Android: [Acceleratorer/WUWA-VN-Android](https://github.com/Acceleratorer/WUWA-VN-Android)
+- Shizuku: [RikkaApps/Shizuku](https://github.com/RikkaApps/Shizuku)
+- Giấy phép: [MIT](LICENSE)
 
-Manual PowerShell pipeline vẫn được giữ tạm thời làm legacy fallback:
-
-```powershell
-powershell -ExecutionPolicy Bypass -File .\tools\build-release.ps1
-```
-
-Gradle là build path chính từ `v3.3.11`. Legacy script vẫn tự kiểm tra Android SDK build-tools `36.0.0`, download và verify Shizuku AARs, download và verify Kotlin compiler `2.0.21`, compile AIDL/Java generated sources/Kotlin sources, chạy D8, zipalign, apksigner, rồi xuất APK vào `release/`.
-
-GitHub Actions release secrets cần cấu hình:
-
-```text
-WUWA_RELEASE_KEYSTORE_BASE64
-WUWA_RELEASE_STORE_PASSWORD
-WUWA_RELEASE_KEY_ALIAS
-WUWA_RELEASE_KEY_PASSWORD
-```
-
-Release workflow sẽ ghi SHA-256 của APK vừa build vào `update.json` artifact, rồi verify APK bằng `release-verification-report.txt`.
-
-## Báo Lỗi
-
-Khi gặp lỗi, hãy bấm **Copy State Snapshot** hoặc **Send Issue Report** trước, rồi gửi kèm log trong app nếu có:
-
-```text
-[22:31:10] App version: 3.3.13
-[22:31:10] Android version: 14
-[22:31:11] Shizuku: running
-[22:31:11] Permission: granted
-[22:31:12] Game folder: found
-[22:31:12] Game version: 3.3.x
-[22:31:12] Launcher compatibility: WUWA Global 3.3
-[22:31:13] State: patch=PATCHED, config=SAFE_DEFAULT
-[22:31:13] State: pak=true, mountLang=true
-[22:31:13] State: trustedBackup=true
-[22:31:13] Smart UI: Vietnamese patch appears installed. Update/remove available; config and restore writes locked for WUWA 3.6.
-[22:31:15] Backup read: copied Engine.ini
-[22:31:16] Backup read: copied DeviceProfiles.ini
-[22:31:16] Backup read: copied MountLang_en.txt
-[22:31:16] Backup metadata: wrote actual backed-up files
-[22:31:16] Restore dry run: verified 3/3 files
-[22:31:17] Restore write: verified Engine.ini
-[22:31:18] Restore write: success
-[22:31:19] Patch download: success
-[22:31:19] SHA-256: verified
-[22:31:20] Patch write: started
-[22:31:25] Patch write: verified
-[22:31:26] Safe config preset: started
-[22:31:27] Safe preset write: verified Engine.ini
-[22:31:28] Safe config preset: success
-[22:31:29] Balanced preset dry run: shown
-[22:31:30] Balanced preset: started
-[22:31:31] Balanced write: verified Engine.ini
-[22:31:32] Balanced preset: success
-[22:31:33] Patch remove: MountLang restored
-[22:31:34] Patch remove: verified target deleted
-```
-
-## Test Checklist 3.6
-
-- [ ] ORIGINAL: install/update enabled only with a trusted original backup; preset, general restore, and Max Graphics writes locked.
-- [ ] PATCHED: update/remove enabled only with a trusted original backup; preset and general restore writes locked.
-- [ ] PARTIAL/UNKNOWN: dangerous actions remain disabled except remove when its exact trusted-original preconditions pass.
-- [ ] Trusted backup rejects a MountLang containing any `Lang_en/*/WuWaVH_99_P.pak` entry.
-- [ ] Installed PATCHED requires PAK + SIG + valid MountLang registry together.
-- [ ] Install/update verifies PAK size/SHA-256, paired official SIG SHA-1, and MountLang hashes before commit.
-- [ ] Install/update rollback restores all previous PAK/SIG/MountLang files after a simulated commit failure.
-- [ ] Remove rollback restores all previous PAK/SIG/MountLang files after a simulated removal failure.
-- [ ] Download follows only HTTPS trusted-host redirects and stops at the redirect limit.
-- [ ] Legacy `Content/Paks` and `Config/Android/MountLang_en.txt` paths are rejected.
-- [ ] `REQUEST_INSTALL_PACKAGES` is absent; root write and Max Graphics remain disabled.
-
-## Historical Test Checklist 3.3
-
-Xem checklist test LTS tại [`docs/WUWA-3.3-LTS-TEST-CHECKLIST.md`](docs/WUWA-3.3-LTS-TEST-CHECKLIST.md).
-
-- [ ] ORIGINAL: Install enabled nếu có trusted backup, Safe enabled nếu có trusted backup, Balanced disabled, Performance disabled, Remove disabled, Restore enabled nếu có trusted backup
-- [ ] PATCHED: Install disabled, Safe enabled nếu có trusted backup, Balanced enabled nếu có trusted backup, Performance enabled nếu có trusted backup, Remove enabled nếu có trusted backup, Restore enabled nếu có trusted backup
-- [ ] PARTIAL: Install disabled, Safe disabled, Balanced disabled, Performance disabled, Remove/Restore enabled nếu có trusted backup
-- [ ] UNKNOWN: dangerous actions disabled, Performance disabled
-- [ ] First install shows setup guide, **Got it** hides it next launch
-- [ ] **Start Setup** opens onboarding again
-- [ ] Setup Checklist shows correct YES/NO for install and presets
-- [ ] Shizuku Setup Help explains the current Shizuku state
-- [ ] Root Preview Help explains root without enabling root writes
-- [ ] Check Root Access asks for confirmation before calling root
-- [ ] Root preview status appears in Setup Checklist and State Snapshot
-- [ ] Open Developer Options works or opens Shizuku setup guide fallback
-- [ ] Home screen shows 6 Quick Actions for non-tech users
-- [ ] More Tools contains advanced actions: presets, remove/restore, recovery, diagnostics, root preview, and install help
-- [ ] Game Path Diagnostic is read-only and reports candidate MountLang/Resources/PAK paths, layout confirmation, MountLang SHA/preview, and Android 3.3.2 Patch Plan Preview when available
-- [ ] Backup copy đúng `Engine.ini`, `DeviceProfiles.ini`, `MountLang_en.txt` và ghi metadata
-- [ ] Download verify PAK SHA-256 trước khi install
-- [ ] Install Vietnamese Patch chỉ ghi `WuWaVH_99_P.pak`
-- [ ] Safe / Default chỉ ghi 3 file config allowlisted
-- [ ] Balanced chỉ ghi 3 file config khi state là PATCHED
-- [ ] Performance show dry-run/final confirmation và chỉ ghi 3 file config khi state là PATCHED
-- [ ] Remove Patch restore `MountLang_en.txt`, xoá PAK, rồi verify target deleted
-- [ ] Restore Original Files chỉ restore backup VERIFIED
-- [ ] Max Graphics vẫn khóa
-- [ ] Manifest không thêm permission mới và `android:debuggable=false`
-- [ ] Root write remains disabled in v3.3.31
-
-## Security Checklist
-
-- [ ] APK là release-signed, không phải debug-signed
-- [ ] `android:debuggable=false`
-- [ ] `update.json` có SHA-256 thật cho APK
-- [ ] APK URL trỏ về `Acceleratorer/WUWA-VN-Android`
-- [ ] PAK SHA-256 là hash thật
-- [ ] App kiểm tra SHA-256 trước khi cài hoặc áp dụng file
-- [ ] Backup chạy trước mọi thay đổi file
-- [ ] Restore đã được test
-- [ ] Các trạng thái Shizuku được xử lý an toàn
-- [ ] Shizuku permission check dùng API thật, không chỉ kiểm tra package
-- [ ] Root preview không ghi file và không nhận path tuỳ ý
-- [ ] App chỉ chỉnh sửa file trong allowlist
-- [ ] Release notes/changelog rõ ràng
-- [ ] Không commit keystore hoặc signing secret
-
-## Credits
-
-- Vietnamese translation pack: [CallMeDangDev/WuwaVH](https://github.com/CallMeDangDev/WuwaVH)
-- Android patch manager: [Acceleratorer/WUWA-VN-Android](https://github.com/Acceleratorer/WUWA-VN-Android)
-
-## License
-
-MIT License. Xem file [LICENSE](LICENSE).
-
-## Lưu Ý
-
-Ứng dụng không liên kết với Kuro Games.
-
-Hãy sao lưu trước khi sử dụng.
-
-Không dùng app để gian lận, bypass anti-cheat, hoặc can thiệp gameplay online.
+Ứng dụng không liên kết với Kuro Games. Hãy backup trước khi sử dụng. Không dùng app để gian lận, bypass anti-cheat hoặc can thiệp gameplay online.
